@@ -1,0 +1,10 @@
+*.py[co]
+scratch
+backup
+data*
+logs
+build
+dist
+env
+GIMMS
+src/miCASA.egg-info

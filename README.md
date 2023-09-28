@@ -1,2 +1,3 @@
 # miCASA
-MODIS support and other improvements to CASA
+
+MODIS and other Improvements to CASA (miCASA).
