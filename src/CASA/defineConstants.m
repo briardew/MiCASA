@@ -1,7 +1,7 @@
 DIRM2   = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
 DIRMODV = '/discover/nobackup/bweir/miCASA/data';
 DIRCASA = '/discover/nobackup/bweir/miCASA/data-casa';
-DIRUTIL = '/discover/nobackup/bweir/matlab/globutils';		% Needed for regridding (avgarea)
+DIRUTIL = '/discover/nobackup/bweir/miCASA/utils';		% Needed for regridding (avgarea)
 
 % Define constants
 %comment out spinUpYear here, and assign it in the new spin up section of CASA.m
@@ -33,6 +33,14 @@ herbivoreEff        = single(0.50);     % efficiency of herbivory (part autotrop
 %NLON = numel(lon);
 %do_daily = 'n';
 
+runname = 'monthly-0.1deg';
+dx = 0.1;
+lat = [-90+dx/2:dx:90-dx/2]';
+lon = [-180+dx/2:dx:180-dx/2]';
+NLAT = numel(lat);
+NLON = numel(lon);
+do_daily = 'n';
+
 %runname = 'daily-0.1deg';
 %dx = 0.1;
 %lat = [-90+dx/2:dx:90-dx/2]';
@@ -41,10 +49,19 @@ herbivoreEff        = single(0.50);     % efficiency of herbivory (part autotrop
 %NLON = numel(lon);
 %do_daily = 'y';
 
-runname = 'monthly-0.1deg';
-dx = 0.1;
-lat = [-90+dx/2:dx:90-dx/2]';
-lon = [-180+dx/2:dx:180-dx/2]';
-NLAT = numel(lat);
-NLON = numel(lon);
-do_daily = 'n';
+do_spinup_stage1 = 'y';
+do_spinup_stage2 = 'y';
+%do_spinup_stage1 = 'n';
+%do_spinup_stage2 = 'n';
+
+spinUpYear_stage1 = 250;
+spinUpYear_stage2 = 1750;
+
+use_cropstate_emax = 'y';
+use_sink = 'y';
+use_crop_moisture = 'y';
+use_crop_ppt_ratio = 'y';
+
+spinUpYear   = single(spinUpYear_stage1);
+spinUpYear_2 = single(spinUpYear_stage2);
+

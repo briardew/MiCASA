@@ -24,12 +24,8 @@ NPPtemp(T1 < 0 | T2low < 0 | T2high < 0)=0;
 NPPtemp(AIRT < -10)=0;
 NPPtemp(NPPtemp > 1) = 1;
 
-%ai replace constant EMAX usage with spatially varying EMAX
-%note: the equation remains the same whether EMAX is a constant or a column
-%vector
-%epsilon = EMAX .* NPPtemp .* NPPmoist;
 epsilon = EMAX .* NPPtemp .* NPPmoist;
-NPP  = epsilon .* IPAR;
+NPP = epsilon .* IPAR;
 
 % derive abiotic effect for each timestep in the cycle
 bgtemp = Q10.^((AIRT - 30) ./ 10);

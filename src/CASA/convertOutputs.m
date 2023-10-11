@@ -1,10 +1,9 @@
 defineConstants;
-addpath(DIRUTIL);
 
 DIRIN  = [DIRCASA, '/', runname, '/native'];
-DIROUT = [DIRCASA, '/', runname];
+DIROUT = [DIRCASA, '/', runname, '/output'];
 YEAR0  = 2003;
-YEARF  = 2004;
+YEARF  = 2021;
 ADDHER = 1;
 
 % Begin
@@ -25,14 +24,14 @@ RH1    = zeros(size(mask));
 HERBV1 = zeros(size(mask));
 FUEL1  = zeros(size(mask));
 FIRE1  = zeros(size(mask));
-SOILM1 = zeros(size(mask));
+%SOILM1 = zeros(size(mask));
 
 NPP   = zeros(NLON, NLAT, 12);
 RH    = zeros(NLON, NLAT, 12);
 HERBV = zeros(NLON, NLAT, 12);
 FUEL  = zeros(NLON, NLAT, 12);
 FIRE  = zeros(NLON, NLAT, 12);
-SOILM = zeros(NLON, NLAT, 12);
+%SOILM = zeros(NLON, NLAT, 12);
 
 for ny = YEAR0:YEARF
     syear = num2str(ny);
@@ -47,7 +46,7 @@ for ny = YEAR0:YEARF
     load([DIRIN, '/COMpeat', syear, '.mat']);
     load([DIRIN, '/COMwood', syear, '.mat']);
 
-    load([DIRIN, '/soilm', syear, '.mat']);
+%    load([DIRIN, '/soilm', syear, '.mat']);
 
     NPP2   = eval(['NPP',syear]);
     RH2    = eval(['RES',syear]);
@@ -55,7 +54,7 @@ for ny = YEAR0:YEARF
     FUEL2  = eval(['FUE',syear]);
     FIRE2  = eval(['COMdefo',syear]) + eval(['COMherb',syear]) + ...
              eval(['COMpeat',syear]) + eval(['COMwood',syear]);
-    SOILM2 = eval(['soilm',syear]);
+%    SOILM2 = eval(['soilm',syear]);
 
     % Reshape
     for nm = 1:12
@@ -64,14 +63,14 @@ for ny = YEAR0:YEARF
       HERBV1(inds) = HERBV2(:,nm);
       FUEL1(inds)  = FUEL2(:,nm);
       FIRE1(inds)  = FIRE2(:,nm);
-      SOILM1(inds) = SOILM2(:,nm);
+%      SOILM1(inds) = SOILM2(:,nm);
 
       NPP(:,:,nm)   = fliplr(NPP1);
       RH(:,:,nm)    = fliplr(RH1);
       HERBV(:,:,nm) = fliplr(HERBV1);
       FUEL(:,:,nm)  = fliplr(FUEL1);
       FIRE(:,:,nm)  = fliplr(FIRE1);
-      SOILM(:,:,nm) = fliplr(SOILM1);
+%      SOILM(:,:,nm) = fliplr(SOILM1);
     end
 
     if ADDHER, RH = RH + HERBV; end
@@ -80,7 +79,7 @@ for ny = YEAR0:YEARF
     clear ['NPP',syear] ['RES',syear] ['FUE',syear] ['HER',syear];
     clear ['COMdefo',syear] ['COMherb',syear];
     clear ['COMpeat',syear] ['COMwood',syear];
-    clear ['SOILM',syear];
+%    clear ['SOILM',syear];
 
     % NPP
     % ---
@@ -228,32 +227,32 @@ for ny = YEAR0:YEARF
                {'lon', NLON, 'lat', NLAT, 'month', 12});
     ncwrite(   fout, vout, FIRE);
 
-    % SOILM
-    % -----
-    fout = [DIROUT, '/SOILM.monthly.0.5x0.5.', syear, '.nc'];
-    vout = 'SOILM';
-
-    idnc = netcdf.create(fout, 'clobber');
-    netcdf.close(idnc);
-
-    ncwriteatt(fout, '/', 'flux_variable_description', 'Soil Moisture');
-    ncwriteatt(fout, '/', 'CO2_flux_unit', 'gC/m2/month');
-    ncwriteatt(fout, '/', 'CO2_flux_sign', '+: emission to atmosphere');
-    ncwriteatt(fout, '/', 'Time_Interval', 'month, mid-point');
-
-    nccreate(  fout, 'lat',  'dimensions', {'lat', NLAT});
-    ncwriteatt(fout, 'lat',  'units',      'degrees_north');
-    ncwriteatt(fout, 'lat',  'long_name',  'latitude');
-    ncwrite(   fout, 'lat',  lat);
-
-    nccreate(  fout, 'lon',  'dimensions', {'lon', NLON});
-    ncwriteatt(fout, 'lon',  'units',      'degrees_east');
-    ncwriteatt(fout, 'lon',  'long_name',  'longitude');
-    ncwrite(   fout, 'lon',  lon);
-
-    nccreate(  fout, 'month', 'dimensions', {'month', 12});
-
-    nccreate(  fout, vout, 'dimensions',       ...
-               {'lon', NLON, 'lat', NLAT, 'month', 12});
-    ncwrite(   fout, vout, SOILM);
+%    % SOILM
+%    % -----
+%    fout = [DIROUT, '/SOILM.monthly.0.5x0.5.', syear, '.nc'];
+%    vout = 'SOILM';
+%
+%    idnc = netcdf.create(fout, 'clobber');
+%    netcdf.close(idnc);
+%
+%    ncwriteatt(fout, '/', 'flux_variable_description', 'Soil Moisture');
+%    ncwriteatt(fout, '/', 'CO2_flux_unit', 'gC/m2/month');
+%    ncwriteatt(fout, '/', 'CO2_flux_sign', '+: emission to atmosphere');
+%    ncwriteatt(fout, '/', 'Time_Interval', 'month, mid-point');
+%
+%    nccreate(  fout, 'lat',  'dimensions', {'lat', NLAT});
+%    ncwriteatt(fout, 'lat',  'units',      'degrees_north');
+%    ncwriteatt(fout, 'lat',  'long_name',  'latitude');
+%    ncwrite(   fout, 'lat',  lat);
+%
+%    nccreate(  fout, 'lon',  'dimensions', {'lon', NLON});
+%    ncwriteatt(fout, 'lon',  'units',      'degrees_east');
+%    ncwriteatt(fout, 'lon',  'long_name',  'longitude');
+%    ncwrite(   fout, 'lon',  lon);
+%
+%    nccreate(  fout, 'month', 'dimensions', {'month', 12});
+%
+%    nccreate(  fout, vout, 'dimensions',       ...
+%               {'lon', NLON, 'lat', NLAT, 'month', 12});
+%    ncwrite(   fout, vout, SOILM);
 end

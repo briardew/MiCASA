@@ -89,9 +89,12 @@ bgmoist  = bgmoist_temp;
 %ai Oct.2010
 %set the NPPmoist and bgmoist to 1 for states with crops as was done in
 %Zhen's code
-if (use_crop_moisture == 'y')
-    NPPmoist(crop_states_index) = 1;
-    bgmoist(crop_states_index)  = 1;
+if lower(use_crop_moisture(1)) == 'y'
+%   NPPmoist(crop_states_index) = 1;
+%   bgmoist(crop_states_index)  = 1;
+    alpha = SINK/max(SINK(:));
+    NPPmoist = (1 - alpha).*NPPmoist + alpha;
+    bgmoist  = (1 - alpha).*bgmoist  + alpha;
 end
 
 % set snow pack, soil moisture, bgmoistpret, NPPmoistpret for next step

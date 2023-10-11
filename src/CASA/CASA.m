@@ -5,25 +5,11 @@
 % * Be able to save/load current state (in netCDF)
 
 
-
 % CASA = Carnegie-Ames-Stanford-Approach. biogeochemical model developed in
 % the 1990s to simulate terrestrial carbon exchange. Further developed and
 % accounted for fires; Global Fire Emissions Database (GFED)
 clear
-
-do_spinup_stage1 = 'y'; 
-do_spinup_stage2 = 'y'; 
-
-spinUpYear_stage1 = 250;
-spinUpYear_stage2 = 1750;
-
-use_cropstate_emax = 'y'; 
-use_sink = 'y';
-use_crop_moisture = 'y';
-use_crop_ppt_ratio = 'y';
-
-spinUpYear   = single(spinUpYear_stage1);
-spinUpYear_2 = single(spinUpYear_stage2);
+defineConstants
 
 %fluxes = {'NPP','RES','HER','FUE','COMwood','COMherb','COMdefo','COMpeat'};
 % Above doesn't work before COMdefo and COMpeat only begin after spinup (FIXME)
@@ -37,7 +23,6 @@ end
 NSTEPS = 12; % Currently only support monthly spinup
 if lower(do_spinup_stage1(1)) == 'y'
     %% read input datasets and set parameter values
-    defineConstants
     loadCASAinput
     defineArrays
     doLatitude
@@ -136,8 +121,8 @@ for year = startYear:endYear
     doLeafRootShedding
     for step = 1:NSTEPS
         updateCASAinput
+        disp('a');
 
-        disp('o');
         doPET
         doSoilMoisture
         doNPP
@@ -146,10 +131,11 @@ for year = startYear:endYear
         doTreeCarbon
         doDefoCarbon
         doHerbCarbon
+        disp('b');
 
-        disp('x');
         processData
         saveData
+        disp('c');
     end
 
     disp([' Year ' int2str(year) ', time used = ' int2str(toc) ' seconds'])

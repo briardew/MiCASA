@@ -45,6 +45,7 @@ end
 
 %ai alt fpar
 datasets = {'FPAR'};
+data_dir = 'annual';
 for ii = 1:length(datasets)
     average = zeros(arr_rows,arr_cols,12);
     for year = startYear:endYear
@@ -58,7 +59,6 @@ end
 %ai
 %MERRa data can be used for these data sets
 datasets = {'PPT','AIRT','SOLRAD'};
-%if (use_merra == 'y'), data_dir = 'annual_merra'; else data_dir = 'annual'; end
 data_dir = 'annual';
 for ii = 1:length(datasets)
     average = zeros(arr_rows,arr_cols,12);
@@ -133,17 +133,17 @@ FHC = FHC - error_fraction;
 
 %ai
 %load the spatially dependent EMAX which replaces the constant version
-if (use_cropstate_emax == 'y')
+if lower(use_cropstate_emax(1)) == 'y'
     load([DIRCASA, '/', runname, '/maps/EMAX.mat']);
     EMAX = single(maskfile(EMAX,mask));
 end
 %load sink data
-if (use_sink == 'y')
+if lower(use_sink(1)) == 'y'
     load([DIRCASA, '/', runname, '/maps/SINK.mat']);
     SINK = single(maskfile(SINK,mask));
 end
 %load crop moisture data
-if (use_crop_moisture == 'y')
+if lower(use_crop_moisture(1)) == 'y' || lower(use_crop_ppt_ratio(1)) == 'y'
     load([DIRCASA, '/', runname, '/maps/crop_states.mat']);
     crop_states = single(maskfile(crop_states,mask));
     %get list of indices for crop states

@@ -1,62 +1,66 @@
 % herbaceous vegetation carbon fluxes
 
 % NPP: calculate inputs from NPP to living pools following Hui and Jackson
-% (http://www.blackwell-synergy.com/doi/pdf/10.1111/j.1469-8137.2005.01569.x)
-io                  = 0.85 - MAP; io(io<0.2)=0.2; io(io>0.8)=0.8;
+% https://doi.org/10.1111/j.1469-8137.2005.01569.x
+io = 0.85 - MAP;
+io(io < 0.20) = 0.20; io(io > 0.80) = 0.80;
 
 %ai
 if (use_crop_ppt_ratio == 'y')
     io(crop_states_index) = 0.15;
 end
-    
-frootinput          = NPP .* io;
-leafinput           = NPP .* (1-io);
 
+frootinput = NPP .* io;
+leafinput  = NPP .* (1-io);
 
 % NPP: transfer NPP into living biomass pools
-hleafpool          = hleafpool      + leafinput;
-hfrootpool         = hfrootpool     + frootinput;
+hfrootpool = hfrootpool + frootinput;
+hleafpool  = hleafpool  + leafinput;
 
 %ai 
 % take out the sink from hleafpool as was done in Zhen's code
-if (use_sink == 'y' && month == 9)
-  hleafpool = hleafpool-SINK;
+if lower(use_sink(1)) == 'y' && month == 9
+    if NSTEPS == 12
+        hleafpool = hleafpool - SINK;
+    else
+        hleafpool = hleafpool - SINK/30;
+    end
 end
 
 % HERBIVORY
-herbivory           = grass_herbivory .* herb_seasonality;                  % yearly herbivory * seasonality scalar
-io                  = herbivory > hleafpool;                                % check that herbivory does not exceed available leaf
-herbivory(io)       = hleafpool(io);                                        % in case herbivory exceeds leaf, lower herbivory
-hleafpool           = hleafpool - herbivory;                                % deduct herbivory from the leafpool
-carbonout_leaf      = herbivory .* (1 - herbivoreEff);                      % part of the consumed leaf will be returned as litter
-herbivory           = herbivory  - herbivory .* (1 - herbivoreEff);         % part of the consumed leaf for maintenance
+herbivory      = grass_herbivory .* herb_seasonality;			% yearly herbivory * seasonality scalar
+io             = herbivory > hleafpool;					% check that herbivory does not exceed available leaf
+herbivory(io)  = hleafpool(io);						% in case herbivory exceeds leaf, lower herbivory
+hleafpool      = hleafpool - herbivory;					% deduct herbivory from the leafpool
+carbonout_leaf = herbivory .* (1 - herbivoreEff);			% part of the consumed leaf will be returned as litter
+herbivory      = herbivory - herbivory .* (1 - herbivoreEff);		% part of the consumed leaf for maintenance
 
-hsurfstrpool         = hsurfstrpool   + carbonout_leaf .*(1 - metabfract);    
-hsurfmetpool         = hsurfmetpool   + carbonout_leaf .* metabfract;    
+hsurfstrpool   = hsurfstrpool   + carbonout_leaf .*(1 - metabfract);    
+hsurfmetpool   = hsurfmetpool   + carbonout_leaf .* metabfract;    
 
 % DECAY of biomass and litter, each of the following equations have the following basic form: 
 % carbon pool size * rate constant * abiotic effect. Some may have more terms but all are first order
-carbonout_leaf      = hleafpool      .* K_hleaf      .* litterscalar;
-carbonout_froot     = hfrootpool     .* K_hfroot     .* litterscalar;
-carbonout_surfmet   = hsurfmetpool   .* K_surfmet    .* abiotic;
-carbonout_surfstr   = hsurfstrpool   .* K_surfstr    .* abiotic  .* lignineffect;
-carbonout_soilmet   = hsoilmetpool   .* K_soilmet    .* abiotic;
-carbonout_soilstr   = hsoilstrpool   .* K_soilstr    .* abiotic  .* lignineffect;
-carbonout_surfmic   = hsurfmicpool   .* K_surfmic    .* abiotic;
-carbonout_soilmic   = hsoilmicpool   .* K_soilmic    .* abiotic  .* soilmicDecayFactor;
-carbonout_slow      = hslowpool      .* K_hslow      .* abiotic;
-carbonout_armored   = harmoredpool   .* K_harmored   .* abiotic;
+carbonout_leaf    = hleafpool    .* K_hleaf    .* litterscalar;
+carbonout_froot   = hfrootpool   .* K_hfroot   .* litterscalar;
+carbonout_surfmet = hsurfmetpool .* K_surfmet  .* abiotic;
+carbonout_surfstr = hsurfstrpool .* K_surfstr  .* abiotic  .* lignineffect;
+carbonout_soilmet = hsoilmetpool .* K_soilmet  .* abiotic;
+carbonout_soilstr = hsoilstrpool .* K_soilstr  .* abiotic  .* lignineffect;
+carbonout_surfmic = hsurfmicpool .* K_surfmic  .* abiotic;
+carbonout_soilmic = hsoilmicpool .* K_soilmic  .* abiotic  .* soilmicDecayFactor;
+carbonout_slow    = hslowpool    .* K_hslow    .* abiotic;
+carbonout_armored = harmoredpool .* K_harmored .* abiotic;
 
 % determine inputs into structural and metabolic pools from decaying living
 % pools
-hsurfstrpool       = hsurfstrpool   + carbonout_leaf  .* (1 - metabfract);    
-hsoilstrpool       = hsoilstrpool   + carbonout_froot .* (1 - metabfract);
-hsurfmetpool       = hsurfmetpool   + carbonout_leaf  .* metabfract;    
-hsoilmetpool       = hsoilmetpool   + carbonout_froot .* metabfract;    
+hsurfstrpool = hsurfstrpool + carbonout_leaf  .* (1 - metabfract);    
+hsoilstrpool = hsoilstrpool + carbonout_froot .* (1 - metabfract);
+hsurfmetpool = hsurfmetpool + carbonout_leaf  .* metabfract;    
+hsoilmetpool = hsoilmetpool + carbonout_froot .* metabfract;    
 
-hleafpool          = hleafpool      - carbonout_leaf;
-hfrootpool         = hfrootpool     - carbonout_froot;
-hsurfstrpool       = hsurfstrpool   - carbonout_surfstr;
+hleafpool    = hleafpool    - carbonout_leaf;
+hfrootpool   = hfrootpool   - carbonout_froot;
+hsurfstrpool = hsurfstrpool - carbonout_surfstr;
 
 % empty respirationpools in beginning of month
 resppools = {'resppool_surfstr','resppool_surfmet','resppool_surfmic','resppool_armored', ...

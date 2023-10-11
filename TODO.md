@@ -1,3 +1,13 @@
+* Read percent land to fix soil moisture parameter complaint
+* Go to daily (probably need `OMP_NUM_THREADS` set per below)
+* Find other crop moisture and carbon concentration parameters
+
+* New version comes out O(5 years). In the version year and month,
+  for us 202310, we use retrospective as much as possible: everything
+  retrospective up to year - 2 (here 2021). In year - 1, land cover changes to
+  persistence, in month - 3 (here 2023/07) burned area ???, in month (here
+  2023/10) fPAR changes to NRT collection.
+
 * Remember to set `OMP_NUM_THREADS` if you ever want this to finish
 
 * RUN THE DAMN THING!!!
