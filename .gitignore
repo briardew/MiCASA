@@ -8,3 +8,4 @@ dist
 env
 src/MiCASA.egg-info
 src/CASA/deprecated
+src/masinfo/crops
