@@ -4,7 +4,9 @@
 # To install with dependencies, run:
 #     python3 -m pip install -r requirements.txt -e .
 # The `-e .` is for editable mode. See README.md for more.
+setuptools
 numpy
 netcdf4
 dask
 xarray
+rioxarray

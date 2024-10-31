@@ -62,10 +62,12 @@ def _regrid(dsout, dirin, mask=None):
         nirin = dsin['Nadir_Reflectance_Band2'].values.T
         nirqc = dsin['BRDF_Albedo_Band_Mandatory_Quality_Band2'].values.T
 
-        # Red and NIR have different QC
-        # QC = 255 and val = 32767 are equiv but doing both out of paranoia
-        iok = np.logical_and.reduce((redin != 32767, redqc != 255,
-            nirin != 32767, nirqc != 255,
+        # Red and NIR can have different QC
+        # QC = 255 and val = 32767 are equiv, but sometimes val = -32767
+        # QC = 0 is too strict over cloudy regions, e.g., Amazon
+        # QC = 1 is an over-agressive fill we must live with
+        iok = np.logical_and.reduce((abs(redin) != 32767, redqc != 255,
+            abs(nirin) != 32767, nirqc != 255,
             NDVIMIN*(nirin + redin) <= nirin - redin))
 
         numgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone))[0]
@@ -85,10 +87,9 @@ def _regrid(dsout, dirin, mask=None):
 
     # Apply mask if provided
     if mask is not None:
-    # Should this mask to NDVIMIN?
-#       ndvi = (ndvi - NDVIMIN)*mask + NDVIMIN
-    # Masking to 0 shows better agreement w/ GIMMS (worth revisiting)
-        ndvi = ndvi * mask
+    # Should this mask to NDVIMIN or 0? Looks like GIMMS masks to NDVIMIN
+        ndvi = (ndvi - NDVIMIN)*mask + NDVIMIN
+#       ndvi = ndvi * mask
 
     # Fill Dataset
     dsout['NDVI'].values = ndvi.astype(dsout['NDVI'].dtype)
@@ -96,38 +97,68 @@ def _regrid(dsout, dirin, mask=None):
 
     return dsout
 
-def _ndvi2fpar(ndvi, lctype):
+# Keeping this for now, but obviously not working
+def _ndvi2fpar_los(ndvi, lctype):
     '''Convert NDVI to fPAR using Los et al. (2000) formulation'''
 
     def srfun(xx):
         return (1. + xx)/(1. - xx)
 
     fpar = np.zeros_like(ndvi)
-    qt = np.zeros((NTYPE, 2))
 
     # Convert to using percent
     for nn in range(NTYPE):
         ime = lctype == nn
 
-        ndlo = NDVI02P[nn]
-        ndhi = NDVI98P[nn]
-        srlo = srfun(ndlo)
-        srhi = srfun(ndhi)
+        N0 = NDVI02P[nn]
+        N1 = NDVI98P[nn]
+        S0 = srfun(N0)
+        S1 = srfun(N1)
 
-        sr = srfun(np.minimum(ndvi,ndhi))
+        sr = srfun(np.minimum(ndvi,N1))
 
-        fpsr = (sr   - srlo)*(fPMAX - fPMIN)/(srhi - srlo) + fPMIN
-        fpnd = (ndvi - ndlo)*(fPMAX - fPMIN)/(ndhi - ndlo) + fPMIN
+        fpsr = (sr   - S0)*(fPMAX - fPMIN)/(S1 - S0) + fPMIN
+        fpnd = (ndvi - N0)*(fPMAX - fPMIN)/(N1 - N0) + fPMIN
 
         fpsr = np.maximum(fPMIN, np.minimum(fPMAX, fpsr))
         fpnd = np.maximum(fPMIN, np.minimum(fPMAX, fpnd))
 
         fpar[ime] = 0.5*(fpsr[ime] + fpnd[ime])
 
-        # Add some capability to read/write quantiles
-#       qt[nn,:] = np.nanquantile(ndvi[ime], [0.02, 0.98])
+    fpar[np.isnan(fpar)] = 0.
 
-#   print(qt)
+    return fpar
+
+def _ndvi2fpar_lin(ndvi):
+    '''Convert NDVI to fPAR using simple linear transform'''
+
+    fpar = np.zeros_like(ndvi)
+
+    N0 = 0.10
+    N1 = 0.80
+
+    fpar = (ndvi - N0)*(fPMAX - fPMIN)/(N1 - N0) + fPMIN
+    fpar = np.maximum(fPMIN, np.minimum(fPMAX, fpar))
+
+    fpar[np.isnan(fpar)] = 0.
+
+    return fpar
+
+def _ndvi2fpar_jojo(ndvi):
+    '''Convert NDVI to fPAR using Joiner et al. (2018) formulation'''
+
+    fpar = np.zeros_like(ndvi)
+
+#   N0 = 0.25
+    N0 = 0.15
+    N1 = 0.75
+
+    iramp = np.logical_and(N0 < ndvi, ndvi <= N1)
+    ifree = N1 < ndvi
+
+    fpar[iramp] = (ndvi[iramp] - N0)/(N1 - N0)*N1
+    fpar[ifree] =  ndvi[ifree]
+
     fpar[np.isnan(fpar)] = 0.
 
     return fpar
@@ -145,31 +176,34 @@ class VegInd(xr.Dataset):
         lat, lon = centers(nlat, nlon)
 
         coords = {'lat':(['lat'], lat.astype(np.single),
-                {'long_name':'latitude','units':'degrees north'}),
+                {'long_name':'latitude','units':'degrees_north'}),
             'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees east'})}
+                {'long_name':'longitude','units':'degrees_east'})}
 
         blank = np.nan * np.ones((nlat, nlon))
 
         dandvi = xr.DataArray(data=blank.astype(np.single),
             dims=['lat','lon'], coords=coords,
             attrs={'long_name':'Normalized difference vegetation index (NDVI)',
-                'units':'%'})
+                'units':'1'})
 
         self = xr.Dataset.__init__(self,
             data_vars={'NDVI':dandvi},
+            # Read institution and contact from settings (***FIXME***)
             attrs={'Conventions':'CF-1.9',
-                'title':'MODIS/VIIRS daily vegetation (NDVI/fPAR) data',
-                'institution':'NASA GMAO Constituent Group',
+                'institution':'NASA Goddard Space Flight Center',
                 'contact':'Brad Weir <brad.weir@nasa.gov>',
+                'title':'MODIS/VIIRS daily vegetation (NDVI/fPAR) data',
                 'input_files':''})
 
     def ndvi2fpar(self, lctype):
-        fpar = _ndvi2fpar(self['NDVI'].values, lctype)
+#       fpar = _ndvi2fpar_los(self['NDVI'].values, lctype)
+#       fpar = _ndvi2fpar_lin(self['NDVI'].values)
+        fpar = _ndvi2fpar_jojo(self['NDVI'].values)
 
-        return self.assign(fPAR=(['lat','lon'], fpar, {'units':'%',
+        return self.assign(fPAR=(['lat','lon'], fpar, {
             'long_name':'Fraction (absorbed) Photosynthetically Available ' +
-            'Radiation (fPAR)'}))
+            'Radiation (fPAR)', 'units':'1'}))
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)

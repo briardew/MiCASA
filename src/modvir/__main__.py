@@ -13,15 +13,17 @@ from modvir import build
 # Parse command-line options
 class MVParser(ArgumentParser):
     def error(self, message):
-        sys.stderr.write('\n*** ERROR **** %s\n\n' % message)
+        sys.stderr.write('\n*** ERROR *** %s\n\n' % message)
         self.print_help()
         sys.exit(2)
 
 # Read arguments
 parser = MVParser(description=__doc__,
     usage='modvir name [options]')
-parser.add_argument('name', help='name of product to build (cover, vegind, ' +
-    'burn, all)')
+parser.add_argument('name', help='name of product to build: cover, vegind, ' +
+    'burn, all')
+parser.add_argument('--mode', help='operation mode (get, regrid, fill, ' +
+    'all, default: %(default)s)', default='all')
 parser.add_argument('--data', help='data directory (default: %(default)s)',
     default=defaults['data'])
 parser.add_argument('--beg', help='begin date (default: %(default)s)',
@@ -32,9 +34,10 @@ parser.add_argument('--nlat', help='latitude dimension (default: %(default)s)',
     type=int, default=defaults['nlat'])
 parser.add_argument('--nlon', help='longitude dimension (default: %(default)s)',
     type=int, default=defaults['nlon'])
-parser.add_argument('--mode', help='operation mode (get, regrid, fill, ' +
-    'all, default: %(default)s)', default='all')
+# These are hard coded, but a pain to fix
 parser.add_argument('--repro', help='reprocess/overwrite (default: false)',
+    action='store_true')
+parser.add_argument('--nrt', help='near real time mode (default: false)',
     action='store_true')
 parser.add_argument('--rmcol', help='remove downloaded collection (default: false)',
     action='store_true')
@@ -70,8 +73,14 @@ def main():
         raise ValueError('Unsupported mode: ' + mode)
 
     # Some helpful? output
-    print('*** MODIS/VIIRS processing utility ****')
-    print('Running with arguments', kwargs)
+    print('============================================')
+    print('===    MODIS/VIIRS processing utility    ===')
+    print('============================================')
+    print('')
+    print('kwargs = {')
+    for key in kwargs:
+        print("    '" + key + "': " + str(kwargs[key]) + ",")
+    print('}')
 
     name = kwargs.pop('name')
     if name == 'cover':

@@ -1,10 +1,9 @@
-# * Figure out how to extend land cover and VCF
-# Seems like we need a switch to do NRT or not. We want to know if
-# persistence has been used or not
 # * Can we back off the filling for NDVI? Looks like too much over
 # CONUS, but more stringent options have been untenable in tropics
 # * Can't always do download for NBAR. Would just want to link NRT
 # product
+# * Burned area tries to download entire year, only exits if
+# regridding (***FIXME***)
 
 import sys
 import numpy as np
@@ -15,67 +14,104 @@ from subprocess import check_call
 from datetime import datetime, timedelta
 from calendar import monthrange
 
-from modvir.config import defaults, check_args, check_cols
-from modvir.config import BEGYEARCOV, ENDYEARCOV, BEGYEARVCF, ENDYEARVCF
+from modvir.config import (defaults, check_args, check_cols,
+    YMAXCOV, YMAXVCF)
 from modvir.utils import download
+
 from modvir.cover import Cover
 from modvir.vegind import VegInd
 from modvir.burn import Burn
 
-def cover(data=defaults['data'], date0=defaults['date0'],
-    dateF=defaults['dateF'], nlat=defaults['nlat'], nlon=defaults['nlon'],
-    **kwargs):
-    '''Build (re)gridded MODIS/VIIRS land cover type dataset'''
+def cover(**kwargs):
+    '''Build (re)gridded MODIS/VIIRS land cover dataset'''
+
+    print('')
+    print('===    ____ Land Cover                   ===')
 
     # Check and read arguments
-    kwargs = check_args(date0, dateF, **kwargs)
+    kwargs = check_args(**kwargs)
+
+    data  = kwargs['data']
+    date0 = kwargs['date0']
+    dateF = kwargs['dateF']
+    nlat  = kwargs['nlat']
+    nlon  = kwargs['nlon']
+
+    # Use 2001 land cover for 2000
+    date0 = max(date0, datetime(2001, 1, 1))
+    dateF = max(dateF, datetime(2001, 1, 1))
 
     # Initialize
     cc = Cover(nlat=nlat, nlon=nlon)
     restag = 'x' + str(nlon) + '_y' + str(nlat)
 
-    year0 = max(date0.year, BEGYEARCOV)
-    yearF = min(dateF.year, ENDYEARCOV)
-
-    # Loop over years
-    for year in range(year0, yearF+1):
+    for year in range(date0.year, dateF.year+1):
         jdnow = datetime(year, 1, 1)
 
         # Year-specific strings
-        syear = str(year)
-        dircov = path.join(data, 'cover')
-        fcov = path.join(dircov, 'modvir_cover.' + restag + '.yearly.' +
+        syear  = str(year)
+        dirout = path.join(data, 'cover')
+        fout   = path.join(dirout, 'modvir_cover.' + restag + '.yearly.' +
             syear + '.nc')
 
-        # Download?
-        colcov = check_cols(jdnow, **kwargs)['colcov']
-        dateget = jdnow.strftime('%Y.%m.%d')
-        dirget = path.join(data, colcov, syear, '001')
-        if kwargs['get']: download(colcov, dateget, dirget)
+        print('===    ________ ' + syear + '                     ===')
 
-        if not kwargs['regrid']: continue
+        # Download land cover
+        colcov  = check_cols(jdnow, **kwargs)['colcov']
+        yearcov = min(year, YMAXCOV)
+        datecov = datetime(yearcov, 1, 1).strftime('%Y.%m.%d')
+        ystrcov = datetime(yearcov, 1, 1).strftime('%Y')
+        dircov  = path.join(data, colcov, ystrcov, '001')
+        headcov = path.join(data, colcov, ystrcov, '001',
+            colcov[:-4] + '.A' + ystrcov + '001.')
+
+        if kwargs['get']:
+            print('===    ____________ Downloading          ===')
+            download(colcov, datecov, dircov)
+
+        # Download VCF
+        colvcf  = check_cols(jdnow, **kwargs)['colvcf']
+        yearvcf = min(year, YMAXVCF)
+        datevcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y.%m.%d')
+        ystrvcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y')
+        dirvcf  = path.join(data, colvcf, ystrvcf, '065')
+        headvcf = path.join(data, colvcf, ystrvcf, '065',
+            colvcf[:-4] + '.A' + ystrvcf + '065.')
+
+        if kwargs['get']:
+            download(colvcf, datevcf, dirvcf)
 
         # Read or regrid
-        if path.isfile(fcov) and not kwargs['repro']:
-            cc = Cover(xr.open_dataset(fcov))
+        if not kwargs['regrid']: continue
+
+        print('===    ____________ Regridding           ===')
+        if path.isfile(fout) and not kwargs['repro']:
+            cc = Cover(xr.open_dataset(fout))
         else:
-            pout = check_call(['mkdir', '-p', dircov])
-            cc = cc.regrid(dirget)
-            cc.to_netcdf(fcov)
+            pout = check_call(['mkdir', '-p', dirout])
+            cc = cc.regrid(dircov, headcov, headvcf)
+            cc.to_netcdf(fout)
 
             # Slightly terrifying
             if kwargs['get'] and kwargs['rmcol']:
-                pout = check_call(['rm', '-rf', dirget])
+                pout = check_call(['rm', '-rf', dircov])
 
     return cc
 
-def vegind(data=defaults['data'], date0=defaults['date0'],
-    dateF=defaults['dateF'], nlat=defaults['nlat'], nlon=defaults['nlon'],
-    **kwargs):
-    '''Build (re)gridded MODIS/VIIRS vegetation index dataset'''
+def vegind(**kwargs):
+    '''Build (re)gridded MODIS/VIIRS vegetation indices dataset'''
+
+    print('')
+    print('===    ____ Vegetation Indicies          ===')
 
     # Check and read arguments
-    kwargs = check_args(date0, dateF, **kwargs)
+    kwargs = check_args(**kwargs)
+
+    data  = kwargs['data']
+    date0 = kwargs['date0']
+    dateF = kwargs['dateF']
+    nlat  = kwargs['nlat']
+    nlon  = kwargs['nlon']
 
     # Initialize
     vv = VegInd(nlat=nlat, nlon=nlon)
@@ -85,25 +121,28 @@ def vegind(data=defaults['data'], date0=defaults['date0'],
         vv.attrs['title'] += ': Preliminary, no persistence'
     restag = 'x' + str(nlon) + '_y' + str(nlat)
 
-    # Loop over years
     for year in range(date0.year, dateF.year+1):
         # Compute vegetation mask
-        # -----------------------
+        # ---
         if kwargs['regrid'] or kwargs['fill']:
-            # Build/read yearly land cover type
-            cc = cover(**kwargs)
+            # Build/read land cover
+            kwargs_cov = kwargs
+            kwargs_cov['date0'] = datetime(year, 1, 1)
+            kwargs_cov['dateF'] = datetime(year,12,31)
+            cc = cover(**kwargs_cov)
+            print('')
 
-            percent = cc['percent'].values
+            ftype = cc['ftype'].values
             # Will need to make this a function in the class (remember
             # 0 indexing): Unclassified (17), water bodies (16), snow/ice (14),
             # wetlands (10)
-#           mask = 1. - (percent[17,:,:] + percent[16,:,:] + percent[14,:,:] +
-#               0.5*percent[10,:,:])
+#           mask = 1. - (ftype[17,:,:] + ftype[16,:,:] + ftype[14,:,:] +
+#               0.5*ftype[10,:,:])
             # Not using wetlands even though it makes sense (closer to GIMMS)
-            mask = 1. - (percent[17,:,:] + percent[16,:,:] + percent[14,:,:])
+            mask = 1. - (ftype[17,:,:] + ftype[16,:,:] + ftype[14,:,:])
 
         # Build/read daily vegetation indices
-        # -----------------------------------
+        # ---
         # Year-specific strings
         syear = str(year)
         dirpre  = path.join(data, 'vegpre', syear)
@@ -120,45 +159,49 @@ def vegind(data=defaults['data'], date0=defaults['date0'],
             jdnow = jday0 + timedelta(nd)
             dateget = jdnow.strftime('%Y.%m.%d')
             jdayget = jdnow.strftime('%j')
-            dateveg = jdnow.strftime('%Y%m%d')
+            dateout = jdnow.strftime('%Y%m%d')
+
+            print('===    ________ ' + jdnow.strftime('%Y-%m-%d') + '               ===')
 
             colveg = check_cols(jdnow, **kwargs)['colveg']
             dirget = path.join(data, colveg, syear, jdayget)
-            fveg = headveg + dateveg + '.nc'
-            fpre = headpre + dateveg + '.nc'
+            fveg = headveg + dateout + '.nc'
+            fpre = headpre + dateout + '.nc'
 
             # Download
-            if kwargs['get']: download(colveg, dateget, dirget)
+            if kwargs['get']:
+                print('===    ____________ Downloading          ===')
+                download(colveg, dateget, dirget)
 
             if not kwargs['regrid'] and not kwargs['fill']: continue
 
             vvold = vv.copy(deep=True)
 
+            # Read or regrid preliminary file
             if kwargs['regrid']:
+                print('===    ____________ Regridding           ===')
                 if path.isfile(fpre) and not kwargs['repro']:
                     vv = VegInd(xr.open_dataset(fpre))
                 else:
                     try:
                         vv = vv.regrid(dirget, mask=mask)
                     except EOFError as message:
-                        sys.stderr.write('\n*** WARNING **** %s on %s' %
-                            (message, jdnow.strftime('%Y-%m-%d')))
-                        sys.stderr.write('\nNo output, proceeding ...\n')
+                        sys.stderr.write('No files to process, proceeding ...\n')
                     else:
                         pout = check_call(['mkdir', '-p', dirpre])
                         vv.to_netcdf(fpre)
 
             # Read or regrid filled file
             if kwargs['fill']:
+                print('===    ____________ Filling              ===')
                 if path.isfile(fveg) and not kwargs['repro']:
                     vv = VegInd(xr.open_dataset(fveg))
                 else:
-                    # Fill with persistence
+                    # Fill with persistence and compute fPAR
                     inan = np.logical_and(np.isnan(vv['NDVI'].values),
                         ~np.isnan(vvold['NDVI'].values))
                     vv['NDVI'].values[inan] = vvold['NDVI'].values[inan]
 
-                    # Compute fPAR ala Los et al. (2000)
                     vv = vv.ndvi2fpar(cc['mode'].values)
 
                     pout = check_call(['mkdir', '-p', dirveg])
@@ -171,40 +214,56 @@ def vegind(data=defaults['data'], date0=defaults['date0'],
     if kwargs['regrid'] or kwargs['fill']: cc.close()
     return vv
 
-def burn(data=defaults['data'], date0=defaults['date0'],
-    dateF=defaults['dateF'], nlat=defaults['nlat'], nlon=defaults['nlon'],
-    **kwargs):
+def burn(**kwargs):
     '''Build (re)gridded MODIS/VIIRS burned area dataset'''
 
+    print('')
+    print('===    ____ Burned Area                  ===')
+
     # Check and read arguments
-    kwargs = check_args(date0, dateF, **kwargs)
+    kwargs = check_args(**kwargs)
+
+    data  = kwargs['data']
+    date0 = kwargs['date0']
+    dateF = kwargs['dateF']
+    nlat  = kwargs['nlat']
+    nlon  = kwargs['nlon']
 
     # Initialize
     bb = Burn(nlat=nlat, nlon=nlon)
     restag = 'x' + str(nlon) + '_y' + str(nlat)
 
-    # Loop over years
     for year in range(date0.year, dateF.year+1):
         syear = str(year)
         jdyear = datetime(year, 1, 1)
 
-        # Read and fill collections
-        kwargs = check_cols(jdyear, **kwargs)
-        colcov = kwargs['colcov']
-        colvcf = kwargs['colvcf']
-
-        # Download land cover
-        yearcov = min(max(year, BEGYEARVCF), ENDYEARVCF)
+        # Land cover definitions
+        colcov  = check_cols(jdyear, **kwargs)['colcov']
+        yearcov = min(year, YMAXCOV)
         datecov = datetime(yearcov, 1, 1).strftime('%Y.%m.%d')
-        dircov  = path.join(data, colcov, syear, '001')
-        headcov = path.join(data, colcov, syear, '001',
-            colcov[:-4] + '.A' + syear + '001.')
+        ystrcov = datetime(yearcov, 1, 1).strftime('%Y')
+        dircov  = path.join(data, colcov, ystrcov, '001')
+        headcov = path.join(data, colcov, ystrcov, '001',
+            colcov[:-4] + '.A' + ystrcov + '001.')
+
+        # VCF definitions
+        colvcf = check_cols(jdyear, **kwargs)['colvcf']
+        yearvcf = min(year, YMAXVCF)
+        datevcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y.%m.%d')
+        ystrvcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y')
+        dirvcf  = path.join(data, colvcf, ystrvcf, '065')
+        headvcf = path.join(data, colvcf, ystrvcf, '065',
+            colvcf[:-4] + '.A' + ystrvcf + '065.')
+
         if kwargs['regrid'] and kwargs['get']:
+            print('===    ________ ' + syear + '                     ===')
+            print('===    ____________ Downloading          ===')
             download(colcov, datecov, dircov)
+            download(colvcf, datevcf, dirvcf)
 
         # Build burned area
-        # =================
-        dirout = path.join(data, 'burn', syear)
+        # ---
+        dirout  = path.join(data, 'burn', syear)
         headmon = path.join(dirout, 'modvir_burn.' + restag + '.monthly.')
         headday = path.join(dirout, 'modvir_burn.' + restag + '.daily.')
 
@@ -213,27 +272,22 @@ def burn(data=defaults['data'], date0=defaults['date0'],
             dateget = jdmonth.strftime('%Y.%m.%d')
             jdayget = jdmonth.strftime('%j')
 
-            # Download and/or regrid burned area
-            # ----------------------------------
-            colburn = check_cols(jdmonth, **kwargs)['colburn']
+            print('===    ________ ' + jdmonth.strftime('%Y-%m') + '                  ===')
+
+            # Download burned area
+            colburn  = check_cols(jdmonth, **kwargs)['colburn']
             dirget   = path.join(data, colburn, syear, jdayget)
             headburn = path.join(data, colburn, syear, jdayget,
                 colburn[:-4] + '.A' + syear + jdayget + '.')
-            if kwargs['get']: download(colburn, dateget, dirget)
+
+            if kwargs['get']:
+                print('===    ____________ Downloading          ===')
+                download(colburn, dateget, dirget)
 
             if not kwargs['regrid']: continue
 
-            # Download VCF
-            # ------------
-            yearvcf = min(max(year - (nm < 3)*1, BEGYEARVCF), ENDYEARVCF)
-            datevcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y.%m.%d')
-            ystrvcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y')
-            dirvcf  = path.join(data, colvcf, ystrvcf, '065')
-            headvcf = path.join(data, colvcf, ystrvcf, '065',
-                colvcf[:-4] + '.A' + ystrvcf + '065.')
-            if kwargs['get']: download(colvcf, datevcf, dirvcf)
-
-            # Read or regrid monthlies
+            # Regrid monthlies
+            print('===    ____________ Regridding           ===')
             fmon = headmon + jdmonth.strftime('%Y%m') + '.nc'
             if path.isfile(fmon) and not kwargs['repro']:
                 bb = Burn(xr.open_dataset(fmon))
@@ -257,13 +311,11 @@ def burn(data=defaults['data'], date0=defaults['date0'],
                         # Slightly terrifying
                         pout = check_call(['rm', '-rf', dirget])
                         pout = check_call(['rm', '-rf', dircov])
-                        pout = check_call(['rm', '-rf', dirvcf])
                     return bb
 
             # Slightly terrifying
             if kwargs['get'] and kwargs['rmcol']:
                 pout = check_call(['rm', '-rf', dirget])
-                pout = check_call(['rm', '-rf', dirvcf])
 
         # Slightly terrifying
         if kwargs['get'] and kwargs['rmcol']:

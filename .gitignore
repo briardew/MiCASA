@@ -1,11 +1,10 @@
 *.py[co]
-scratch
 backup
+scratch
 data*
 logs
 build
 dist
 env
-src/miCASA.egg-info
-DUMBTHOUGHTS
-utils
+src/MiCASA.egg-info
+src/CASA/deprecated

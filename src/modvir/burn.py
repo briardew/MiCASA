@@ -13,17 +13,11 @@ import numpy as np
 import xarray as xr
 import rioxarray as rxr
 
-from modvir.config import defaults, LCVAR
+from modvir.config import defaults, LCVAR, NTYPE
 from modvir.geometry import edges, centers, singrid, sinarea
+from modvir.utils import swaphead
 
-def swaphead(ff, headin, headout):
-    parts = ff.replace(headin, headout, 1).split('.')
-    flist = glob('.'.join(parts[:-2]) + '.*.' + parts[-1])
-    flist.sort(key=path.getmtime)
-
-    return flist[0] if len(flist) > 0 else None
-
-def _regrid(dsout, dirin, headburn, headlct, headvcf):
+def _regrid(dsout, dirin, headburn, headcov, headvcf):
     # Set up output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
@@ -43,55 +37,69 @@ def _regrid(dsout, dirin, headburn, headlct, headvcf):
     if len(flist) == 0:
         return dsout
 
+    fused = flist
     for ff in flist:
-        flct = swaphead(ff, headburn, headlct)
+        fcov = swaphead(ff, headburn, headcov)
         fvcf = swaphead(ff, headburn, headvcf)
 
-        # Can't believe we have to do this
-        if flct is None or fvcf is None:
+        # h08v11, h01v07 have burning and no land cover (***FIXME***)
+        if fcov is None:
+            print('Missing land cover data for ' + ff)
             continue
 
-        dsin  = rxr.open_rasterio(ff).squeeze(drop=True)
-        dslct = rxr.open_rasterio(flct).squeeze(drop=True)
+        if fvcf is None:
+            print('Missing VCF data for ' + ff)
+            continue
+
+        fused = fused + [fcov, fvcf]
+
+        dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
+        dscov = rxr.open_rasterio(fcov).squeeze(drop=True)
         dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
 
         # Compute lat/lon mesh for MODIS sin grid
         LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
-        areain = sinarea(dsin['y'].values, dsin['x'].values)
+        areain     = sinarea(dsin['y'].values, dsin['x'].values)
 
-        # Read burn date
         datein = dsin['Burn Date'].values.T
+        typein = dscov[LCVAR].values.T
+        # Unclassified set to NTYPE
+        typein[typein == 255] = NTYPE
 
-        # Read land cover type
-        typein = dslct[LCVAR].values.T
-
-        # Read VCF (percent tree, herbaceous, and barren)
-        pbare = dsvcf['Percent_NonVegetated']
-        pherb = dsvcf['Percent_NonTree_Vegetation']
-        ptree = dsvcf['Percent_Tree_Cover']
+        # Read VCF (percent tree and herbaceous)
+        ptreehi = dsvcf['Percent_Tree_Cover']
+        pherbhi = dsvcf['Percent_NonTree_Vegetation']
 
         # Set all water (200) and fill (253) values to barren
-        ino = np.logical_or.reduce((pbare.values > 100, pherb.values > 100,
-             ptree.values > 100))
-        pbare.values[ino] = 100
-        pherb.values[ino] = 0
-        ptree.values[ino] = 0
+        ino = np.logical_or.reduce((pherbhi.values > 100, ptreehi.values > 100))
+        ptreehi.values[ino] = 0
+        pherbhi.values[ino] = 0
 
         # Coarsen VCF to burned area and land cover type grid
-        pbarein = pbare.coarsen(x=2, y=2).mean().values.T
-        pherbin = pherb.coarsen(x=2, y=2).mean().values.T
-        ptreein = ptree.coarsen(x=2, y=2).mean().values.T
+        ftreein = ptreehi.coarsen(x=2, y=2).mean().values.T/100.
+        fherbin = pherbhi.coarsen(x=2, y=2).mean().values.T/100.
 
-        pdefoin = typein == 2
+        fbothin = ftreein + fherbin
+        # Make barren 50-50 split (hopefully nbd)
+        ftreein[fbothin == 0.] = 0.5
+        fherbin[fbothin == 0.] = 0.5
+        fbothin = ftreein + fherbin
+
+        ftreein = ftreein/fbothin
+        fherbin = fherbin/fbothin
+
+        fdefoin = typein == 2
 
         burnin = areain
-        herbin = areain * pherbin
-        woodin = areain * ptreein * (1. - pdefoin)
-        defoin = areain * ptreein * pdefoin
+        herbin = areain * fherbin
+        woodin = areain * ftreein * (1. - fdefoin)
+        defoin = areain * ftreein * fdefoin
 
         iok = datein > 0
 
         numgran  = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone))[0]
+        dategran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
+            weights=datein[iok])[0]
         burngran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
             weights=burnin[iok])[0]
         herbgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
@@ -100,15 +108,13 @@ def _regrid(dsout, dirin, headburn, headlct, headvcf):
             weights=woodin[iok])[0]
         defogran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
             weights=defoin[iok])[0]
-        dategran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
-            weights=datein[iok])[0]
 
         num = num + numgran
+        date = date + dategran
         burn = burn + burngran
         herb = herb + herbgran
         wood = wood + woodgran
         defo = defo + defogran
-        date = date + dategran
 
     # NB: Burned areas are sums, not averages
     iok = num > 0
@@ -119,14 +125,13 @@ def _regrid(dsout, dirin, headburn, headlct, headvcf):
     dsout['baherb'].values = herb.astype(dsout['baherb'].dtype)
     dsout['bawood'].values = wood.astype(dsout['bawood'].dtype)
     dsout['badefo'].values = defo.astype(dsout['badefo'].dtype)
-    dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in flist])
+    dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
     # Assign day information
     dsout = dsout.assign(date=(['lat','lon'], date.astype(datein.dtype),
         {'units':'day of the year', 'long_name':'Day of burning'}))
 
-    dslct.close()
-    dsvcf.close()
+    dscov.close()
 
     return dsout
 
@@ -143,35 +148,36 @@ class Burn(xr.Dataset):
         lat, lon = centers(nlat, nlon)
 
         coords = {'lat':(['lat'], lat.astype(np.single),
-                {'long_name':'latitude','units':'degrees north'}),
+                {'long_name':'latitude','units':'degrees_north'}),
             'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees east'})}
+                {'long_name':'longitude','units':'degrees_east'})}
 
         blank = np.nan * np.ones((nlat, nlon))
 
         batot = xr.DataArray(data=blank.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Total burned area', 'units':'m^2'})
+            attrs={'long_name':'Total burned area', 'units':'m2'})
 
         baherb = xr.DataArray(data=blank.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Herbaceous burned area', 'units':'m^2'})
+            attrs={'long_name':'Herbaceous burned area', 'units':'m2'})
 
         bawood = xr.DataArray(data=blank.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Woody burned area', 'units':'m^2'})
+            attrs={'long_name':'Woody burned area', 'units':'m2'})
 
         badefo = xr.DataArray(data=blank.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Deforestation burned area', 'units':'m^2'})
+            attrs={'long_name':'Deforestation burned area', 'units':'m2'})
 
         self = xr.Dataset.__init__(self,
             data_vars={'batot':batot, 'baherb':baherb, 'bawood':bawood,
                 'badefo':badefo},
+            # Read institution and contact from settings (***FIXME***)
             attrs={'Conventions':'CF-1.9',
-                'title':'MODIS/VIIRS daily burned area data',
-                'institution':'NASA GMAO Constituent Group',
+                'institution':'NASA Goddard Space Flight Center',
                 'contact':'Brad Weir <brad.weir@nasa.gov>',
+                'title':'MODIS/VIIRS daily burned area data',
                 'input_files':''})
 
     def regrid(self, *args, **kwargs):

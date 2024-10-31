@@ -1,44 +1,55 @@
-* Read percent land to fix soil moisture parameter complaint
-* Go to daily (probably need `OMP_NUM_THREADS` set per below)
-* Find other crop moisture and carbon concentration parameters
+* Soil moisture bug
 
-* New version comes out O(5 years). In the version year and month,
-  for us 202310, we use retrospective as much as possible: everything
-  retrospective up to year - 2 (here 2021). In year - 1, land cover changes to
-  persistence, in month - 3 (here 2023/07) burned area ???, in month (here
-  2023/10) fPAR changes to NRT collection.
+* Write NRT fire code in Python and set it to run
+* File format for MODIS/VIIRS files?
+`MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
+`MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
+`MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
 
-* Remember to set `OMP_NUM_THREADS` if you ever want this to finish
+* Proper cell weighted averages:
+`ds.weighted(weights).mean(('lat', 'lon'))`
 
-* RUN THE DAMN THING!!!
-  - Finish daily vegetation index
-  - Finish daily burned area
-  - Add met regridding to CASA code. Data loader should read met file if it
-    exists, regrids otherwise, and saves if requested
-  - Other fields?
-  - Add option to run daily. Can nmonths vary by year? Leap days?
-  - Will need to remove time-dependence of arrays; save will be done every
-    day; not sure about spin-up, read may have to be done every day
+* Provide global totals in metadata
 
-* Make it nice:
-  - Indicate what land cover was used in vegpre and burn files
-  - Overall land cover improvements, much is hard-coded
-  - Tune parameters so GIMMS NDVI looks like fPAR we have in CASA
-  - Revisit censoring water cells towards 0 instead of NDVIMIN
-  - Get our NDVI to look as much like GIMMS as possible
-  - Polish filler:
-    * Make high-latitude persistence look as much like GIMMS as possible
+Version 2
+---
+* Soil properties from SMAP nature run
+* Fill with climatological daily change, not persistence
 
-Dumb thoughts:
-We really need to separate the trend and "baseline". Why not:
-1. Compute early modern (say 2003-2008) and late modern (say 2017-2019)
-baselines from inversions
+"Backlog"
+---
+* Move LoFI2 into MiCASA
+* Clean up bin directory
+* Go through and check FIXMEs
 
-Kinda you want a balanced period and unbalanced. ENSO years will give you
-neutral sink but you don't want to tune to that.
+* Remove references to previous run in input maker: FUEL NEED
+* Rewrite masker
+* How to provide directory RC files to Python, Bash, Matlab, etc. code
+  - Environment variables? They are environment specific after all
+  - Python packages don't like to provide data
+  - Version control?
+* Pull code out of data-aux and utils directory
+* General fix-ups for GitHub (repo name)
 
-* Tune parameters to LPJ. Then use LPJ outside the MODIS/VIIRS period, i.e.,
-start-2001 and now-forecast. So CASA parameters would represent
-LPJ fPAR, soil, etc. -> flux. Ehhh ... not quite. Our "truths" are MODIS
-fPAR+BA and inversion NEE. Probably you'd want to tune LPJ and CASA
-parameters to the same NEE truth, then use LPJ outside the MODIS period.
+* FIRE!!!
+* SOIL MOISTURE!!!
+* Find other crop moisture and carbon concentration parameters (what does this
+  even mean?): there is a lit review in the Wolf(e) and West paper's supplement
+* Trist West crops?
+* Check out 500m paper for MORT and FP, updated CC parameters
+* Compare to Saatchi AGB; what does ED use/compare to?
+
+Dumb thoughts
+---
+* We need to separate the trend and "baseline". Why not:
+  - Compute early modern (say 2003-2008) and late modern (say 2017-2019)
+    baselines from inversions
+
+  - Kinda you want a balanced period and unbalanced. ENSO years will give you
+    neutral sink but you don't want to tune to that.
+
+  - Tune parameters to LPJ. Then use LPJ outside the MODIS/VIIRS period, i.e.,
+    start-2001 and now-forecast. So CASA parameters would represent LPJ fPAR,
+    soil, etc. -> flux. Ehhh ... not quite. Our "truths" are MODIS fPAR+BA and
+    inversion NEE. Probably you'd want to tune LPJ and CASA parameters to the
+    same NEE truth, then use LPJ outside the MODIS period.
