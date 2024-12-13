@@ -16,7 +16,8 @@ REPROCOG=false
 DIRIN="/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-new/holding"
 
 # 2. Output
-ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/pub"
+#ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/pub"
+ROOTOUT="/css/gmao/geos_carb/pub"
 HEADOUT="MiCASA/v$VERSION/netcdf"
 DIROUT="$ROOTOUT/$HEADOUT"					# Form needed for URLs
 HEADDOC="MiCASA/v$VERSION"					# Form needed for URLs

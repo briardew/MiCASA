@@ -20,15 +20,15 @@
 % 19 Tundra
 % 20 Boreal crop		(0 in Norm)
 
-
 addpath('/discover/nobackup/bweir/matlab/globutils');
 
 YEAR0 = 2003;			% Start year
 YEARF = 2020;			% End year: Comparison
+DIRGFED = '/css/gmao/geos_carb/share/GFED/v5';
 
 % Read grid data
 fmi = '../data/burn/2003/modvir_burn.x3600_y1800.monthly.200301.nc';
-fgf = '../data-aux/GFED5/BA200301.nc';
+fgf = [DIRGFED, '/area/BA200301.nc'];
 
 latmi  = ncread(fmi, 'lat');
 lonmi  = ncread(fmi, 'lon');
@@ -54,7 +54,7 @@ for year = YEAR0:YEARF
 
         fmi = ['../data/burn/', syear, '/modvir_burn.x3600_y1800.monthly.', ...
             syear, smon, '.nc'];
-        fgf = ['../data-aux/GFED5/BA', syear, smon, '.nc'];
+        fgf = [DIRGFED, '/area/BA', syear, smon, '.nc'];
 
         burnmi(:,:,1) = burnmi(:,:,1) + 12*molen/yrlen*1e-6*ncread(fmi, 'bawood');
         burnmi(:,:,2) = burnmi(:,:,2) + 12*molen/yrlen*1e-6*ncread(fmi, 'badefo');

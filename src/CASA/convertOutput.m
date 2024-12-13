@@ -4,8 +4,7 @@
 defineConstants;
 
 % Timestamp settings
-YSTART = 1980;
-TSTAMP = ['days since ', num2str(YSTART), '-01-01'];
+TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 
 % Directories and versioning
 DIRIN   = [DIRCASA, '/', runname, '/native'];
@@ -57,16 +56,6 @@ extras = [ ...
 
 % RUN
 %==============================================================================
-% Make sure the NCO utilities are available
-[status, result] = system('ncks --version');
-if status ~= 0
-    error(sprintf([...
-        '*** Missing NCO environment variables ***\n\n', ...
-        'On discover, run\n', ...
-        '    > module load nco\n', ...
-        'from the terminal before starting Octave/Matlab.']));
-end
-
 if lower(do_reprocess(1)) == 'y'
     disp('Reprocessing ... Press any key to continue');
     pause;
@@ -94,8 +83,7 @@ for year = startYear:endYear
     % Daily
     % ---
     if lower(do_daily(1)) == 'y'
-%       for mon = 1:12
-        for mon = 8:12
+        for mon = 1:12
             smon  = num2str(mon, '%02u');
             molen = datenum(year,mon+1,01) - datenum(year,mon,01);
 
@@ -122,19 +110,21 @@ for year = startYear:endYear
                 end
 
                 % Check inputs exist before creating
+                skip = 0;
                 for nn = 1:numel(fluxes)
                     fin = [dnowin, '/', fluxes(nn).orig, '.mat'];
-                    if ~isfile(fin)
-%                       error(['Missing input file: ', fin]);
+                    if ~isfile(fin) && ~strcmp(fluxes(nn).orig, 'FIRE')
+                        skip = 1;
                     end
                 end
+                if skip, continue; end
 
                 % Make sure output folder exists
                 if ~isfolder(dnowout)
                     [status, result] = system(['mkdir -p ', dnowout]);
                 end
 
-                time = datenum(year, mon, 1) - datenum(YSTART, 1, 1) + nd - 1;
+                time = datenum(year, mon, 1) - datenum(startYearTime, 1, 1) + nd - 1;
 
                 nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
@@ -205,41 +195,6 @@ for year = startYear:endYear
                 end
             end
 
-            % Create monthly averages of daily fluxes
-            % ---
-            dnowout = [DIROUT, '/monthly/', syear];
-            dnowin  = [DIROUT, '/daily/',   syear, '/', smon];
-            fbit = ['MiCASA_v', VERSION, '_flux_', restag, ...
-                '_monthly_', syear, smon, '.', FEXT];
-            fout = [dnowout, '/', fbit];
-            fins = [dnowin,  '/', 'MiCASA_v', VERSION, '_flux_', restag, ...
-                '_daily_', syear, smon, '??.', FEXT];
-
-            % Skip if file exists and not reprocessing
-            if isfile(fout)
-                if lower(do_reprocess(1)) == 'y'
-                    [status, result] = system(['rm ', fout]);
-                else
-                    continue;
-                end
-            end
-
-            % Make sure output folder exists
-            if ~isfolder(dnowout)
-                [status, result] = system(['mkdir -p ', dnowout]);
-            end
-
-            [status, result] = system(['ncra -O -h ', fins, ' ', fout]);
-
-            time = datenum(year, mon, 1) - datenum(YSTART, 1, 1);
-
-            % Fix time and time_bnds
-            ncwriteatt(fout, 'time',      'cell_methods','time: minimum');
-            ncwrite(fout,    'time', ...
-                 datenum(year, mon, 1) - datenum(YSTART, 1, 1));
-            ncwriteatt(fout, 'time_bnds', 'cell_methods','time: minimum');
-            ncwrite(fout,    'time_bnds', [time; time+molen]);
-
             % Read & create extras file
             % ---
             for nd = 1:molen
@@ -262,12 +217,22 @@ for year = startYear:endYear
                     end
                 end
 
+                % Check inputs exist before creating
+                skip = 0;
+                for nn = 1:numel(extras)
+                    fin = [dnowin, '/', extras(nn).orig, '.mat'];
+                    if ~isfile(fin)
+                        skip = 1;
+                    end
+                end
+                if skip, continue; end
+
                 % Make sure output folder exists
                 if ~isfolder(dnowout)
                     [status, result] = system(['mkdir -p ', dnowout]);
                 end
 
-                time = datenum(year, mon, 1) - datenum(YSTART, 1, 1) + nd - 1;
+                time = datenum(year, mon, 1) - datenum(startYearTime, 1, 1) + nd - 1;
 
                 nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);

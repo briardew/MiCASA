@@ -168,7 +168,13 @@ for year = startYear:endYear
     tic;
     doLeafRootShedding
     for step = startStep:NSTEPS
-        updateCASAinput
+        % Allow for soft exiting when we've run out of input
+        try
+            updateCASAinput
+        catch
+            disp('Could not load input ...');
+            return;
+        end
 
         doPET
         doSoilMoisture

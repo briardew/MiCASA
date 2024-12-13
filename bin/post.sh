@@ -3,7 +3,8 @@
 #echo "Only for checking final product. Beware running this for real ..."
 #exit 1
 
-MIDIR="$(pwd)"
+# Still really not great
+MIDIR="$(dirname "$(readlink -f "$0")")"
 COMMAND="post/$1.sh"
 
 if [[ "$#" -lt 1 || ! -f "$COMMAND" ]]; then

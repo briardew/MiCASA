@@ -56,12 +56,12 @@ def check_cols(date, **kwargs):
     colveg  = kwargs.get('colveg',  'MCD43A4.061')
     colburn = kwargs.get('colburn', 'MCD64A1.061')
 
-    # Brutal hack, needs better treatment (VNP not working anyways)
-    if 2026 < date.year:
+    # Brutal hack, needs better treatment (not working anyways)
+    if 2025 < date.year:
         colcov  = 'VNP12Q1.001'
         colvcf  = 'VNP44B.001'
-        colveg  = 'VNP43IA4.001'
-        colburn = 'VNP64A1.001'
+        colveg  = 'VNP43IA4.002'
+        colburn = 'VNP64A1.002'
 
     # Needs better treatment
     if kwargs.get('nrt', defaults['nrt']): colveg = 'MCD43A4N.061'

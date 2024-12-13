@@ -17,16 +17,16 @@
 %===============================================================================
 
 % Only discover-specific stuff
-QFDIR   = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1/sfc';
-QFNRT   = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1-nrt/sfc';
-DIRIN   = '/discover/nobackup/bweir/MiCASA/data/burn';
-DIROUT  = '/discover/nobackup/bweir/MiCASA/data-nrt/burn';
+QFDIR  = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1/sfc';
+QFNRT  = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1-nrt/sfc';
+DIRIN  = '/discover/nobackup/bweir/MiCASA/data/burn';
+DIROUT = '/discover/nobackup/bweir/MiCASA/data-nrt/burn';
 
 VERSION = '1';
 YEAR0 = 2001;					% Fit start
 YEARF = 2021;					% Fit end
-REPRO = 1;					% Reprocess?
-DNOUT = [datenum(2024,01,01):now];
+REPRO = 0;					% Reprocess?
+DNOUT = [datenum(2024,10,01):now];
 
 dxlo  = 4;
 latlo = [ -90+dxlo/2:dxlo: 90-dxlo/2]';

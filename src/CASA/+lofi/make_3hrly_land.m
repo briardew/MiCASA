@@ -20,7 +20,7 @@ DNUM0 = datenum(1980, 01, 01);
 DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
 
 % Get met data
-M2HEAD = ['meteo/merra2_met_v', VERSION, '_x', num2str(NLON), '_y', ...
+M2HEAD = ['merra2_met_v', VERSION, '_x', num2str(NLON), '_y', ...
     num2str(NLAT)];
 
 TOTYRS = endYear - startYear + 1;
@@ -36,6 +36,19 @@ for nyr = 1:TOTYRS
         for nday = 1:molen
             sday  = num2str(nday, '%02u');
             sdate = [syear, '-', smon, '-', sday];
+
+            fbit = [FHEAD, '_3hrly_', syear, smon, sday, '.', FEXT];
+            dout = [MIROOT, '/3hrly/', syear, '/', smon];
+            fout = [dout, '/', fbit];
+
+            % Skip if file exists and not reprocessing
+            if isfile(fout)
+                if REPRO
+                    [status, result] = system(['rm ', fout]);
+                else
+                    continue;
+                end
+            end
 
 %           1. READ DAILY FLUXES
 %===============================================================================
@@ -66,7 +79,7 @@ for nyr = 1:TOTYRS
             end
             fbit = [M2HEAD, '_3hrly_', num2str(midYearClim), smon, sdm2, ...
                 '.', FEXT];
-            fm2  = [FROOT, '/', fbit];
+            fm2  = [DIRMET, '/', fbit];
 
             fprintf(repmat('\b', 1, lenmsg));
             message = ['Reading MERRA-2 data from ', fbit, ' ...'];
@@ -97,6 +110,7 @@ for nyr = 1:TOTYRS
 
 %           4. WRITE
 %===============================================================================
+            % Redefine fbit since it gets overwritten
             fbit = [FHEAD, '_3hrly_', syear, smon, sday, '.', FEXT];
             dout = [MIROOT, '/3hrly/', syear, '/', smon];
             fout = [dout, '/', fbit];
@@ -105,15 +119,6 @@ for nyr = 1:TOTYRS
             message = ['Writing ', fbit, ' ...'];
             fprintf(message);
             lenmsg = length(message);
-
-            % Skip if file exists and not reprocessing
-            if isfile(fout)
-                if REPRO
-                    [status, result] = system(['rm ', fout]);
-                else
-                    continue;
-                end
-            end
 
             % Make sure output folder exists 
             if ~isfolder(dout)

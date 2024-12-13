@@ -16,7 +16,7 @@ if mod(midYearClim, 4) == 0 && (mod(midYearClim, 100) ~= 0 ...
     midYearClim = midYearClim + 1;
 end
 
-REPRO  = 1;						% Reprocess?
+REPRO  = lower(do_reprocess(1)) == 'y';			% Reprocess?
 GCBTAG = '2023-v1.1';					% GCB version to use for sink size
 % Land-ocean exchange via rivers and marginal seas (Pg C/year)
 % 0.78 was used for MiCASA v1
@@ -34,7 +34,7 @@ CONTACT = 'Brad Weir <brad.weir@nasa.gov>';
 % Environment settings
 % ---
 MIROOT = [DIRCASA, '/', runname, '/holding'];
-FROOT  = '/discover/nobackup/bweir/fluxes';		% Last remaining hook to nobackup
+DIRMET = [DIRMODV, '/meteo/climate'];			% Where to put climatological diurnal cycle
 
 % Reanalysis files & grid data
 % ---

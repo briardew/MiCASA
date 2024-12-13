@@ -34,7 +34,7 @@ parser.add_argument('--nlat', help='latitude dimension (default: %(default)s)',
     type=int, default=defaults['nlat'])
 parser.add_argument('--nlon', help='longitude dimension (default: %(default)s)',
     type=int, default=defaults['nlon'])
-# These are hard coded, but a pain to fix
+# These are hard coded, but a pain to do right
 parser.add_argument('--repro', help='reprocess/overwrite (default: false)',
     action='store_true')
 parser.add_argument('--nrt', help='near real time mode (default: false)',

@@ -10,3 +10,5 @@ netcdf4
 dask
 xarray
 rioxarray
+gdal
+hdf4

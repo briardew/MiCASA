@@ -20,7 +20,7 @@ QBASE  = 1.5;					% Base of Q10 function
 %===============================================================================
 lofi.setup;					% Just needed for lat/lon
 
-DNUM0 = datenum(1980, 01, 01);
+DNUM0 = datenum(startYearTime, 01, 01);
 DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
 
 TOTYRS = endYearClim - startYearClim + 1;
@@ -116,12 +116,11 @@ for nyday = 1:365
         q10out(:,:,n3hr) = interp2(LAMX, LOMX, cxq10(:,:,n3hr), LA, LO, 'linear');
     end
 
-    % Output variables (FROOT defined in setup)
+    % Output variables (DIRMET defined in setup)
     dstr = datestr(datenum(midYearClim,01,01)+nyday-1, 'yyyymmdd');
     fbit = ['merra2_met_v', VERSION, '_x', num2str(NLON), '_y', ...
         num2str(NLAT), '_3hrly_', dstr, '.', FEXT];
-    dout = [FROOT, '/meteo'];
-    fout = [dout, '/', fbit];
+    fout = [DIRMET, '/', fbit];
 
     disp(['Writing ', fbit, ' ...']);
     fprintf(repmat('\b', 1, lenmsg));
@@ -133,7 +132,7 @@ for nyday = 1:365
         if ~REPRO, continue; end
         [status, result] = system(['rm ', fout]);
     else
-        [status, result] = system(['mkdir -p ', dout]);
+        [status, result] = system(['mkdir -p ', DIRMET]);
     end
 
     times = datenum(midYearClim, 01, 01) + nyday - 1 - DNUM0 + [0:3:21]'/24;

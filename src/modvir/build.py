@@ -1,9 +1,7 @@
 # * Can we back off the filling for NDVI? Looks like too much over
-# CONUS, but more stringent options have been untenable in tropics
-# * Can't always do download for NBAR. Would just want to link NRT
-# product
+#   CONUS, but more stringent options have been untenable in tropics
 # * Burned area tries to download entire year, only exits if
-# regridding (***FIXME***)
+#   regridding (***FIXME***)
 
 import sys
 import numpy as np
@@ -16,11 +14,10 @@ from calendar import monthrange
 
 from modvir.config import (defaults, check_args, check_cols,
     YMAXCOV, YMAXVCF)
-from modvir.utils import download
-
-from modvir.cover import Cover
+from modvir.utils  import download
+from modvir.cover  import Cover
 from modvir.vegind import VegInd
-from modvir.burn import Burn
+from modvir.burn   import Burn
 
 def cover(**kwargs):
     '''Build (re)gridded MODIS/VIIRS land cover dataset'''
@@ -268,6 +265,10 @@ def burn(**kwargs):
         headday = path.join(dirout, 'modvir_burn.' + restag + '.daily.')
 
         for nm in range(1,13):
+            # Skip if before range
+            if year == date0.year and nm < date0.month:
+                continue
+
             jdmonth = datetime(year, nm, 1)
             dateget = jdmonth.strftime('%Y.%m.%d')
             jdayget = jdmonth.strftime('%j')

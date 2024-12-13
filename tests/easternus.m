@@ -1,6 +1,8 @@
-YEAR0 = 2024;
-YEARF = 2024;
-TESTDIR = '/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-new/holding/daily';
+%YEAR0 = 2024;
+%YEARF = 2024;
+YEAR0 = 2023;
+YEARF = 2023;
+TESTDIR = '/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-final/holding/daily';
 
 addpath('/discover/nobackup/bweir/matlab/globutils');
 
