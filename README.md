@@ -1,6 +1,7 @@
-# MiCASA
+# Más-Informada CASA (MiCASA)
 
-Más-Informada CASA (MiCASA).
+This is obviously still quite rough. Check out the data README
+[here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
 
 ## Recipe (so far, ugh)
 1. Go to `src/CASA` and run the following in Matlab/Octave:
