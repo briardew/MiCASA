@@ -19,7 +19,6 @@ MIDIR="$(dirname "$(readlink -f "$0")")/../.."
 DIRIN="$MIDIR/data-casa/daily-0.1deg/holding"
 
 # 2. Output
-#ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/pub"
 ROOTOUT="/css/gmao/geos_carb/pub"
 HEADOUT="MiCASA/v$VERSION/netcdf"
 DIROUT="$ROOTOUT/$HEADOUT"					# Form needed for URLs
