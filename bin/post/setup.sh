@@ -13,6 +13,7 @@ REPROCOG=false
 # System-specific settings
 # ---
 # 1. Input
+MIDIR="/discover/nobackup/bweir/MiCASA"
 DIRIN="/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-new/holding"
 
 # 2. Output

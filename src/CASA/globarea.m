@@ -11,7 +11,7 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2018/06/07	Adding support for equal-area grids
+% 2018-06-07	Adding support for equal-area grids
 %===============================================================================
 function area = globarea(lat, lon, radius)
 

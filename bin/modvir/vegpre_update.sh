@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# Fancy way to source setup and support symlinks, spaces, etc.
+# At present only defines $MIDIR
+. "$(dirname "$(readlink -f "$0")")"/setup.sh
+
 # discover11-14, 21-24
 # discover22,24,31,32 are slow
-
-MIDIR="/discover/nobackup/bweir/MiCASA"
 
 ssh discover-cssrw "
     cd $MIDIR

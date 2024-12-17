@@ -1,10 +1,15 @@
 % Data directories
 % ---
-DIRM2   = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
-DIRIT   = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
-DIRMODV = '/discover/nobackup/bweir/MiCASA/data';
-DIRCASA = '/discover/nobackup/bweir/MiCASA/data-casa';
-DIRAUX  = '/discover/nobackup/bweir/MiCASA/data-aux';
+% Need to make this more robust; for now, happy not referencing
+% my own nobackup
+DIRHEAD = '../..';
+DIRMODV = [DIRHEAD, '/data'];
+DIRCASA = [DIRHEAD, '/data-casa'];
+DIRAUX  = [DIRHEAD, '/data-aux'];
+
+% NB: This will only work on systems that already have MERRA-2 or GEOS IT
+DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
+DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
 
 % Define constants
 % ---
@@ -55,66 +60,73 @@ NLAT = numel(lat);
 NLON = numel(lon);
 
 % RUN-SPECIFIC
+% (NB: Spin-up is done at monthly)
 % ---
-runname = 'daily-0.1deg-nrt';
-DIRMODV = '/discover/nobackup/bweir/MiCASA/data-nrt';
-do_reprocess = 'n';				
-do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
-do_nrt_meteo = 'y';				%
-do_spinup_stage1 = 'n';				% Do first  stage spin-up (as opposed to loading it)
-do_spinup_stage2 = 'n';				% Do second stage spin-up (as opposed to loading it)
-do_restart_load  = 'y';				% Load workspace to start
-do_restart_all   = 'y';				% Save workspace at every non-spinup step (slow, for NRT)
-startYear = 2024;				% First year with interannual data
-endYear   = 2024;				% Last  year with interannual data
+if ~exist('runname', 'var')
+    runname  = 'test-monthly-0.1deg';
+    do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
 
-%runname = 'daily-0.1deg-new';
-%do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
-%do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
-%do_restart_load  = 'y';			% Load workspace to start
-%do_restart_all   = 'y';			% Save workspace at every non-spinup step (slow, for NRT)
-%do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
-%startYear = 2024;				% First year with interannual data
-%endYear   = 2024;				% Last  year with interannual data
+elseif strcmp('runname','daily-0.1deg-nrt')
+    % Pretty hacky
+    DIRMODV = [DIRMODV, '-nrt'];
+    do_reprocess = 'n';				
+    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
+    do_nrt_meteo = 'y';				%
+    do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
+    do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
+    do_restart_load  = 'y';			% Load workspace to start
+    do_restart_all   = 'y';			% Save workspace at every non-spinup step (slow, for NRT)
+    dvec = datevec(now);
+    startYear = 2024;				% First year with interannual data
+    endYear   = dvec(1);			% Last  year with interannual data
 
-% Runs needed to reproduce above
-% NB: Spin-up is done at monthly
-% ---
-%runname = 'daily-0.1deg';
-%do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
-%do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
-%do_restart_load  = 'y';			% Load workspace to start
-%do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
+elseif strcmp('runname','daily-0.1deg-new')
+    runname = 'daily-0.1deg-new';
+    do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
+    do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
+    do_restart_load  = 'y';			% Load workspace to start
+    do_restart_all   = 'y';			% Save workspace at every non-spinup step (slow, for NRT)
+    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
+    startYear = 2024;				% First year with interannual data
+    endYear   = 2024;				% Last  year with interannual data
 
-%runname = 'monthly-0.1deg';
-%do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
+elseif strcmp('runname','daily-0.1deg')
+    do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
+    do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
+    do_restart_load  = 'y';			% Load workspace to start
+    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
+
+elseif strcmp('runname','monthly-0.1deg')
+    runname = 'monthly-0.1deg';
+    do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
 
 % Runs for testing changes/reproducibility
 % ---
-%runname = 'monthly-0.5deg';
-%dx   = 0.5;
-%lat  = [ -90+dx/2:dx: 90-dx/2]';
-%lon  = [-180+dx/2:dx:180-dx/2]';
-%NLAT = numel(lat);
-%NLON = numel(lon);
-%do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
-%% Need to fix BA regridding
-%startYear = 2003;				% First year with interannual data
-%endYear   = 2013;				% Last  year with interannual data
+elseif strcmp('runname','monthly-0.5deg')
+    dx   = 0.5;
+    lat  = [ -90+dx/2:dx: 90-dx/2]';
+    lon  = [-180+dx/2:dx:180-dx/2]';
+    NLAT = numel(lat);
+    NLON = numel(lon);
+    do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
+    % Need to fix BA regridding
+    startYear = 2003;				% First year with interannual data
+    endYear   = 2013;				% Last  year with interannual data
 
-%runname = 'original-0.5deg';
-%dx   = 0.5;
-%lat  = [ -90+dx/2:dx: 90-dx/2]';
-%lon  = [-180+dx/2:dx:180-dx/2]';
-%NLAT = numel(lat);
-%NLON = numel(lon);
-%do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
-%do_deprecated = 'y';				% Use deprecated functionality (for debugging, etc.)
-%use_crop_moisture  = 'y';			% Remove moisture limitation over indicated areas (recommended 'n', may deprecate 'y')
-%startYear = 2003;				% First year with interannual data
-%endYear   = 2013;				% Last  year with interannual data
-%startYearClim = 2003;				% First year to use in climatology
-%endYearClim   = 2013;				% Last  year to use in climatology
+elseif strcmp('runname','original-0.5deg')
+    dx   = 0.5;
+    lat  = [ -90+dx/2:dx: 90-dx/2]';
+    lon  = [-180+dx/2:dx:180-dx/2]';
+    NLAT = numel(lat);
+    NLON = numel(lon);
+    do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
+    do_deprecated = 'y';			% Use deprecated functionality (for debugging, etc.)
+    use_crop_moisture  = 'y';			% Remove moisture limitation over indicated areas (recommended 'n', may deprecate 'y')
+    startYear = 2003;				% First year with interannual data
+    endYear   = 2013;				% Last  year with interannual data
+    startYearClim = 2003;			% First year to use in climatology
+    endYearClim   = 2013;			% Last  year to use in climatology
+end
 
 DIRNAT = [DIRCASA, '/', runname, '/native'];
 if ~isfolder(DIRNAT)

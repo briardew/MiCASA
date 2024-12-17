@@ -1,6 +1,8 @@
 #!/bin/bash
 
-MIDIR="/discover/nobackup/bweir/MiCASA"
+# Fancy way to source setup and support symlinks, spaces, etc.
+# At present only defines $MIDIR
+. "$(dirname "$(readlink -f "$0")")"/setup.sh
 
 cd "$MIDIR" || exit
 mkdir -p logs/vegind/update

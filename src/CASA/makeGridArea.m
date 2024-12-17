@@ -8,8 +8,8 @@
 % 		Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2003/01/01	Initial version (GvdW)
-% 2018/06/07	Adding support for equal-area grids
+% 2003-01-01	Initial version (GvdW)
+% 2018-06-07	Adding support for equal-area grids
 %===============================================================================
 
 function gridArea = makeGridArea(lats, lons);

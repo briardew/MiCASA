@@ -1,11 +1,13 @@
 #!/bin/bash
 
-#echo "Only for checking final product. Beware running this for real ..."
-#exit 1
+echo "Only for checking final product. Beware running this for real ..."
+exit 1
 
 # Still really not great
-MIDIR="$(dirname "$(readlink -f "$0")")"
-COMMAND="post/$1.sh"
+COMMAND="$1.sh"
+# Fancy way to source setup and support symlinks, spaces, etc.
+POSTDIR=$(dirname "$(readlink -f "$0")")
+. "$POSTDIR"/setup.sh
 
 if [[ "$#" -lt 1 || ! -f "$COMMAND" ]]; then
     echo "ERROR: Please provide a valid command to run in batch. For example," 1>&2
@@ -21,9 +23,9 @@ for year in {2001..2009}; do
     [[ "$1" == "upload" ]] && NODE="discover31"				# Hack for upload
     ssh "$NODE" "
         cd $MIDIR
-        mkdir -p ../logs/post/$year
-        cd ../logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR/..;$MIDIR/$COMMAND $year batch\"
+        mkdir -p logs/post/$year
+        cd logs/post/$year
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
         exit"
 done
 
@@ -33,9 +35,9 @@ for year in {2010..2018}; do
     [[ "$1" == "upload" ]] && NODE="discover32"				# Hack for upload
     ssh "$NODE" "
         cd $MIDIR
-        mkdir -p ../logs/post/$year
-        cd ../logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR/..;$MIDIR/$COMMAND $year batch\"
+        mkdir -p logs/post/$year
+        cd logs/post/$year
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
         exit"
 done
 
@@ -45,8 +47,8 @@ for year in {2019..2023}; do
     [[ "$1" == "upload" ]] && NODE="discover33"				# Hack for upload
     ssh "$NODE" "
         cd $MIDIR
-        mkdir -p ../logs/post/$year
-        cd ../logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR/..;$MIDIR/$COMMAND $year batch\"
+        mkdir -p logs/post/$year
+        cd logs/post/$year
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
         exit"
 done

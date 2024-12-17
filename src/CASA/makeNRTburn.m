@@ -9,18 +9,20 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2018/06/07	Adding support for equal-area grids
+% 2024-12-17	First crack
 %
 % TODO:
 % * Split into 2 phases for fit and use? (takes about 10 minutes)
 % * Make more robust/consistent
 %===============================================================================
 
-% Only discover-specific stuff
-QFDIR  = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1/sfc';
-QFNRT  = '/discover/nobackup/bweir/MiCASA/data-aux/QFED/v2.6r1-nrt/sfc';
-DIRIN  = '/discover/nobackup/bweir/MiCASA/data/burn';
-DIROUT = '/discover/nobackup/bweir/MiCASA/data-nrt/burn';
+% Need to make this more robust; for now, happy not referencing
+% my own nobackup; NB: This will only work on systems that already have QFED
+DIRHEAD = '../..';
+QFDIR   = [DIRHEAD, '/data-aux/QFED/v2.6r1/sfc'];
+QFNRT   = [DIRHEAD, '/data-aux/QFED/v2.6r1-nrt/sfc'];
+DIRIN   = [DIRHEAD, '/data/burn'];
+DIROUT  = [DIRHEAD, '/data-nrt/burn'];
 
 VERSION = '1';
 YEAR0 = 2001;					% Fit start
