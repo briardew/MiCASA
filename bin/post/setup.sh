@@ -13,8 +13,10 @@ REPROCOG=false
 # System-specific settings
 # ---
 # 1. Input
-MIDIR="/discover/nobackup/bweir/MiCASA"
-DIRIN="/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-new/holding"
+# Fancy way to point MIDIR to two directories higher
+# Should support symlinks, spaces, etc.
+MIDIR="$(dirname "$(readlink -f "$0")")/../.."
+DIRIN="$MIDIR/data-casa/daily-0.1deg/holding"
 
 # 2. Output
 #ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/pub"
