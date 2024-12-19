@@ -23,3 +23,5 @@ git update-index --no-skip-worktree bin/post/setup.sh
 ```
 I still need a better solution as that `setup.sh` should be able to support
 multiple different runs.
+
+I think the post-processing utilities need to be able to take an RC file.
