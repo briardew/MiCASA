@@ -79,10 +79,10 @@ if lower(do_spinup_stage1(1)) == 'y'
 
     save([DIRNAT, '/spinUp_stage1.mat'], '-v7');
 else
-    % the stage1 data only needs to be loaded if it is going to be used by stage2
+    % The stage1 data only needs to be loaded if it is going to be used by stage2
     if lower(do_spinup_stage2(1)) == 'y'
-        load([DIRNAT, '/spinUp_stage1.mat']);
-        % Allows sharing of spinup across runs
+        % Allows sharing of spinup/restart across runs
+        load([DIRNAT, '/spinUp_stage1.mat'], '-regexp', '^(?!runname$|frestart$).');
         defineConstants
     end
 end
@@ -114,19 +114,17 @@ if lower(do_spinup_stage2(1)) == 'y'
     end
     save([DIRNAT, '/spinUp_stage2.mat'], '-v7');
 else
-    load([DIRNAT, '/spinUp_stage2.mat']);
-    % Allows sharing of spinup across runs
+    % Allows sharing of spinup/restart across runs
+    load([DIRNAT, '/spinUp_stage2.mat'], '-regexp', '^(?!runname$|frestart$).');
     defineConstants
 end
 
 % Begin from restart if requested
 frestart = [DIRNAT, '/restart.mat'];
 if lower(do_restart_load(1)) == 'y' && exist(frestart,'file')
-    load(frestart);
-
-    % Allows sharing of spinup across runs
-    defineConstants
-    frestart = [DIRNAT, '/restart.mat'];
+    % Allows sharing of spinup/restart across runs
+    load(frestart, '-regexp', '^(?!runname$|frestart$).');
+    defineConstants;
 
     startYear = year;
 end
@@ -192,7 +190,7 @@ for year = startYear:endYear
         end
     end
 
-    % Save annual restarts no matter what
+    % Save annual restart no matter what
     save(frestart, '-v7');
 
     disp(['Year ', int2str(year), ', time used = ', ...

@@ -1,4 +1,4 @@
-* Figure out how to automate land cover persistence for NRT
+* Rename `spinUp_stage1.mat` and `spinUp_stage2.mat` to `restart.mat`
 
 * Soil moisture bug
 
