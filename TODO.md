@@ -1,13 +1,16 @@
+* Figure out how to automate land cover persistence for NRT
+
 * Soil moisture bug
 
 * Write NRT fire code in Python and set it to run
 * File format for MODIS/VIIRS files?
-`MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
-`MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
-`MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
+    `MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
+    `MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
+    `MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
+* Publish MODIS/VIIRS files on DataPortal so users don't need to reproduce them
 
 * Proper cell weighted averages:
-`ds.weighted(weights).mean(('lat', 'lon'))`
+    `ds.weighted(weights).mean(('lat', 'lon'))`
 
 * Provide global totals in metadata
 

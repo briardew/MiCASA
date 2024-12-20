@@ -12,4 +12,4 @@ dask
 xarray
 rioxarray
 gdal
-hdf4
+libgdal-hdf4

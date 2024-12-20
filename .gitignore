@@ -6,7 +6,7 @@ logs
 build
 dist
 env
-src/MiCASA.egg-info
 src/CASA/deprecated
 src/CASA/archive
 src/masinfo/crops
+src/MiCASA.egg-info

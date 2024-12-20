@@ -26,7 +26,6 @@ RIVER  = 0.78;
 % Product settings
 % ---
 FLUXID  = 'MiCASA';
-VERSION = '1';
 TITLE   = [FLUXID, ' v', VERSION];
 INSTITUTION = 'NASA Goddard Space Flight Center';
 CONTACT = 'Brad Weir <brad.weir@nasa.gov>';

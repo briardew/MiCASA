@@ -21,6 +21,7 @@ herbivoreEff      = single(0.50);		% Efficiency of herbivory (part autotrophic r
 
 % Defaults
 % ---
+VERSION  = '1';					% Version number
 do_daily = 'y';					% Run at a daily timestep (alternative is monthly)
 do_reprocess  = 'n';				% Reprocess/overwrite results
 do_deprecated = 'n';				% Use deprecated functionality (for debugging, etc.)
@@ -60,14 +61,14 @@ NLAT = numel(lat);
 NLON = numel(lon);
 
 % RUN-SPECIFIC
-% (NB: Spin-up is done at monthly)
 % ---
+% Pretty hacky for now; considering writing a Python entry point
+% NB: Spin-up is done at monthly => daily runs require spin-up
 if ~exist('runname', 'var')
     runname  = 'test-monthly-0.1deg';
     do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
 
 elseif strcmp('runname','daily-0.1deg-nrt')
-    % Pretty hacky
     DIRMODV = [DIRMODV, '-nrt'];
     do_reprocess = 'n';				
     do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative

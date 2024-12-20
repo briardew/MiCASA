@@ -9,7 +9,6 @@ TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 % Directories and versioning
 DIRIN   = [DIRCASA, '/', runname, '/native'];
 DIROUT  = [DIRCASA, '/', runname, '/holding'];
-VERSION = '1';
 
 % Herbivory settings
 ADDHER  = 1;					% Add herbivory to respiration?
