@@ -70,6 +70,7 @@ if ~exist('runname', 'var')
 
 elseif strcmp('runname','daily-0.1deg-nrt')
     DIRMODV = [DIRMODV, '-nrt'];
+    VERSION = 'NRT';				% Version number
     do_reprocess = 'n';				
     do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
     do_nrt_meteo = 'y';				%
