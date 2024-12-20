@@ -8,7 +8,7 @@
 % CASA = Carnegie-Ames-Stanford-Approach. biogeochemical model developed in
 % the 1990s to simulate terrestrial carbon exchange. Further developed and
 % accounted for fires; Global Fire Emissions Database (GFED)
-clear
+clear -except runname
 defineConstants
 
 fluxes = {'NPP', 'RES', 'HER', 'FUE', 'COMwood', 'COMherb', ...
