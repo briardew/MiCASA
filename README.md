@@ -26,18 +26,18 @@ burned area inputs.
 
 ### Daily runs (with LoFI)
 To run daily CASA, do:
-    ```
-    runname = 'daily-0.1deg';
-    CASA;
-    convertOutput;
-    lofi.make_sink;
-    lofi.make_3hrly_land;
-    ```
+```
+runname = 'daily-0.1deg';
+CASA;
+convertOutput;
+lofi.make_sink;
+lofi.make_3hrly_land;
+```
 If desired, run the post-processing from the root directory:
-    ```
-    cd ../..
-    ./bin/post/process.sh
-    ```
+```
+cd ../..
+./bin/post/process.sh
+```
 
 ## Maintaining local configurations
 MiCASA configuration is still pretty rough, but I've made a lot of progress.
