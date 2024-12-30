@@ -4,19 +4,40 @@ This is obviously still quite rough. Check out the data README
 [here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
 
 ## Recipe
+Most of the work involved in getting a run going revolves around building inputs and
+spinning up, as described in the following two subsections. Once this is done, daily
+runs and side experiments are fairly straightforward, as described in the final
+subsection.
 
-### Building inputs and Spinning up
-Building inputs and spinning up is a complex process.
-1. Use the `modvir` command to generate MODIS/VIIRS land cover, vegetation, and
-burned area inputs.
-2. Change into the `src/CASA` directory and use the `makeCASAinputAnnual.m` and
-`makeCASAinputClim.m` commands to generate input. *More details coming.*
-3. Run monthly CASA to spin up. Run the following in Matlab/Octave:
+### Building MODIS/VIIRS inputs
+1. Install the MiCASA Python package in editable mode following the instructions in
+`requirements.txt`.
+2. Run `modvir --help` to get an example of how to generate the MODIS/VIIRS files.
+3. Look at the utilities in `bin/modvir` to get an idea of how to generate and update
+MODIS/VIIRS inputs.
+
+*NOTE*: MiCASA was originally designed to run on NASA high-performance
+computing assets. Mirroring the entire `MCD12Q1`, `MOD44B`, `MCD43A4`, and
+`MCD64A1` collections takes a lot of time and space, especially the `MCD43A4`
+collection. The next version of MiCASA will support running on individual
+MODIS/VIIRS tiles and using services like OPeNDAP to make this process easier.
+We also plan to archive the inputs we use so that the user need not reproduce
+this step. Nevertheless, these files will be at least a few GB per year.
+
+### Spinning up
+1. Build the climatological and annual inputs needed for spin-up. Change into
+the `src/CASA` directory and run the following in Matlab/Octave:
+    ```
+    runname = 'monthly-0.1deg';
+    makeCASAinputClim;
+    makeCASAinputAnnual;
+    ```
+2. Run monthly CASA to spin up. Run the following in Matlab/Octave:
     ```
     runname = 'monthly-0.1deg';
     CASA;
     ```
-4. Copy the monthly spin-up and restart data to the daily run. For example,
+3. Copy the monthly spin-up and restart data to the daily run. For example,
     ```
     cd ../..
     cp data-casa/monthly-0.1deg/native/spinUp_stage?.mat data-casa/daily-0.1deg/native
@@ -25,7 +46,8 @@ burned area inputs.
     ```
 
 ### Daily runs (with LoFI)
-To run daily CASA, do:
+Once inputs are built and the monthly spin-up is done, you can run daily CASA in
+Matlab/Octave by doing the following:
 ```
 runname = 'daily-0.1deg';
 CASA;
@@ -38,6 +60,11 @@ If desired, run the post-processing from the root directory:
 cd ../..
 ./bin/post/process.sh
 ```
+
+This will end once the MODIS/VIIRS input end. To continue, simply update the
+MODIS/VIIRS inputs using the `modvir` command as above. The remaining inputs do
+not need to be updated: they are either climatological or specifically for the
+monthly spin-up.
 
 ## Maintaining local configurations
 MiCASA configuration is still pretty rough, but I've made a lot of progress.
