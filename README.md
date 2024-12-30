@@ -4,24 +4,28 @@ This is obviously still quite rough. Check out the data README
 [here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
 
 ## Recipe
-This is still very rough. Working on it.
-1. If starting from a fresh run, you'll need to generate the inputs. This is a
-complex process with more details coming.
-2. Run CASA. Go to `src/CASA`. If spinning up for the first time, run the
-following in Matlab/Octave:
+
+### Building inputs and Spinning up
+Building inputs and spinning up is a complex process.
+1. Use the `modvir` command to generate MODIS/VIIRS land cover, vegetation, and
+burned area inputs.
+2. Change into the `src/CASA` directory and use the `makeCASAinputAnnual.m` and
+`makeCASAinputClim.m` commands to generate input. *More details coming.*
+3. Run monthly CASA to spin up. Run the following in Matlab/Octave:
     ```
     runname = 'monthly-0.1deg';
     CASA;
     ```
-3. If running daily, copy the spin-up and restart data from the montly run. For
-example,
+4. Copy the monthly spin-up and restart data to the daily run. For example,
     ```
     cd ../..
     cp data-casa/monthly-0.1deg/native/spinUp_stage?.mat data-casa/daily-0.1deg/native
     cp data-casa/monthly-0.1deg/native/restart.mat data-casa/daily-0.1deg/native
     cd src/CASA
     ```
-Then run daily CASA:
+
+### Daily runs (with LoFI)
+To run daily CASA, do:
     ```
     runname = 'daily-0.1deg';
     CASA;
@@ -29,7 +33,7 @@ Then run daily CASA:
     lofi.make_sink;
     lofi.make_3hrly_land;
     ```
-4. Run the post-processing from the root directory:
+If desired, run the post-processing from the root directory:
     ```
     cd ../..
     ./bin/post/process.sh
