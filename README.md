@@ -22,7 +22,8 @@ computing assets. Mirroring the entire `MCD12Q1`, `MOD44B`, `MCD43A4`, and
 collection. The next version of MiCASA will support running on individual
 MODIS/VIIRS tiles and using services like OPeNDAP to make this process easier.
 We also plan to archive the inputs we use so that the user need not reproduce
-this step. Nevertheless, these files will be at least a few GB per year.
+this step. Nevertheless, these files will be about 4GB per year, so about 100GB
+total for the entire 24+ year record.
 
 ### Spinning up
 1. Build the climatological and annual inputs needed for spin-up. Change into
