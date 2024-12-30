@@ -1,4 +1,4 @@
-* Rename `modvir` inputs and stage on NCCS DataPortal.
+* Rename `modvir` inputs, compress, and stage on NCCS DataPortal.
 
 * Rename `spinUp_stage1.mat` and `spinUp_stage2.mat` to `restart.mat`?
 
