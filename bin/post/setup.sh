@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run-specific settings
-# (needs serious improvement)
+# (needs serious improvement, ***FIXME***)
 # ---
 VERSION="1"
 DIRIN="/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg/holding"
