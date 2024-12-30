@@ -3,30 +3,47 @@
 This is obviously still quite rough. Check out the data README
 [here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
 
-## Recipe (so far, ugh)
-1. Go to `src/CASA` and run the following in Matlab/Octave:
-    1. `CASA`
-    2. `convertOuput`
-    3. `lofi.make_sink`
-    4. `lofi.make_3hrly_land`
-2. Go back to root and run `./bin/post.sh process`
+## Recipe
+This is still very rough. Working on it.
+1. If starting from a fresh run, you'll need to generate the inputs. This is a
+complex process with more details coming.
+2. Run CASA. Go to `src/CASA`. If spinning up for the first time, run the
+following in Matlab/Octave:
+    ```
+    runname = 'monthly-0.1deg';
+    CASA;
+    ```
+3. If running daily, copy the spin-up and restart data from the montly run. For
+example,
+    ```
+    cd ../..
+    cp data-casa/monthly-0.1deg/native/spinUp_stage?.mat data-casa/daily-0.1deg/native
+    cp data-casa/monthly-0.1deg/native/restart.mat data-casa/daily-0.1deg/native
+    cd src/CASA
+    ```
+Then run daily CASA:
+    ```
+    runname = 'daily-0.1deg';
+    CASA;
+    convertOutput;
+    lofi.make_sink;
+    lofi.make_3hrly_land;
+    ```
+4. Run the post-processing from the root directory:
+    ```
+    cd ../..
+    ./bin/post/process.sh
+    ```
 
-## Yucky stuff
-It's still pretty hard to maintain a local configuration that doesn't get
-overwritten by running `git pull`. So far, I can suggest running
-```
-git update-index --skip-worktree bin/post/setup.sh
-```
-This can be turned off by running
-```
-git update-index --no-skip-worktree bin/post/setup.sh
-```
-I still need a better solution as that `setup.sh` should be able to support
-multiple different runs.
+## Maintaining local configurations
+MiCASA configuration is still pretty rough, but I've made a lot of progress.
+The main configuration files are `src/CASA/defineConstants.m` and
+`bin/post/setup.sh`. The former defines the CASA model settings along with
+input and output directories and the latter post processes. It is not necessary
+to run this for personal installs.
 
-I think the post-processing utilities need to be able to take an RC file.
-
-This doesn't appear to work. We can pull into a dirty tree as follows:
+You may make changes to these configuration files that you won't want a `git
+pull` to overwrite. In such a case, try
 ```
 git stash
 git pull
