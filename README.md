@@ -72,7 +72,7 @@ MiCASA configuration is still pretty rough, but I've made a lot of progress.
 The main configuration files are `src/CASA/defineConstants.m` and
 `bin/post/setup.sh`. The former defines the CASA model settings along with
 input and output directories and the latter post processes. It is not necessary
-to run this for personal installs.
+to run the post processing for personal installs.
 
 You may make changes to these configuration files that you won't want a `git
 pull` to overwrite. In such a case, try
