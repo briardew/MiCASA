@@ -1,7 +1,8 @@
 # Más-Informada CASA (MiCASA)
 
-This is obviously still quite rough. Check out the data README
+This is obviously still quite rough. Check out the README for the data release
 [here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
+A peer-reviewed description paper is in progress.
 
 ## Recipe
 Most of the work involved in getting a run going revolves around building inputs and
