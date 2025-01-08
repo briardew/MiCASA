@@ -63,10 +63,15 @@ cd ../..
 ./bin/post/process.sh
 ```
 
-This will end once the MODIS/VIIRS input end. To continue, simply update the
+This will end once the MODIS/VIIRS inputs end. To continue, simply update the
 MODIS/VIIRS inputs using the `modvir` command as above. The remaining inputs do
 not need to be updated: they are either climatological or specifically for the
 monthly spin-up.
+
+### NRT runs (with LoFI)
+More information coming. This uses NRT QFED to extend the biomass burning into
+NRT. Unless that's publicly available somewhere, we're probably documenting
+this for our own purposes.
 
 ## Maintaining local configurations
 MiCASA configuration is still pretty rough, but I've made a lot of progress.

@@ -65,8 +65,7 @@ NLON = numel(lon);
 % Pretty hacky for now; considering writing a Python entry point
 % NB: Spin-up is done at monthly => daily runs require spin-up
 if ~exist('runname', 'var')
-    runname  = 'test-monthly-0.1deg';
-    do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
+    error('Must specify the runname variable ...');
 
 elseif strcmp(runname,'daily-0.1deg-nrt')
     DIRMODV = [DIRMODV, '-nrt'];
