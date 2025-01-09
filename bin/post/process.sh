@@ -39,16 +39,16 @@ for mon in {01..12}; do
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
-    flist=()
+    ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
         ff="${COLTAG}_3hrly_$year$mon$day.$FEXT"
         fin="$DIRIN/3hrly/$year/$mon/$ff"
         fout="$DIROUT/3hrly/$year/$mon/$ff"
 
-        flist+=("$fout")
+        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        ndays=$((ndays + 1))
         [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if 3hrly file exists and not repro
-        [[ ! -f "$fin" ]] && exit				# Exit if input file is missing
         nproc=$((nproc + 1))
 
         mkdir -p "$DIROUT/3hrly/$year/$mon"
@@ -93,7 +93,7 @@ for mon in {01..12}; do
     done
 
     echo ""
-    echo "$year/$mon: Processed $nproc 3-hourly files"
+    echo "$year/$mon: Processed $nproc 3-hourly files out of $ndays"
 
 #   DAILY
 #==============================================================================
@@ -101,16 +101,16 @@ for mon in {01..12}; do
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
-    flist=()
+    ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
         ff="${COLTAG}_daily_$year$mon$day.$FEXT"
         fin="$DIRIN/daily/$year/$mon/$ff"
         fout="$DIROUT/daily/$year/$mon/$ff"
 
-        flist+=("$fout")
+        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        ndays=$((ndays + 1))
         [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if file exists and not repro
-        [[ ! -f "$fin" ]] && exit				# Exit if input file is missing
         nproc=$((nproc + 1))
 
         mkdir -p "$DIROUT/daily/$year/$mon"
@@ -154,7 +154,7 @@ for mon in {01..12}; do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily files"
+    echo "$year/$mon: Processed $nproc daily files out of $ndays"
 
 #   MONTHLY
 #==============================================================================
@@ -164,7 +164,7 @@ for mon in {01..12}; do
     fchk="${COLTAG}_monthly_$year${mon}_sha256.txt"
 
     [[ -f "$fout" && "$REPRO" != true ]] && continue		# Skip if file exists and not reprocessing
-    [[ ${#flist[@]} -ne $monlen ]] && exit			# Exit if not all daily outputs are available
+    [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available
 
     mkdir -p "$DIROUT/monthly/$year"
 
