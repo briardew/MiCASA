@@ -93,7 +93,7 @@ for mon in {01..12}; do
     done
 
     echo ""
-    echo "$year/$mon: Processed $nproc 3-hourly files out of $ndays"
+    echo "$year/$mon: Processed $nproc 3hrly files out of $ndays"
 
 #   DAILY
 #==============================================================================
