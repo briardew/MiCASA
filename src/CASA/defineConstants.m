@@ -67,7 +67,15 @@ NLON = numel(lon);
 if ~exist('runname', 'var')
     error('Must specify the runname variable ...');
 
-elseif strcmp(runname,'daily-0.1deg-nrt')
+% Current development run
+elseif strcmp(runname,'develop/daily-0.1deg')
+    do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
+    do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
+    do_restart_load  = 'y';			% Load workspace to start
+    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
+
+% Production runs
+elseif strcmp(runname,'vNRT/daily-0.1deg')
     DIRMODV = [DIRMODV, '-nrt'];
     VERSION = 'NRT';				% Version number
     do_reprocess = 'n';				
@@ -81,29 +89,18 @@ elseif strcmp(runname,'daily-0.1deg-nrt')
     startYear = 2024;				% First year with interannual data
     endYear   = dvec(1);			% Last  year with interannual data
 
-elseif strcmp(runname,'daily-0.1deg-new')
-    runname = 'daily-0.1deg-new';
-    do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
-    do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
-    do_restart_load  = 'y';			% Load workspace to start
-    do_restart_all   = 'y';			% Save workspace at every non-spinup step (slow, for NRT)
-    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
-    startYear = 2024;				% First year with interannual data
-    endYear   = 2024;				% Last  year with interannual data
-
-elseif strcmp(runname,'daily-0.1deg')
+elseif strcmp(runname,'v1/daily-0.1deg')
     do_spinup_stage1 = 'n';			% Do first  stage spin-up (as opposed to loading it)
     do_spinup_stage2 = 'n';			% Do second stage spin-up (as opposed to loading it)
     do_restart_load  = 'y';			% Load workspace to start
     do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
 
-elseif strcmp(runname,'monthly-0.1deg')
-    runname = 'monthly-0.1deg';
+elseif strcmp(runname,'v1/monthly-0.1deg-spinup')
     do_daily = 'n';				% Run at a daily timestep (alternative is monthly)
+    do_soilm_bug = 'y';				% Reproduce bug that allowed soil moisture to go negative
 
-% Runs for testing changes/reproducibility
-% ---
-elseif strcmp(runname,'monthly-0.5deg')
+% Test runs
+elseif strcmp(runname,'tests/monthly-0.5deg')
     dx   = 0.5;
     lat  = [ -90+dx/2:dx: 90-dx/2]';
     lon  = [-180+dx/2:dx:180-dx/2]';
@@ -114,7 +111,7 @@ elseif strcmp(runname,'monthly-0.5deg')
     startYear = 2003;				% First year with interannual data
     endYear   = 2013;				% Last  year with interannual data
 
-elseif strcmp(runname,'original-0.5deg')
+elseif strcmp(runname,'tests/original-0.5deg')
     dx   = 0.5;
     lat  = [ -90+dx/2:dx: 90-dx/2]';
     lon  = [-180+dx/2:dx:180-dx/2]';

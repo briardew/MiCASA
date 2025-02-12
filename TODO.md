@@ -1,14 +1,15 @@
-* Rename `modvir` inputs, compress, and stage on NCCS DataPortal.
-
-* Rename `spinUp_stage1.mat` and `spinUp_stage2.mat` to `restart.mat`?
-
-* Soil moisture bug
-
-* Write NRT fire code in Python and set it to run
-* File format for MODIS/VIIRS files?
+* Rename `modvir` inputs as below, compress, and stage on NCCS DataPortal
     `MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
+
+* Clean up `bin` directory
+
+* Rename `spinUp_stage1.mat` to `spinUp1.mat` likewise for the second
+* Move spinups and restart up one directory
+* Make a restarts directory and manually store some by date
+
+* Write NRT fire code in Python and set it to run
 * Publish MODIS/VIIRS files on DataPortal so users don't need to reproduce them
 
 * Proper cell weighted averages:
@@ -18,12 +19,11 @@
 
 Version 2
 ---
-* Soil properties from SMAP nature run
+* Soil moisture revamp to use SMAP/SMAP nature run
 * Fill with climatological daily change, not persistence
 
 "Backlog"
 ---
-* Move LoFI2 into MiCASA
 * Clean up bin directory
 * Go through and check FIXMEs
 
@@ -36,8 +36,6 @@ Version 2
 * Pull code out of data-aux and utils directory
 * General fix-ups for GitHub (repo name)
 
-* FIRE!!!
-* SOIL MOISTURE!!!
 * Find other crop moisture and carbon concentration parameters (what does this
   even mean?): there is a lit review in the Wolf(e) and West paper's supplement
 * Trist West crops?
