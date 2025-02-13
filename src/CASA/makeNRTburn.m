@@ -25,16 +25,24 @@ DIRIN   = [DIRHEAD, '/data/burn'];
 DIROUT  = [DIRHEAD, '/data-nrt/burn'];
 
 VERSION = '1';
+REPRO = 1;					% Reprocess?
 YEAR0 = 2001;					% Fit start
 YEARF = 2021;					% Fit end
-REPRO = 0;					% Reprocess?
 DNOUT = [datenum(2024,10,01):now];
 
+% Low resolution for scaling factors
 dxlo  = 4;
 latlo = [ -90+dxlo/2:dxlo: 90-dxlo/2]';
 lonlo = [-180+dxlo/2:dxlo:180-dxlo/2]';
 NLATLO = numel(latlo);
 NLONLO = numel(lonlo);
+
+% Mid resolution to blur QFED
+dxmx = 0.25;
+latmx = [ -90+dxmx/2:dxmx: 90-dxmx/2]';
+lonmx = [-180+dxmx/2:dxmx:180-dxmx/2]';
+NLATMX = numel(latmx);
+NLONMX = numel(lonmx);
 
 % Timestamp settings
 YSTART = 1980;
@@ -53,7 +61,10 @@ SHUFFLE = false;
 
 % RUN
 %==============================================================================
-% Read grid data
+NBINS = 3;					% Wood, defo, and herb
+
+% Get grid data
+% ---
 fba = [DIRIN, '/2003/modvir_burn.x3600_y1800.monthly.200301.nc'];
 fqf = [QFDIR, '/0.1/monthly/Y2003/M01', ...
     '/qfed2.emis_co2.061.x3600_y1800.200301mm.nc4'];
@@ -70,15 +81,20 @@ lonqf  = ncread(fqf, 'lon');
 NLATQF = numel(latqf);
 NLONQF = numel(lonqf);
 
-NBINS = 3;					% Wood, defo, and herb
-
+% Initialize arrays
+% ---
 newba = zeros(NLON, NLAT, NBINS);
-avgba = zeros(NLON, NLAT, NBINS);
-stdba = zeros(NLON, NLAT, NBINS);
+avgba = zeros(NLON, NLAT, NBINS, 12);
+stdba = zeros(NLON, NLAT, NBINS, 12);
+maxba = zeros(NLON, NLAT, NBINS);
 newqf = zeros(NLONQF, NLATQF, NBINS);
-avgqf = zeros(NLONQF, NLATQF, NBINS);
-stdqf = zeros(NLONQF, NLATQF, NBINS);
+avgqf = zeros(NLONQF, NLATQF, NBINS, 12);
+stdqf = zeros(NLONQF, NLATQF, NBINS, 12);
+maxqf = zeros(NLON, NLAT, NBINS);
 
+% Compute climatologies
+% ---
+disp('Computing climatologies ...');
 tic;
 for year = YEAR0:YEARF
     ny = year - YEAR0 + 1;
@@ -99,43 +115,38 @@ for year = YEAR0:YEARF
         newqf(:,:,2) = newqf(:,:,1);
         newqf(:,:,3) = newqf(:,:,1);
 
-        % Need to hold these for online algorithm
-        outba = avgba + (newba - avgba)/ny;
-        outqf = avgqf + (newqf - avgqf)/ny;
+	%% Online variance algorithm
+        prvba = avgba(:,:,:,nm);
+	prvqf = avgqf(:,:,:,nm);
 
-        stdba = stdba + (newba - avgba).*(newba - outba);
-        stdqf = stdqf + (newqf - avgqf).*(newqf - outqf);
+        %%% Hold these for online algorithm
+        outba = prvba + (newba - prvba)/ny;
+        outqf = prvqf + (newqf - prvqf)/ny;
 
-        avgba = outba;
-        avgqf = outqf;
+        avgba(:,:,:,nm) = outba;
+        avgqf(:,:,:,nm) = outqf;
+        stdba(:,:,:,nm) = stdba(:,:,:,nm) + (newba - prvba).*(newba - outba);
+        stdqf(:,:,:,nm) = stdqf(:,:,:,nm) + (newqf - prvqf).*(newqf - outqf);
+	maxqf = max(maxqf, newqf);
     end
 end
 % Sometimes we get very small negatives
 stdba = sqrt(abs(stdba)/(YEARF - YEAR0 + 1));
 stdqf = sqrt(abs(stdqf)/(YEARF - YEAR0 + 1));
+% Threshold to avoid NaNs
+stdqf = max(stdqf, max(stdqf(:))/1e9);
 toc;
 
-% Regrid after climatology (saves time)
+% Compute dailies
+% ---
+disp('Computing dailies ...');
 tic;
-avgqflo = zeros(NLONLO, NLATLO, NBINS);
-avgbalo = zeros(NLONLO, NLATLO, NBINS);
-for nb = 1:NBINS
-    avgqflo(:,:,nb) = avgarea(latqf, lonqf, avgqf(:,:,nb), latlo, lonlo);
-    avgbalo(:,:,nb) = avgarea(lat,   lon,   avgba(:,:,nb), latlo, lonlo);
-end
-toc;
+% Bit of a hack ***FIXME***
+fvcf = [DIRHEAD, '/data/cover/modvir_cover.x3600_y1800.yearly.2024.nc'];
+maxba(:,:,1) = area .* ncread(fvcf, 'ftree');
+maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
+maxba(:,:,3) = area .* ncread(fvcf, 'fherb');
 
-fixqflo = max(avgqflo, 1e-3*max(avgqflo(:)));
-scalelo = avgbalo./fixqflo;
-
-scale = zeros(NLON, NLAT, NBINS);
-for nb = 1:NBINS
-    scale(:,:,nb) = avgarea(latlo, lonlo, scalelo(:,:,nb), lat, lon);
-end
-
-% --- Produce dailies ---
-newba = zeros(NLON, NLAT, NBINS);
-tic;
 for id = 1:numel(DNOUT)
     ny = year - YEAR0 + 1;
     dnum = DNOUT(id);
@@ -151,7 +162,7 @@ for id = 1:numel(DNOUT)
 
     fqf = [QFNRT, '/0.1/Y', syear, '/M', smon, ...
         '/qfed2.emis_co2.061.', syear, smon, sday, '.nc4'];
-    % Brutal hack, fixme
+    % Brutal hack? ***FIXME***
     fout = [DIROUT, '/', syear, '/modvir_burn.x3600_y1800.daily.', ...
         syear, smon, sday, '.nc'];
 
@@ -159,10 +170,23 @@ for id = 1:numel(DNOUT)
     newqf(:,:,2) = newqf(:,:,1);
     newqf(:,:,3) = newqf(:,:,1);
 
-%   newqx = avgarea(latqf, lonqf, newqf, lat, lon);
-    % Hack to save time
-    newqx = newqf;
-    newba = scale .* newqf;
+%    %% A. Climatology (for bug/unit tests)
+%    newba = avgba(:,:,:,nm);
+
+    %% B. Two-moment expansion
+    ZMIN = -300; ZMAX = 300;
+    zzzba = (newqf - avgqf(:,:,:,nm))./stdqf(:,:,:,nm);
+    zzzba = min(max(zzzba, ZMIN), ZMAX);
+    newba = avgba(:,:,:,nm) + zzzba.*stdba(:,:,:,nm);
+    % Zero-out small values to prevent widespread, persistent sources
+    newba(zzzba == ZMIN) = 0;
+
+    % Convert daily to monthly (d'oh)
+    molen = datenum(year,nm+1,01) - datenum(year,nm,01);
+    newba = newba/molen;
+
+    % Threshold (could be before or after month conversion)
+    newba = min(max(newba, 0), maxba);
 
     if isfile(fout)
         if REPRO

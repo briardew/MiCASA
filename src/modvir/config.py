@@ -12,10 +12,10 @@ defaults = {
     # 0.1 deg regular grid
     'nlat': 1800,
     'nlon': 3600,
-    # run switches (the treatment of these could be improved)
+    # run switches (values currently ignored in __main__)
     'repro': False,
     'nrt': False,
-    'rmcol': False,
+    'tidy': False,
     # translated from inputs; fixme?
     'regrid': True,
     'get': True,

@@ -39,7 +39,7 @@ parser.add_argument('--repro', help='reprocess/overwrite (default: false)',
     action='store_true')
 parser.add_argument('--nrt', help='near real time mode (default: false)',
     action='store_true')
-parser.add_argument('--rmcol', help='remove downloaded collection (default: false)',
+parser.add_argument('--tidy', help='remove downloads (default: false)',
     action='store_true')
 parser.add_argument('--rc', help='run control settings yaml file')
 

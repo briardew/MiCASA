@@ -12,4 +12,3 @@ dask
 xarray
 rioxarray
 gdal
-libgdal-hdf4

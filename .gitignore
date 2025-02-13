@@ -10,3 +10,4 @@ archive
 /dist
 /env
 /src/masinfo/crops
+/src/CASA/convertOutput.py

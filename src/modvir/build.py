@@ -90,7 +90,7 @@ def cover(**kwargs):
             cc.to_netcdf(fout)
 
             # Slightly terrifying
-            if kwargs['get'] and kwargs['rmcol']:
+            if kwargs['get'] and kwargs['tidy']:
                 pout = check_call(['rm', '-rf', dircov])
 
     return cc
@@ -205,7 +205,7 @@ def vegind(**kwargs):
                     vv.to_netcdf(fveg)
 
             # Slightly terrifying
-            if kwargs['get'] and kwargs['rmcol']:
+            if kwargs['get'] and kwargs['tidy']:
                 pout = check_call(['rm', '-rf', dirget])
 
     if kwargs['regrid'] or kwargs['fill']: cc.close()
@@ -308,18 +308,18 @@ def burn(**kwargs):
 
                 # Finished?
                 if jdnow == dateF:
-                    if kwargs['get'] and kwargs['rmcol']:
+                    if kwargs['get'] and kwargs['tidy']:
                         # Slightly terrifying
                         pout = check_call(['rm', '-rf', dirget])
                         pout = check_call(['rm', '-rf', dircov])
                     return bb
 
             # Slightly terrifying
-            if kwargs['get'] and kwargs['rmcol']:
+            if kwargs['get'] and kwargs['tidy']:
                 pout = check_call(['rm', '-rf', dirget])
 
         # Slightly terrifying
-        if kwargs['get'] and kwargs['rmcol']:
+        if kwargs['get'] and kwargs['tidy']:
             pout = check_call(['rm', '-rf', dircov])
 
     return bb
