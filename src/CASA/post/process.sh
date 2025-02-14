@@ -17,6 +17,7 @@ echo "Input  directory: $DIRIN"
 echo "Output directory: $DIROUT"
 echo "Collection: $COLTAG"
 
+# Get and check input year
 year="$1"
 if [[ "$#" -lt 1 || "$year" -lt 0 || 9999 -lt "$year" ]]; then
     echo "ERROR: Please provide a valid 4-digit year as an argument. For example," 1>&2

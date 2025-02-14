@@ -25,10 +25,10 @@ DIRIN   = [DIRHEAD, '/data/burn'];
 DIROUT  = [DIRHEAD, '/data-nrt/burn'];
 
 VERSION = '1';
-REPRO = 1;					% Reprocess?
+REPRO = 0;					% Reprocess?
 YEAR0 = 2001;					% Fit start
 YEARF = 2021;					% Fit end
-DNOUT = [datenum(2024,10,01):now];
+DNOUT = [now-1:now-1];
 
 % Low resolution for scaling factors
 dxlo  = 4;
@@ -57,6 +57,17 @@ FORMAT  = 'netcdf4';
 %SHUFFLE = true;
 DEFLATE = 0;
 SHUFFLE = false;
+
+% Make sure the NCO utilities are available
+% Needed for monthly means, would love a better way
+[status, result] = system('ncra --version');
+if status ~= 0
+    error(sprintf([...
+        '*** Missing NCO utilities ***\n\n', ...
+        'On NCCS Discover, run\n', ...
+        '    > module load nco\n', ...
+        'from the terminal before starting Octave/Matlab.']));
+end
 
 
 % RUN
@@ -137,7 +148,7 @@ stdqf = sqrt(abs(stdqf)/(YEARF - YEAR0 + 1));
 stdqf = max(stdqf, max(stdqf(:))/1e9);
 toc;
 
-% Compute dailies
+% Daily
 % ---
 disp('Computing dailies ...');
 tic;
@@ -148,7 +159,6 @@ maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
 maxba(:,:,3) = area .* ncread(fvcf, 'fherb');
 
 for id = 1:numel(DNOUT)
-    ny = year - YEAR0 + 1;
     dnum = DNOUT(id);
     dvec = datevec(dnum);
 
@@ -181,13 +191,14 @@ for id = 1:numel(DNOUT)
     % Zero-out small values to prevent widespread, persistent sources
     newba(zzzba == ZMIN) = 0;
 
-    % Convert daily to monthly (d'oh)
+    % Convert monthly to daily (d'oh)
     molen = datenum(year,nm+1,01) - datenum(year,nm,01);
     newba = newba/molen;
 
     % Threshold (could be before or after month conversion)
     newba = min(max(newba, 0), maxba);
 
+    % Skip if file exists and not reprocessing
     if isfile(fout)
         if REPRO
             [status, result] = system(['rm ', fout]);
@@ -196,6 +207,7 @@ for id = 1:numel(DNOUT)
         end
     end
 
+    % Make sure output folder exists
     dnowout = [DIROUT, '/', syear];
     if ~isfolder(dnowout)
         [status, result] = system(['mkdir -p ', dnowout]);
@@ -257,5 +269,61 @@ for id = 1:numel(DNOUT)
     ncwrite(fout,    'baherb', single(newba(:,:,3)));
     ncwriteatt(fout, 'baherb', 'units','m2');
     ncwriteatt(fout, 'baherb', 'long_name','Herbaceous burned area');
+end
+toc;
+
+% Monthly
+% ---
+disp('Computing monthlies ...');
+tic;
+
+dvec  = datevec(DNOUT(1));
+YRAV0 = dvec(1);
+dvec  = datevec(DNOUT(end));
+YRAVF = dvec(1);
+
+for year = YRAV0:YRAVF
+    syear = num2str(year);
+    dnowout = [DIROUT, '/', syear];
+    dnowin  = [DIROUT, '/', syear];
+
+    for nm = 1:12
+        monlen = datenum(year, nm+1, 01) - datenum(year, nm, 01);
+        smon = num2str(nm, '%02u');
+
+        fout = [DIROUT, '/', syear, '/modvir_burn.x3600_y1800.monthly.', ...
+            syear, smon, '.nc'];
+        fins = [DIROUT, '/', syear, '/modvir_burn.x3600_y1800.daily.', ...
+
+        % Skip if file exists and not reprocessing
+        if isfile(fout)
+             if REPRO
+                [status, result] = system(['rm ', fout]);
+            else
+                continue;
+            end
+        end
+
+        % Skip if we don't have a whole month (brutal hack)
+        [status, result] = system(['ls -1 ', fins, ' | wc -l']);
+        if status ~= 0 || ~strcmp(result(1:2), num2str(monlen))
+            continue;
+        end
+
+        % Make sure output folder exists
+        if ~isfolder(dnowout)
+            [status, result] = system(['mkdir -p ', dnowout]);
+        end
+
+        [status, result] = system(['ncra -O -h ', fins, ' ', fout]);
+
+        time = datenum(year, nm, 1) - datenum(startYearTime, 1, 1);
+
+        % Fix time and time_bnds
+        ncwriteatt(fout, 'time', 'cell_methods','time: minimum');
+        ncwrite(fout,    'time', time);
+        ncwriteatt(fout, 'time_bnds', 'cell_methods','time: minimum');
+        ncwrite(fout,    'time_bnds', [time; time+monlen]);
+    end
 end
 toc;

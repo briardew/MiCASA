@@ -1,38 +1,32 @@
+This initial software release will focus on two use cases: 1. Production of
+public MiCASA data, and 2. Derivative experiments by users with different
+constants, assumptions, etc. The latter will be well enabled by housing MiCASA
+driver data on a public share point for both NCSS Discover users and on the
+NCCS DataPortal for outside users. The actual MiCASA outputs are also available
+through GES DISC while the driver data is not.
+
+* Have `restart.mat` saved at the very end? No need for `do_restart_all`?
+
+* Make `makeNRTburn` create monthlies
+
 * Rename `modvir` inputs as below, compress, and stage on NCCS DataPortal
     `MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
 
 * Clean up `bin` directory
+* Improve post-processing
 
 * Rename `spinUp_stage1.mat` to `spinUp1.mat` likewise for the second
 * Move spinups and restart up one directory
 * Make a restarts directory and manually store some by date
 
-* Write NRT fire code in Python and set it to run
-* Publish MODIS/VIIRS files on DataPortal so users don't need to reproduce them
-
-* Proper cell weighted averages:
-    `ds.weighted(weights).mean(('lat', 'lon'))`
-
-* Provide global totals in metadata
-
-Version 2
----
-* Soil moisture revamp to use SMAP/SMAP nature run
-* Fill with climatological daily change, not persistence
-
 "Backlog"
 ---
-* Clean up bin directory
 * Go through and check FIXMEs
 
 * Remove references to previous run in input maker: FUEL NEED
 * Rewrite masker
-* How to provide directory RC files to Python, Bash, Matlab, etc. code
-  - Environment variables? They are environment specific after all
-  - Python packages don't like to provide data
-  - Version control?
 * Pull code out of data-aux and utils directory
 * General fix-ups for GitHub (repo name)
 
@@ -41,6 +35,14 @@ Version 2
 * Trist West crops?
 * Check out 500m paper for MORT and FP, updated CC parameters
 * Compare to Saatchi AGB; what does ED use/compare to?
+
+Version 2
+---
+* Provide global totals in metadata
+* Proper cell weighted averages:
+    `ds.weighted(weights).mean(('lat', 'lon'))`
+* Soil moisture revamp to use SMAP/SMAP nature run
+* Fill with climatological daily change, not persistence
 
 Dumb thoughts
 ---
