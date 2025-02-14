@@ -1,15 +1,19 @@
 %MAKENRTBURN   Make near real time (NRT) burned area
 %
-%    MAKENRTBURN computes averages and std devs of burned area from an
-%    input dataset and averages and std devs of biomass burning from
-%    QFED. It computes NRT burned area by adding the the input average
-%    a scaled version of the QFED anomaly. The random errors of this
-%    approximation
+%    MAKENRTBURN computes averages and std devs of burned area from an input
+%    dataset and averages and std devs of biomass burning from QFED. It
+%    computes NRT burned area by adding the the input average a scaled version
+%    of the QFED anomaly. The random errors of this approximation
 %
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
 % 2024-12-17	First crack
+%
+% Notes:
+% * This doesn't use defineConstants. One reason is that its builds input data,
+% so the `runname` variable isn't entirely appropriate. Also not sure if this
+% belongs in the CASA or modvir ecosystem.
 %
 % TODO:
 % * Split into 2 phases for fit and use? (takes about 10 minutes)
@@ -25,9 +29,9 @@ DIRIN   = [DIRHEAD, '/data/burn'];
 DIROUT  = [DIRHEAD, '/data-nrt/burn'];
 
 VERSION = '1';
-REPRO = 0;					% Reprocess?
-YEAR0 = 2001;					% Fit start
-YEARF = 2021;					% Fit end
+REPRO = 0;								% Reprocess?
+YEAR0 = 2001;								% Fit start
+YEARF = 2021;								% Fit end
 DNOUT = [now-1:now-1];
 
 % Low resolution for scaling factors
