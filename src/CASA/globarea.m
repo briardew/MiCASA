@@ -15,6 +15,12 @@
 %===============================================================================
 function area = globarea(lat, lon, radius)
 
+% Note: this is supported, but as wasn't used in v1
+if ~exist('radius', 'var')
+    % Default value from GEOS in meters; NB: MODIS uses 6371007.181
+    radius = 6371000.0;
+end
+
 % Old approach for constant dlat
 dlat  = lat(2) - lat(1);
 xlat0 = max(lat - dlat/2, -90);
@@ -29,11 +35,6 @@ dlon  = lon(2) - lon(1);
 
 [vlat0, vlon0] = meshgrid(xlat0, lon-dlon/2);
 [vlat1, vlon1] = meshgrid(xlat1, lon+dlon/2);
-
-if ~exist('radius', 'var')
-    % Default value from GEOS in meters; NB: MODIS uses 6371007.181
-    radius = 6371000.0;
-end
 
 area = 2*pi*radius^2  * abs(sind(vlat0) - sind(vlat1)) ...
                      .* abs(vlon0 - vlon1)/360;

@@ -13,7 +13,7 @@ if lower(do_deprecated(1)) == 'y'
     datasets = {datasets{:}, 'SOILTEXT', 'land_percent'};
 end
 for ii = 1:length(datasets)
-    load([DIRCASA, '/', runname, '/maps/', datasets{ii}, '.mat']);
+    load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
 end
 
 % In older versions, these were zero
@@ -24,7 +24,7 @@ if lower(do_deprecated(1)) == 'y'
 else
     datasets = {'sand', 'silt', 'clay'};
     for ii = 1:length(datasets)
-        load([DIRCASA, '/', runname, '/maps/', datasets{ii}, '.mat']);
+        load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
     end
 end
 
@@ -35,11 +35,10 @@ FRC = zeros(NLAT, NLON, 'single');
 % Data for spin-up
 datasets = {'BAherb', 'BAwood', 'BAdefo', 'FP', 'PF', 'MORT', 'FPAR', ...
     'PPT', 'AIRT', 'SOLRAD'};
-data_dir = 'annual';
 for ii = 1:length(datasets)
     average = zeros(NLAT, NLON, 12);
     for year = startYearClim:endYearClim
-        load([DIRCASA, '/', runname, '/', data_dir, '/', int2str(year), '/', ...
+        load([DIRCASA, '/', runname, '/maps/annual/', int2str(year), '/', ...
             datasets{ii}, '.mat']);
         eval(['average = average + ' datasets{ii} ';']);
     end
@@ -119,18 +118,18 @@ FHC = FHC - error_fraction;
 
 %ai
 %load the spatially dependent EMAX which replaces the constant version
-load([DIRCASA, '/', runname, '/maps/EMAX.mat']);
+load([DIRCASA, '/', runname, '/maps/climate/EMAX.mat']);
 EMAX = single(maskfile(EMAX,mask));
 
 %load sink data
 if lower(use_sink(1)) == 'y'
-    load([DIRCASA, '/', runname, '/maps/SINK.mat']);
+    load([DIRCASA, '/', runname, '/maps/climate/SINK.mat']);
     SINK = single(maskfile(SINK,mask));
 end
 
 %load crop moisture data
 if lower(use_crop_moisture(1)) == 'y' || lower(use_crop_ppt_ratio(1)) == 'y'
-    load([DIRCASA, '/', runname, '/maps/crop_states.mat']);
+    load([DIRCASA, '/', runname, '/maps/climate/crop_states.mat']);
     crop_states = single(maskfile(crop_states,mask));
     %get list of indices for crop states
     %crop states have a flag value > 10

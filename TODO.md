@@ -7,18 +7,17 @@ through GES DISC while the driver data is not.
 
 * Have `restart.mat` saved at the very end? No need for `do_restart_all`?
 
-* Make `makeNRTburn` create monthlies
-
-* Rename `modvir` inputs as below, compress, and stage on NCCS DataPortal
+* Rename `modvir` inputs as below,
     `MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
     `MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
+* Compress, and stage on NCCS DataPortal (in a dir named `drivers`?). Don't
+  concatenate into a single file (drastic time differences/applications).
 
 * Clean up `bin` directory
+* Clean up `masinfo` directory
 * Improve post-processing
 
-* Rename `spinUp_stage1.mat` to `spinUp1.mat` likewise for the second
-* Move spinups and restart up one directory
 * Make a restarts directory and manually store some by date
 
 "Backlog"
@@ -41,8 +40,9 @@ Version 2
 * Provide global totals in metadata
 * Proper cell weighted averages:
     `ds.weighted(weights).mean(('lat', 'lon'))`
-* Soil moisture revamp to use SMAP/SMAP nature run
-* Fill with climatological daily change, not persistence
+* Move to IT met for retrospective
+* Soil moisture revamp to use SMAP/nature run
+* Fill inputs with climatological daily change, not persistence
 
 Dumb thoughts
 ---

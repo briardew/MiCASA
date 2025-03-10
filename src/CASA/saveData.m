@@ -1,6 +1,11 @@
 % Write summary files for analysis
 if year < startYear, return; end
 
+DIRNAT = [DIRRUN, '/native'];				% Native CASA output dir
+if ~isfolder(DIRNAT)
+    [status, result] = system(['mkdir -p ', DIRNAT]);
+end
+
 syear = int2str(year);
 datasets = {fluxes{:}, 'COMdefo', 'COMpeat', 'NPPmoist', 'NPPtemp', ...
     'bgmoist', 'soilm', 'EET'};
@@ -13,13 +18,12 @@ for ii = 1:length(datasets)
         if step == 1, eval([dd, ' = [];']); end
         eval([dd, ' = cat(3, ', dd, ', ', datasets{ii}, ');']);
 
+        dout = [DIRNAT, '/monthly'];
+        if ~isfolder(dout)
+            [status, result] = system(['mkdir -p ', dout]);
+        end
+
         if step == 12
-            dout = [DIRCASA, '/', runname, '/native'];
-
-            if ~isfolder(dout)
-                [status, result] = system(['mkdir -p ', dout]);
-            end
-
             fout = [dout, '/', dd, '.mat'];
             if ~isfile(fout) || lower(do_reprocess(1)) == 'y'
                 save(fout, dd, '-v7');
@@ -29,8 +33,7 @@ for ii = 1:length(datasets)
     else
         dd =  datasets{ii};
 
-        sday = datestr(dnum, 'yyyy/mm/dd');
-        dout = [DIRCASA, '/', runname, '/native/', sday];
+        dout = [DIRNAT, '/', datestr(dnum, 'yyyy/mm/dd')];
 
         if ~isfolder(dout)
             [status, result] = system(['mkdir -p ', dout]);

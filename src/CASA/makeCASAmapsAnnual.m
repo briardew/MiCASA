@@ -1,5 +1,3 @@
-REPRO = 1;				% 0 => overwrite existing files, 1 => don't
-
 defineConstants;
 
 % Compute monthly values of daily input data
@@ -15,7 +13,7 @@ for year = double(startYear):double(endYear)
         tic;
         ntot = 0;
         for dnum = datenum(year,month,01):datenum(year,month+1,01)-1
-            loadDailyInput
+            loadCASAdaily
 
             % Increment monthly total
             ntot = ntot + 1;
@@ -47,7 +45,7 @@ for year = double(startYear):double(endYear)
         dd = datasets{ii};
 
         % Check if file exists; skip if not reprocessing
-        dout = [DIRCASA, '/', runname, '/annual/', int2str(year)];
+        dout = [DIRCASA, '/', runname, '/maps/annual/', int2str(year)];
         fout = [dout, '/', dd, '.mat'];
         if isfile(fout) && ~REPRO, continue; end
 

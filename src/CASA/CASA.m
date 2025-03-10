@@ -11,6 +11,11 @@
 clearvars -except runname
 defineConstants
 
+DIRRUN = [DIRCASA, '/', runname];					% Root run dir
+if ~isfolder(DIRRUN)
+    [status, result] = system(['mkdir -p ', DIRRUN]);
+end
+
 fluxes = {'NPP', 'RES', 'HER', 'FUE', 'COMwood', 'COMherb', ...
     }; 
 %    'COMdefo', 'COMpeat'};
@@ -77,12 +82,12 @@ if lower(do_spinup_stage1(1)) == 'y'
             int2str(toc), ' seconds']);
     end
 
-    save([DIRNAT, '/spinUp_stage1.mat'], '-v7');
+    save([DIRRUN, '/spinup1.mat'], '-v7');
 else
     % The stage1 data only needs to be loaded if it is going to be used by stage2
     if lower(do_spinup_stage2(1)) == 'y'
         % Allows sharing of spinup/restart across runs
-        load([DIRNAT, '/spinUp_stage1.mat'], '-regexp', '^(?!runname$|frestart$).');
+        load([DIRRUN, '/spinup1.mat'], '-regexp', '^(?!runname$|frestart$).');
         defineConstants
     end
 end
@@ -112,15 +117,15 @@ if lower(do_spinup_stage2(1)) == 'y'
         disp(['Year ', int2str(year), ', time used = ', ...
             int2str(toc), ' seconds']);
     end
-    save([DIRNAT, '/spinUp_stage2.mat'], '-v7');
+    save([DIRRUN, '/spinup2.mat'], '-v7');
 else
     % Allows sharing of spinup/restart across runs
-    load([DIRNAT, '/spinUp_stage2.mat'], '-regexp', '^(?!runname$|frestart$).');
+    load([DIRRUN, '/spinup2.mat'], '-regexp', '^(?!runname$|frestart$).');
     defineConstants
 end
 
 % Begin from restart if requested
-frestart = [DIRNAT, '/restart.mat'];
+frestart = [DIRRUN, '/restart.mat'];
 if lower(do_restart_load(1)) == 'y' && exist(frestart,'file')
     % Allows sharing of spinup/restart across runs
     load(frestart, '-regexp', '^(?!runname$|frestart$).');

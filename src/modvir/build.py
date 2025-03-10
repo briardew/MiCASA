@@ -19,11 +19,14 @@ from modvir.cover  import Cover
 from modvir.vegind import VegInd
 from modvir.burn   import Burn
 
+MITAG = 'MiCASA_v1'
+FEXT = 'nc4'
+
 def cover(**kwargs):
     '''Build (re)gridded MODIS/VIIRS land cover dataset'''
 
     print('')
-    print('===    ____ Land Cover                   ===')
+    print('===    ____ Land Cover')
 
     # Check and read arguments
     kwargs = check_args(**kwargs)
@@ -48,10 +51,10 @@ def cover(**kwargs):
         # Year-specific strings
         syear  = str(year)
         dirout = path.join(data, 'cover')
-        fout   = path.join(dirout, 'modvir_cover.' + restag + '.yearly.' +
-            syear + '.nc')
+        fout   = path.join(dirout, MITAG + '_cover_' + restag + '_yearly_' +
+            syear + '.' + FEXT)
 
-        print('===    ________ ' + syear + '                     ===')
+        print('===    ________ ' + syear)
 
         # Download land cover
         colcov  = check_cols(jdnow, **kwargs)['colcov']
@@ -63,7 +66,7 @@ def cover(**kwargs):
             colcov[:-4] + '.A' + ystrcov + '001.')
 
         if kwargs['get']:
-            print('===    ____________ Downloading          ===')
+            print('===    ____________ Downloading')
             download(colcov, datecov, dircov)
 
         # Download VCF
@@ -81,7 +84,7 @@ def cover(**kwargs):
         # Read or regrid
         if not kwargs['regrid']: continue
 
-        print('===    ____________ Regridding           ===')
+        print('===    ____________ Regridding')
         if path.isfile(fout) and not kwargs['repro']:
             cc = Cover(xr.open_dataset(fout))
         else:
@@ -99,7 +102,7 @@ def vegind(**kwargs):
     '''Build (re)gridded MODIS/VIIRS vegetation indices dataset'''
 
     print('')
-    print('===    ____ Vegetation Indicies          ===')
+    print('===    ____ Vegetation Indicies')
 
     # Check and read arguments
     kwargs = check_args(**kwargs)
@@ -143,9 +146,9 @@ def vegind(**kwargs):
         # Year-specific strings
         syear = str(year)
         dirpre  = path.join(data, 'vegpre', syear)
-        headpre = path.join(dirpre, 'modvir_vegpre.' + restag + '.daily.')
+        headpre = path.join(dirpre, MITAG + '_vegpre_' + restag + '_daily_')
         dirveg  = path.join(data, 'vegind', syear)
-        headveg = path.join(dirveg, 'modvir_vegind.' + restag + '.daily.')
+        headveg = path.join(dirveg, MITAG + '_vegind_' + restag + '_daily_')
 
         # Time period
         jday0 = max(datetime(year, 1, 1), date0)
@@ -158,16 +161,16 @@ def vegind(**kwargs):
             jdayget = jdnow.strftime('%j')
             dateout = jdnow.strftime('%Y%m%d')
 
-            print('===    ________ ' + jdnow.strftime('%Y-%m-%d') + '               ===')
+            print('===    ________ ' + jdnow.strftime('%Y-%m-%d'))
 
             colveg = check_cols(jdnow, **kwargs)['colveg']
             dirget = path.join(data, colveg, syear, jdayget)
-            fveg = headveg + dateout + '.nc'
-            fpre = headpre + dateout + '.nc'
+            fveg = headveg + dateout + '.' + FEXT
+            fpre = headpre + dateout + '.' + FEXT
 
             # Download
             if kwargs['get']:
-                print('===    ____________ Downloading          ===')
+                print('===    ____________ Downloading')
                 download(colveg, dateget, dirget)
 
             if not kwargs['regrid'] and not kwargs['fill']: continue
@@ -176,7 +179,7 @@ def vegind(**kwargs):
 
             # Read or regrid preliminary file
             if kwargs['regrid']:
-                print('===    ____________ Regridding           ===')
+                print('===    ____________ Regridding')
                 if path.isfile(fpre) and not kwargs['repro']:
                     vv = VegInd(xr.open_dataset(fpre))
                 else:
@@ -190,7 +193,7 @@ def vegind(**kwargs):
 
             # Read or regrid filled file
             if kwargs['fill']:
-                print('===    ____________ Filling              ===')
+                print('===    ____________ Filling')
                 if path.isfile(fveg) and not kwargs['repro']:
                     vv = VegInd(xr.open_dataset(fveg))
                 else:
@@ -215,7 +218,7 @@ def burn(**kwargs):
     '''Build (re)gridded MODIS/VIIRS burned area dataset'''
 
     print('')
-    print('===    ____ Burned Area                  ===')
+    print('===    ____ Burned Area')
 
     # Check and read arguments
     kwargs = check_args(**kwargs)
@@ -253,16 +256,16 @@ def burn(**kwargs):
             colvcf[:-4] + '.A' + ystrvcf + '065.')
 
         if kwargs['regrid'] and kwargs['get']:
-            print('===    ________ ' + syear + '                     ===')
-            print('===    ____________ Downloading          ===')
+            print('===    ________ ' + syear)
+            print('===    ____________ Downloading')
             download(colcov, datecov, dircov)
             download(colvcf, datevcf, dirvcf)
 
         # Build burned area
         # ---
         dirout  = path.join(data, 'burn', syear)
-        headmon = path.join(dirout, 'modvir_burn.' + restag + '.monthly.')
-        headday = path.join(dirout, 'modvir_burn.' + restag + '.daily.')
+        headmon = path.join(dirout, MITAG + '_burn_' + restag + '_monthly_')
+        headday = path.join(dirout, MITAG + '_burn_' + restag + '_daily_')
 
         for nm in range(1,13):
             # Skip if before range
@@ -273,7 +276,7 @@ def burn(**kwargs):
             dateget = jdmonth.strftime('%Y.%m.%d')
             jdayget = jdmonth.strftime('%j')
 
-            print('===    ________ ' + jdmonth.strftime('%Y-%m') + '                  ===')
+            print('===    ________ ' + jdmonth.strftime('%Y-%m'))
 
             # Download burned area
             colburn  = check_cols(jdmonth, **kwargs)['colburn']
@@ -282,14 +285,14 @@ def burn(**kwargs):
                 colburn[:-4] + '.A' + syear + jdayget + '.')
 
             if kwargs['get']:
-                print('===    ____________ Downloading          ===')
+                print('===    ____________ Downloading')
                 download(colburn, dateget, dirget)
 
             if not kwargs['regrid']: continue
 
             # Regrid monthlies
-            print('===    ____________ Regridding           ===')
-            fmon = headmon + jdmonth.strftime('%Y%m') + '.nc'
+            print('===    ____________ Regridding')
+            fmon = headmon + jdmonth.strftime('%Y%m') + '.' + FEXT
             if path.isfile(fmon) and not kwargs['repro']:
                 bb = Burn(xr.open_dataset(fmon))
             else:
@@ -301,7 +304,7 @@ def burn(**kwargs):
             ndays = monthrange(year, nm)[1]
             for nd in range(1,ndays+1):
                 jdnow = datetime(year, nm, nd)
-                fday  = headday + jdnow.strftime('%Y%m%d') + '.nc'
+                fday  = headday + jdnow.strftime('%Y%m%d') + '.' + FEXT
                 if not path.isfile(fday) or kwargs['repro']: 
                     bbnow = bb.daysel((jdnow - jdyear).days + 1)
                     bbnow.to_netcdf(fday)

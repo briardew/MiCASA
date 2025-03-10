@@ -19,6 +19,9 @@ QBASE  = 1.5;					% Base of Q10 function
 % INITIALIZE
 %===============================================================================
 lofi.setup;					% Just needed for lat/lon
+% Need to turn this off to reproduce v1 2001-2024
+%DEFLATE = 9;
+%SHUFFLE = true;
 
 DNUM0 = datenum(startYearTime, 01, 01);
 DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
@@ -117,8 +120,8 @@ for nyday = 1:365
     end
 
     % Output variables (DIRMET defined in setup)
-    dstr = datestr(datenum(midYearClim,01,01)+nyday-1, 'yyyymmdd');
-    fbit = ['merra2_met_v', VERSION, '_x', num2str(NLON), '_y', ...
+    dstr = ['CLIM', datestr(datenum(midYearClim,01,01)+nyday-1, 'mmdd')];
+    fbit = ['MiCASA_v', VERSION, '_meteo__x', num2str(NLON), '_y', ...
         num2str(NLAT), '_3hrly_', dstr, '.', FEXT];
     fout = [DIRMET, '/', fbit];
 

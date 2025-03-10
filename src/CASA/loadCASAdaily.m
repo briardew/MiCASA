@@ -1,5 +1,7 @@
 % Read and regrid daily input data (and some monthlies)
 % ===
+% TODO:
+% * Add OPeNDAP MERRA-2 read option
 
 % Requires dnum variable as defined in CASA
 syear = datestr(dnum, 'yyyy');
@@ -8,14 +10,14 @@ sday  = datestr(dnum, 'dd');
 
 % Read MODIS/VIIRS fPAR
 % ---
-fin = [DIRMODV, '/vegind/', syear, '/modvir_vegind.x', num2str(NLONMV), ...
-    '_y', num2str(NLATMV), '.daily.', syear, smon, sday, '.nc'];
+fin = [DIRMODV, '/vegind/', syear, '/MiCASA_v', VERSION, ...
+    '_vegind_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 FPAR = flipud(ncread(fin, 'fPAR')');
 
 % Read MODIS/VIIRS burned area
 % ---
-fin = [DIRMODV, '/burn/', syear, '/modvir_burn.x', num2str(NLONMV), ...
-    '_y', num2str(NLATMV), '.daily.', syear, smon, sday, '.nc'];
+fin = [DIRMODV, '/burn/', syear, '/MiCASA_v', VERSION, ...
+    '_burn_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 BAdefo = flipud(ncread(fin, 'badefo')');
 BAherb = flipud(ncread(fin, 'baherb')');
 BAwood = flipud(ncread(fin, 'bawood')');
@@ -27,11 +29,15 @@ BAwood(isnan(BAwood)) = 0;
 
 % Try to keep the default case quick
 if NLAT ~= NLATMV || NLON ~= NLONMV
-    FPAR   = flipud(avgarea(latmv, lonmv, flipud(FPAR)',   lat, lon)');
-    % This wasn't working; not appropriate for areas
-    BAdefo = flipud(avgarea(latmv, lonmv, flipud(BAdefo)', lat, lon)');
-    BAherb = flipud(avgarea(latmv, lonmv, flipud(BAherb)', lat, lon)');
-    BAwood = flipud(avgarea(latmv, lonmv, flipud(BAwood)', lat, lon)');
+    FPAR   = flipud(avgarea(latmv, lonmv, flipud(FPAR)', lat, lon, RADIUS)');
+
+    area   = globarea(lat,   lon,   RADIUS);
+    areamv = globarea(latmv, lonmv, RADIUS);
+
+    % Recall these are areas
+    BAdefo = flipud(avgarea(latmv, lonmv, flipud(BAdefo)'./areamv, lat, lon, RADIUS)').*area;
+    BAherb = flipud(avgarea(latmv, lonmv, flipud(BAherb)'./areamv, lat, lon, RADIUS)').*area;
+    BAwood = flipud(avgarea(latmv, lonmv, flipud(BAwood)'./areamv, lat, lon, RADIUS)').*area;
 end
 
 if lower(do_nrt_meteo(1)) == 'n'
@@ -108,10 +114,6 @@ latm2 = ncread(fm2, 'lat');
 lonm2 = ncread(fm2, 'lon');
 
 % Not convinced AIRT should be conservatively regridded
-%AIRT   = flipud(avgarea(latm2, lonm2, mean(airtm2, 3), lat, lon)');
-%PPT    = flipud(avgarea(latm2, lonm2, mean(pptm2,  3), lat, lon)');
-%SOLRAD = flipud(avgarea(latm2, lonm2, mean(sradm2, 3), lat, lon)');
-
 % Interpolating instead (maybe faster?) ...
 [LA, LO] = meshgrid(lat, lon);
 % Border protection

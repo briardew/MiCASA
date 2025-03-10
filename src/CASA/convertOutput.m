@@ -62,10 +62,9 @@ end
 if ADDHER, disp('Adding herbivory to respiration ...'); end
 
 datasets = [fluxes; extras];
-restag = ['x', num2str(NLON), '_y', num2str(NLAT)];
 
 % For extracting variables
-vaux = load([DIRIN, '/spinUp_stage1.mat'], 'mask', 'latitude');
+vaux = load([DIRIN, '/spinup1.mat'], 'mask', 'latitude');
 mask = vaux.mask';
 inds = find(mask(:) == 1);
 temp = single(zeros(size(mask)));
@@ -95,7 +94,7 @@ for year = startYear:endYear
                 dnowin  = [DIRIN,  '/', syear, '/', smon, '/', sday];
                 dnowout = [DIROUT, '/daily/', syear, '/', smon];
 
-                fbit = ['MiCASA_v', VERSION, '_flux_', restag, ...
+                fbit = ['MiCASA_v', VERSION, '_flux_', CASARES, ...
                     '_daily_', syear, smon, sday, '.', FEXT];
                 fout = [dnowout, '/', fbit];
 
@@ -203,7 +202,7 @@ for year = startYear:endYear
                 dnowin  = [DIRIN,  '/', syear, '/', smon, '/', sday];
                 dnowout = [DIROUT, '/daily/', syear, '/', smon];
 
-                fbit = ['MiCASA_v', VERSION, '_extra_', restag, ...
+                fbit = ['MiCASA_v', VERSION, '_extra_', CASARES, ...
                     '_daily_', syear, smon, sday, '.', FEXT];
                 fout = [dnowout, '/', fbit];
 
@@ -313,7 +312,7 @@ for year = startYear:endYear
             scale = datasets(nn).scale*30.5;
             lname = datasets(nn).long_name;
 
-            fout  = [DIROUT, '/', vout, '_', restag, ...
+            fout  = [DIROUT, '/', vout, '_', CASARES, ...
                 '_monthly_', syear, '.', FEXT];
 
             NSTEPS = 12;

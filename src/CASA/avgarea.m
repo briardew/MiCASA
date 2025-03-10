@@ -4,13 +4,21 @@
 %   the lat-lon grid specified by LATq and LONq that is an interpolant of the
 %   array VV defined on the lat-lon grid specified by LAT and LON.  This
 %   interpolation conserves global averages.
+%
+%   VVq = AVGAREA(LAT, LON, VV, LATq, LONq, R) the same with R as the radius
+%   of the Earth
 
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
 % 2018-06-07	Adding support for equal-area grids
 %===============================================================================
-function [aq, smx, smy, wq] = avgarea(xx, yy, aa, xq, yq)
+function [aq, smx, smy, wq] = avgarea(xx, yy, aa, xq, yq, radius)
+
+if ~exist('radius', 'var')
+    % Default value from GEOS in meters; NB: MODIS uses 6371007.181
+    radius = 6371000.0;
+end
 
 % 1. Determine the fine and coarse scale coordinates
 % --------------------------------------------------
@@ -129,6 +137,6 @@ mask(imask) = 0;
 aa(imask)   = 0;
 
 % Use transformations to compute query weight (prevents ringing)
-ww = mask.*globarea(xxv, yyv);
+ww = mask.*globarea(xxv, yyv, radius);
 wq = smy' * ww * smx;
 aq = (smy' * (aa.*ww) * smx)./wq;

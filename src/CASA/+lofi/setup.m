@@ -33,7 +33,7 @@ CONTACT = 'Brad Weir <brad.weir@nasa.gov>';
 % Environment settings
 % ---
 MIROOT = [DIRCASA, '/', runname, '/holding'];
-DIRMET = [DIRMODV, '/meteo/climate'];			% Where to put climatological diurnal cycle
+DIRMET = [DIRMODV, '/meteo'];				% Where to put climatological diurnal cycle
 
 % Reanalysis files & grid data
 % ---
@@ -45,8 +45,8 @@ NLONM2 = numel(lonm2);
 
 % Constants
 % ---
-MASSDRY = 5.1352;					% x 10^18 kg
-MOLMDRY = 28.965;					% kg/Kmole
+MASSDRY =  5.1352;					% x 10^18 kg
+MOLMDRY =  28.965;					% kg/Kmole
 MOLMC   =  12.011;
 MOLMCO2 =  44.0098;					% MOLMC + 2*MOLMO
 PPMTOPG = MOLMC/MOLMDRY*MASSDRY;

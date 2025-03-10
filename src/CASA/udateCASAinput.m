@@ -1,4 +1,6 @@
-% Needs year, NSTEPS, & step defined
+% * Needs year, NSTEPS, & step defined
+% * month_ and molen_ are global variables added for running daily
+% and monthly
 if NSTEPS == 12
     month_ = step;
     molen_ = 1;			% Number of steps a month is
@@ -10,7 +12,7 @@ if NSTEPS == 12
         if year < startYear
             eval([dname ' = ' dname 'mo(:,month_);'])
         else
-            load([DIRCASA, '/', runname, '/annual/', int2str(year), ...
+            load([DIRCASA, '/', runname, '/maps/annual/', int2str(year), ...
                 '/', dname, '.mat'])
             eval([dname ' = ' dname '(:,:,month_);'])
             eval([dname ' = maskfile(single(' dname '),mask);'])
@@ -23,7 +25,7 @@ else
     molen_ = datenum(year, month_+1, 1) - datenum(year, month_, 1);
 
     % Needs dnum defined above
-    loadDailyInput
+    loadCASAdaily
 
     % Daily data sets (monthly for spin-up)
     datasets = {'BAherb', 'BAwood', 'BAdefo', 'FPAR', 'PPT', 'AIRT', ...

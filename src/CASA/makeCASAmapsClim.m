@@ -1,16 +1,6 @@
-REPRO = 1;
-
 defineConstants;
 
-casares = ['x', num2str(NLON),   '_y', num2str(NLAT)];
-mvres   = ['x', num2str(NLONMV), '_y', num2str(NLATMV)];
-
 % Make sure directories exist
-dout = [DIRCASA, '/', runname,  '/maps'];
-if ~isfolder(dout)
-    [status, result] = system(['mkdir -p ', dout]);
-end
-
 dout = [DIRCASA, '/', runname,  '/climate'];
 if ~isfolder(dout)
     [status, result] = system(['mkdir -p ', dout]);
@@ -32,8 +22,8 @@ interpms = {'nearest', 'linear', 'nearest'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
 
-    fin  = [DIRCASA, '/original-0.5deg/maps/', dname, '.mat'];
-    fout = [DIRCASA, '/', runname,   '/maps/', dname, '.mat'];
+    fin  = [DIRCASA, '/v0/original-0.5deg/climate/', dname, '.mat'];
+    fout = [DIRCASA, '/', runname,      '/climate/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
@@ -66,7 +56,7 @@ for ii = 1:length(datasets)
     % Create climatology
     AAmo = 0;
     for year = startYearClim:endYearClim
-        fin  = [DIRCASA, '/original-0.5deg/annual/', num2str(year), ...
+        fin  = [DIRCASA, '/v0/original-0.5deg/maps/annual/', num2str(year), ...
             '/', dname, '.mat'];
         AAmo = AAmo + load(fin).(dname);
     end
@@ -93,7 +83,7 @@ fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     PF = zeros(NLAT, NLON, 12);
     % Notice transposition of CASA resolution ***FIXME?***
-    [AA, RR] = readgeoraster([DIRAUX, '/CIFOR/TROP-SUBTROP_PeatV21_', ...
+    [AA, RR] = readgeoraster([DIRAUX, '/LULC/CIFOR/TROP-SUBTROP_PeatV21_', ...
         '2016_CIFOR.x', num2str(NLAT), '_y', num2str(NLON), '.tif']);
 
     for nn = 1:12
@@ -105,16 +95,16 @@ end
 
 %%% Population density
 dname = 'POPDENS';
-fout = [DIRCASA, '/', runname, '/maps/', dname, '.mat'];
+fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     POPDENS = zeros(NLAT, NLON);
 
     % Add actual appropriate year weights ***FIXME***
     [AA, RR] = readgeoraster([DIRAUX, '/SEDAC/gpw_v4_population_density_', ...
-        'adjusted_to_2015_unwpp_country_totals_rev11_2005_', casares, '.tif']);
+        'adjusted_to_2015_unwpp_country_totals_rev11_2005_', CASARES, '.tif']);
     POPDENS = POPDENS + 0.5*1e-6*AA;
     [AA, RR] = readgeoraster([DIRAUX, '/SEDAC/gpw_v4_population_density_', ...
-        'adjusted_to_2015_unwpp_country_totals_rev11_2010_', casares, '.tif']);
+        'adjusted_to_2015_unwpp_country_totals_rev11_2010_', CASARES, '.tif']);
     POPDENS = POPDENS + 0.5*1e-6*AA;
 
     save(fout, dname, '-v7');
@@ -127,7 +117,8 @@ fherbmv = 0;
 ftypemv = 0;
 for year = startYearClim:endYearClim
     syear = num2str(year);
-    fin = [DIRMODV, '/cover/modvir_cover.', mvres, '.yearly.', syear, '.nc'];
+    fin = [DIRMODV, '/cover/MiCASA_v', VERSION, '_cover_', MODVRES, ...
+        '_yearly_', syear, '.nc4'];
 
     ftreein = ncread(fin, 'ftree');
     fherbin = ncread(fin, 'fherb');
@@ -142,17 +133,17 @@ fherbmv = fherbmv/(endYearClim - startYearClim + 1);
 ftypemv = ftypemv/(endYearClim - startYearClim + 1);
 
 % Is area averaging right here? (***FIXME***)
-ftree = avgarea(latmv, lonmv, ftreemv, lat, lon);
-fherb = avgarea(latmv, lonmv, fherbmv, lat, lon);
+ftree = avgarea(latmv, lonmv, ftreemv, lat, lon, RADIUS);
+fherb = avgarea(latmv, lonmv, fherbmv, lat, lon, RADIUS);
 NTYPE = size(ftypemv, 3);
 ftype = zeros(NLON, NLAT, NTYPE);
 for nt = 1:NTYPE
-    ftype(:,:,nt) = avgarea(latmv, lonmv, ftypemv(:,:,nt), lat, lon);
+    ftype(:,:,nt) = avgarea(latmv, lonmv, ftypemv(:,:,nt), lat, lon, RADIUS);
 end
 
 %%% Specific land cover type classification for soil moisture
 dname = 'VEG';
-fout = [DIRCASA, '/', runname, '/maps/', dname, '.mat'];
+fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     VEG = zeros(NLAT, NLON);
 
@@ -219,7 +210,7 @@ FBC = 1. - FTC - FHC;
 datasets = {'FTC', 'FHC', 'FBC'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/maps/', dname, '.mat'];
+    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
@@ -230,8 +221,8 @@ end
 dxin = 1/12;
 latin = [ -90 + dxin/2:dxin: 90 - dxin/2]';
 lonin = [-180 + dxin/2:dxin:180 - dxin/2]';
-fcorn = [DIRAUX, '/SPAM/2010/spam2010V2r0_global_P_MAIZ_A.tif'];
-fsoy  = [DIRAUX, '/SPAM/2010/spam2010V2r0_global_P_SOYB_A.tif'];
+fcorn = [DIRAUX, '/crops/SPAM/2010/spam2010V2r0_global_P_MAIZ_A.tif'];
+fsoy  = [DIRAUX, '/crops/SPAM/2010/spam2010V2r0_global_P_SOYB_A.tif'];
 
 totin = zeros(numel(lonin), numel(latin));
 
@@ -255,9 +246,9 @@ for nn = 1:numel(crops)
 end
 
 weight = min(max((LA - 23)/(27 - 23), 0), 1);
-areain = globarea(latin, lonin);
+areain = globarea(latin, lonin, RADIUS);
 
-totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon);
+totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon, RADIUS);
 total = totre .* weight;
 
 %% CASA-specific stuff
@@ -273,7 +264,7 @@ EMAX = EMAX * 1.07;
 datasets = {'SINK', 'EMAX'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/maps/', dname, '.mat'];
+    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
@@ -303,14 +294,14 @@ end
 % Will want the option to pick between HWSD v1.2, v2, and SoilGrids here
 NSOILDAT = 1;
 if NSOILDAT == 1
-    fin = [DIRAUX, '/HWSD/v2/HWSD2_0-20cm.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_0-20cm.', CASARES, '.nc'];
     ORGC_top = flipud(ncread(fin, 'soc')');
     sand = flipud(ncread(fin, 'sand')');
     silt = flipud(ncread(fin, 'silt')');
     clay = flipud(ncread(fin, 'clay')');
     fill = flipud(ncread(fin, 'fill')');
 
-    fin = [DIRAUX, '/HWSD/v2/HWSD2_20-40cm.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_20-40cm.', CASARES, '.nc'];
     ORGC_top = ORGC_top + 0.50*flipud(ncread(fin, 'soc')');
     sand = 0.75*sand + 0.25*flipud(ncread(fin, 'sand')');
     silt = 0.75*silt + 0.25*flipud(ncread(fin, 'silt')');
@@ -318,14 +309,14 @@ if NSOILDAT == 1
     fill = 0.75*fill + 0.25*flipud(ncread(fin, 'fill')');
 
     ORGC_sub = 0.50*flipud(ncread(fin, 'soc')');
-    fin = [DIRAUX, '/HWSD/v2/HWSD2_40-60cm.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_40-60cm.', CASARES, '.nc'];
     ORGC_sub = ORGC_sub + flipud(ncread(fin, 'soc')');
-    fin = [DIRAUX, '/HWSD/v2/HWSD2_60-80cm.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_60-80cm.', CASARES, '.nc'];
     ORGC_sub = ORGC_sub + flipud(ncread(fin, 'soc')');
-    fin = [DIRAUX, '/HWSD/v2/HWSD2_80-100cm.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_80-100cm.', CASARES, '.nc'];
     ORGC_sub = ORGC_sub + flipud(ncread(fin, 'soc')');
 elseif NSOILDAT == 2
-    fin = [DIRAUX, '/HWSD/v1.2/HWSD1.2.', casares, '.nc'];
+    fin = [DIRAUX, '/soil/HWSD/v1.2/HWSD1.2.', CASARES, '.nc'];
     ORGC_top = flipud(ncread(fin, 't_soc')');
     ORGC_sub = flipud(ncread(fin, 's_soc')');
     sand = flipud(ncread(fin, 't_sand')');
@@ -386,7 +377,7 @@ fill = fill/100;
 datasets = {'ORGC_top', 'ORGC_sub', 'sand', 'silt', 'clay'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/maps/', dname, '.mat'];
+    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
