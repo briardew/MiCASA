@@ -8,12 +8,19 @@
 % reshaped to a X by 12 matrix, one column for each month.
 
 datasets = {'FTC', 'FHC', 'FBC', 'VEG', 'POPDENS', 'FUELNEED', ...
-    'ORGC_top', 'ORGC_sub', 'basisregions'};
+    'ORGC_top', 'ORGC_sub', 'basisregions', 'EMAX', 'SINK'};
 if lower(do_deprecated(1)) == 'y'
-    datasets = {datasets{:}, 'SOILTEXT', 'land_percent'};
-end
-for ii = 1:length(datasets)
-    load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
+    datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
+    for ii = 1:length(datasets)
+        load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
+    end
+else
+    datasets = {datasets{:}, 'FP', 'PF', 'MORT'};
+    fmaps = [DIRCASA, '/', runname, '/drivers/MiCASA_v', VERSION, ...
+        '_maps_', CASARES, '.nc4'];
+    for ii = 1:length(datasets)
+        eval([datasets{ii} ' = flipud(ncread(' fmaps, ', ' datasets{ii} ''');']);
+    end
 end
 
 % In older versions, these were zero
@@ -24,7 +31,7 @@ if lower(do_deprecated(1)) == 'y'
 else
     datasets = {'sand', 'silt', 'clay'};
     for ii = 1:length(datasets)
-        load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
+        eval([datasets{ii} ' = flipud(ncread(' fmaps, ', ' datasets{ii} ''');']);
     end
 end
 
@@ -33,8 +40,10 @@ FDC = zeros(NLAT, NLON, 'single');
 FRC = zeros(NLAT, NLON, 'single');
 
 % Data for spin-up
-datasets = {'BAherb', 'BAwood', 'BAdefo', 'FP', 'PF', 'MORT', 'FPAR', ...
-    'PPT', 'AIRT', 'SOLRAD'};
+datasets = {'BAherb', 'BAwood', 'BAdefo', 'FPAR', 'PPT', 'AIRT', 'SOLRAD'};
+if lower(do_deprecated(1)) == 'y'
+    datasets = {datasets{:}, 'FP', 'PF', 'MORT'};
+end
 for ii = 1:length(datasets)
     average = zeros(NLAT, NLON, 12);
     for year = startYearClim:endYearClim
@@ -86,18 +95,18 @@ gridArea = makeGridArea(NLAT, NLON);
 % Mask and reshape datasets
 datasets = {'AIRT', 'FPAR', 'PPT', 'BAherb', 'BAwood', 'BAdefo', 'FP', 'PF', ...
     'MORT', 'FTC', 'VEG', 'SOLRAD', 'POPDENS', 'FUELNEED', ...
-    'ORGC_top', 'ORGC_sub', 'FDC', 'FHC', 'FBC', 'FRC', 'gridArea', ...
-    'basisregions', 'sand', 'silt', 'clay'};
+    'ORGC_top', 'ORGC_sub', 'FDC', 'FHC', 'FBC', 'FRC', 'EMAX', 'SINK', ...
+    'gridArea', 'basisregions', 'sand', 'silt', 'clay'};
 if lower(do_deprecated(1)) == 'y'
-    datasets = {datasets{:}, 'SOILTEXT', 'land_percent'};
+    datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
 end
 
 for ii = 1:length(datasets)
     eval(['dump = size(' datasets{ii} ');'])
     if length(dump) == 2
-        eval([ datasets{ii} ' = single(maskfile(' datasets{ii} ',mask));'])
+        eval([datasets{ii} ' = single(maskfile(' datasets{ii} ',mask));'])
     else
-        eval([ datasets{ii} ' = single(mask12file(' datasets{ii} ',mask));'])
+        eval([datasets{ii} ' = single(mask12file(' datasets{ii} ',mask));'])
     end
 end
 
@@ -116,23 +125,9 @@ FBC = FBC + error_fraction;
 FBC(FBC < 0) = 0;			% to prevent it being -0.000001...
 FHC = FHC - error_fraction;
 
-%ai
-%load the spatially dependent EMAX which replaces the constant version
-load([DIRCASA, '/', runname, '/maps/climate/EMAX.mat']);
-EMAX = single(maskfile(EMAX,mask));
-
-%load sink data
-if lower(use_sink(1)) == 'y'
-    load([DIRCASA, '/', runname, '/maps/climate/SINK.mat']);
-    SINK = single(maskfile(SINK,mask));
-end
-
-%load crop moisture data
-if lower(use_crop_moisture(1)) == 'y' || lower(use_crop_ppt_ratio(1)) == 'y'
-    load([DIRCASA, '/', runname, '/maps/climate/crop_states.mat']);
-    crop_states = single(maskfile(crop_states,mask));
-    %get list of indices for crop states
-    %crop states have a flag value > 10
+%get list of indices for crop states
+%crop states have a flag value > 10
+if lower(do_deprecated(1)) == 'y'
     crop_states_index = find(crop_states > 10);
 end
 

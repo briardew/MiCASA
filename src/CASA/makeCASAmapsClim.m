@@ -1,9 +1,9 @@
 defineConstants;
 
 % Make sure directories exist
-dout = [DIRCASA, '/', runname,  '/climate'];
-if ~isfolder(dout)
-    [status, result] = system(['mkdir -p ', dout]);
+DIRCLIM = [DIRCASA, '/', runname, '/maps/climate'];
+if ~isfolder(DIRCLIM)
+    [status, result] = system(['mkdir -p ', DIRCLIM]);
 end
 
 %---  ---%
@@ -14,20 +14,35 @@ latxx = [-90.25:0.5:90.25]';
 [LA,   LO]   = meshgrid(lat,   lon);
 [LAxx, LOxx] = meshgrid(latxx, lonxx);
 
-%%% Annual climatologies (interpolation, lazy)
-%datasets = {'basisregions', 'FUELNEED'};
-%interpms = {'nearest', 'linear'};
-datasets = {'basisregions', 'FUELNEED', 'SOILTEXT'};
-interpms = {'nearest', 'linear', 'nearest'};
+%%% Basis Regions and Fuel Need
+% NB: I don't yet have a good way of creating these datasets. Instead, I'm just
+% interpolating what already existed in CASA. Expect this to improve in future
+% versions
+% NB2: Basis regions only affect spinup
+datasets = {'basisregions', 'FUELNEED'};
+interpms = {'nearest',      'linear'};
+if lower(do_deprecated(1)) == 'y'
+    datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
+    interpms = {interpms{:}, 'nearest',  'linear',       'nearest'};
+else
+    % Eventually want to have an OPeNDAP URL option
+    fmaps = [DIRCASA, '/', runname, '/drivers/MiCASA_v', VERSION, '_maps_', ...
+        CASARES, '.nc4'];
+end
+
 for ii = 1:length(datasets)
     dname = datasets{ii};
-
-    fin  = [DIRCASA, '/v0/original-0.5deg/climate/', dname, '.mat'];
-    fout = [DIRCASA, '/', runname,      '/climate/', dname, '.mat'];
+    fout  = [DIRCLIM, '/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
-    AA = load(fin).(dname);
+    if ~isfile(fmaps) || REPRO
+        fin = [DIRCASA, '/v0/original/maps/climate/', dname, '.mat'];
+        AA = load(fin).(dname);
+    else
+        AA = flipud(ncread(fmaps, dname)');
+    end
+
     AA = [AA(:,1), AA, AA(:,end)];
     AA = [AA(1,:); AA; AA(end,:)];
 
@@ -39,51 +54,63 @@ for ii = 1:length(datasets)
 
     BB = flipud(interp2(LAxx, LOxx, flipud(AA'), LA, LO, interpms{ii}))';
 
-    eval([dname, ' = BB;']);
+    eval([dname ' = BB;']);
     save(fout, dname, '-v7');
     clear AA BB;
 end
 
-%%% Monthly climatologies (interpolation, lazy)
-datasets = {'FP', 'MORT'};
+%%% Fire Persistence and Mortality
+% NB: I don't yet have a good way of creating these datasets. Instead, I'm just
+% interpolating what already existed in CASA. Expect this to improve in future
+% versions
+% NB2: These were originally annualy varying, but I started using them as a
+% climatology because 1) they were incompletely documented and 2) it didn't
+% appear the IAV was verifiable/important
+datasets = {'FP',     'MORT'};
 interpms = {'linear', 'linear'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/',  runname,  '/climate/', dname, '.mat'];
+    fout  = [DIRCLIM, '/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
     % Create climatology
-    AAmo = 0;
-    for year = startYearClim:endYearClim
-        fin  = [DIRCASA, '/v0/original-0.5deg/maps/annual/', num2str(year), ...
-            '/', dname, '.mat'];
-        AAmo = AAmo + load(fin).(dname);
+    BB = zeros(NLAT, NLON, 12);
+    if ~isfile(fmaps) || REPRO
+        AAmo = 0;
+        for year = startYearClim:endYearClim
+            fin  = [DIRCASA, '/v0/original/maps/annual/', num2str(year), ...
+                '/', dname, '.mat'];
+            AAmo = AAmo + load(fin).(dname);
+        end
+        AAmo = AAmo/(endYearClim - startYearClim + 1);
+
+        for nm = 1:12
+            AA = AAmo(:,:,nm);
+            AA = [AA(:,1), AA, AA(:,end)];
+            AA = [AA(1,:); AA; AA(end,:)];
+
+            BB(:,:,nm) = flipud(interp2(LAxx, LOxx, flipud(AA'), LA, LO, interpms{ii}))';
+        end
+    else
+        AAmo = ncread(fmaps, dname);
+        for nm = 1:12
+            BB(:,:,nm) = flipud(AAmo(:,:,nm)');
+        end
     end
-    AAmo = AAmo/(endYearClim - startYearClim + 1);
 
-    eval([dname, ' = zeros(NLAT, NLON, 12);']);
-    for nm = 1:12
-        AA = AAmo(:,:,nm);
-        AA = [AA(:,1), AA, AA(:,end)];
-        AA = [AA(1,:); AA; AA(end,:)];
-
-        BB = flipud(interp2(LAxx, LOxx, flipud(AA'), LA, LO, interpms{ii}))';
-
-        eval([dname, '(:,:,nm) = BB;']);
-    end
-
+    eval([dname ' = BB;']);
     save(fout, dname, '-v7');
     clear AAmo AA BB;
 end
 
 %%% Peat fraction
 dname = 'PF';
-fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
+fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     PF = zeros(NLAT, NLON, 12);
     % Notice transposition of CASA resolution ***FIXME?***
-    [AA, RR] = readgeoraster([DIRAUX, '/LULC/CIFOR/TROP-SUBTROP_PeatV21_', ...
+    [AA, RR] = readgeoraster([DIRAUX, '/soil/CIFOR/TROP-SUBTROP_PeatV21_', ...
         '2016_CIFOR.x', num2str(NLAT), '_y', num2str(NLON), '.tif']);
 
     for nn = 1:12
@@ -95,7 +122,7 @@ end
 
 %%% Population density
 dname = 'POPDENS';
-fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
+fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     POPDENS = zeros(NLAT, NLON);
 
@@ -115,9 +142,10 @@ end
 ftreemv = 0;
 fherbmv = 0;
 ftypemv = 0;
+VERUSE = VERSION; if VERSION(1) == '0', VERUSE = '1'; end
 for year = startYearClim:endYearClim
     syear = num2str(year);
-    fin = [DIRMODV, '/cover/MiCASA_v', VERSION, '_cover_', MODVRES, ...
+    fin = [DIRMODV, '/cover/MiCASA_v', VERUSE, '_cover_', MODVRES, ...
         '_yearly_', syear, '.nc4'];
 
     ftreein = ncread(fin, 'ftree');
@@ -143,7 +171,7 @@ end
 
 %%% Specific land cover type classification for soil moisture
 dname = 'VEG';
-fout = [DIRCASA, '/', runname, '/climate/', dname, '.mat'];
+fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     VEG = zeros(NLAT, NLON);
 
@@ -210,7 +238,7 @@ FBC = 1. - FTC - FHC;
 datasets = {'FTC', 'FHC', 'FBC'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
+    fout  = [DIRCLIM, '/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
@@ -264,7 +292,7 @@ EMAX = EMAX * 1.07;
 datasets = {'SINK', 'EMAX'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
+    fout  = [DIRCLIM, '/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
@@ -343,43 +371,21 @@ sand(inds) = 0;
 silt(inds) = 0;
 clay(inds) = 0;
 
-% Determine closest texture class centroid
-dcoarse = 0.5*(sand - ppcoarse(1)).^2 + 0.5*(silt - ppcoarse(2)).^2 ...
-        + 0.5*(clay - ppcoarse(3)).^2;
-dcormed = 0.5*(sand - ppcormed(1)).^2 + 0.5*(silt - ppcormed(2)).^2 ...
-        + 0.5*(clay - ppcormed(3)).^2;
-dmedium = 0.5*(sand - ppmedium(1)).^2 + 0.5*(silt - ppmedium(2)).^2 ...
-        + 0.5*(clay - ppmedium(3)).^2;
-dmedfin = 0.5*(sand - ppmedfin(1)).^2 + 0.5*(silt - ppmedfin(2)).^2 ...
-        + 0.5*(clay - ppmedfin(3)).^2;
-dfine   = 0.5*(sand - ppfine(1)).^2   + 0.5*(silt - ppfine(2)).^2 ...
-        + 0.5*(clay - ppfine(3)).^2;
-dmin    = min(dcoarse, min(dcormed, min(dmedium, min(dmedfin, dfine))));
-% Ensure no match for non-soil pixels
-dmin(sand + silt + clay == 0) = -1;
-
-%% 1 = peat, which is reclassified as 3 in code
-%% 7 is reclassified as 6 in code
-%SOILTEXT = zeros(size(dmin));
-%SOILTEXT(dcoarse == dmin) = 2;
-%SOILTEXT(dcormed == dmin) = 3;
-%SOILTEXT(dmedium == dmin) = 4;
-%SOILTEXT(dmedfin == dmin) = 5;
-%SOILTEXT(dfine   == dmin) = 6;
-
 % Convert from percent to fraction
 sand = sand/100;
 silt = silt/100;
 clay = clay/100;
 fill = fill/100;
 
-%datasets = {'ORGC_top', 'ORGC_sub', 'sand', 'silt', 'clay', 'SOILTEXT'};
 datasets = {'ORGC_top', 'ORGC_sub', 'sand', 'silt', 'clay'};
 for ii = 1:length(datasets)
     dname = datasets{ii};
-    fout  = [DIRCASA, '/', runname,  '/climate/', dname, '.mat'];
+    fout  = [DIRCLIM, '/', dname, '.mat'];
 
     if isfile(fout) && ~REPRO, continue; end
 
     save(fout, dname, '-v7');
 end
+
+% Create netCDF version for ease of use
+convertCASAmapsClim

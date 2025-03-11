@@ -3,6 +3,9 @@
 % TODO:
 % * Add OPeNDAP MERRA-2 read option
 
+% Hack because v0 doesn't have MODIS/VIIRS files
+VERUSE = VERSION; if VERSION(1) == '0', VERUSE = '1'; end
+
 % Requires dnum variable as defined in CASA
 syear = datestr(dnum, 'yyyy');
 smon  = datestr(dnum, 'mm');
@@ -10,13 +13,13 @@ sday  = datestr(dnum, 'dd');
 
 % Read MODIS/VIIRS fPAR
 % ---
-fin = [DIRMODV, '/vegind/', syear, '/MiCASA_v', VERSION, ...
+fin = [DIRMODV, '/vegind/', syear, '/MiCASA_v', VERUSE, ...
     '_vegind_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 FPAR = flipud(ncread(fin, 'fPAR')');
 
 % Read MODIS/VIIRS burned area
 % ---
-fin = [DIRMODV, '/burn/', syear, '/MiCASA_v', VERSION, ...
+fin = [DIRMODV, '/burn/', syear, '/MiCASA_v', VERUSE, ...
     '_burn_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 BAdefo = flipud(ncread(fin, 'badefo')');
 BAherb = flipud(ncread(fin, 'baherb')');
@@ -35,9 +38,9 @@ if NLAT ~= NLATMV || NLON ~= NLONMV
     areamv = globarea(latmv, lonmv, RADIUS);
 
     % Recall these are areas
-    BAdefo = flipud(avgarea(latmv, lonmv, flipud(BAdefo)'./areamv, lat, lon, RADIUS)').*area;
-    BAherb = flipud(avgarea(latmv, lonmv, flipud(BAherb)'./areamv, lat, lon, RADIUS)').*area;
-    BAwood = flipud(avgarea(latmv, lonmv, flipud(BAwood)'./areamv, lat, lon, RADIUS)').*area;
+    BAdefo = flipud((avgarea(latmv, lonmv, flipud(BAdefo)'./areamv, lat, lon, RADIUS).*area)');
+    BAherb = flipud((avgarea(latmv, lonmv, flipud(BAherb)'./areamv, lat, lon, RADIUS).*area)');
+    BAwood = flipud((avgarea(latmv, lonmv, flipud(BAwood)'./areamv, lat, lon, RADIUS).*area)');
 end
 
 if lower(do_nrt_meteo(1)) == 'n'

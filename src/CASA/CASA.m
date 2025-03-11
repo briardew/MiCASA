@@ -126,7 +126,7 @@ end
 
 % Begin from restart if requested
 frestart = [DIRRUN, '/restart.mat'];
-if lower(do_restart_load(1)) == 'y' && exist(frestart,'file')
+if lower(do_restart_load(1)) == 'y' && isfile(frestart)
     % Allows sharing of spinup/restart across runs
     load(frestart, '-regexp', '^(?!runname$|frestart$).');
     defineConstants;
@@ -164,7 +164,7 @@ for year = startYear:endYear
     % Begin from restart if requested
     startStep = 1;
     if year == startYear && lower(do_restart_load(1)) == 'y' ...
-        && exist(frestart,'file')
+        && isfile(frestart)
         startStep = step + 1;
     end
 

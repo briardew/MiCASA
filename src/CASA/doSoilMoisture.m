@@ -103,10 +103,10 @@ bgmoist_temp(io) = 0.5;
 %ai Oct.2010
 %set the NPPmoist and bgmoist to 1 for states with crops as was done in Zhen's code
 %bweir: added second option as first is a little heavy handed
-if lower(use_crop_moisture(1)) == 'y'
+if lower(do_deprecated(1)) == 'y'
     NPPmoist_temp(crop_states_index) = 1;
     bgmoist_temp(crop_states_index)  = 1;
-elseif lower(use_sink(1)) == 'y'
+else
     alpha = SINK/max(SINK(:));
     NPPmoist_temp = (1 - alpha).*NPPmoist_temp + alpha;
     bgmoist_temp  = (1 - alpha).*bgmoist_temp  + alpha;

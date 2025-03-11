@@ -5,7 +5,7 @@
 io = max(0.20, min(0.80, 0.85 - MAP));
 
 %ai
-if lower(use_crop_ppt_ratio(1)) == 'y'
+if lower(do_deprecated(1)) == 'y'
     io(crop_states_index) = 0.15;
 end
 
@@ -19,7 +19,7 @@ hleafpool  = hleafpool  + leafinput;
 %ai 
 % take out the sink from hleafpool as was done in Zhen's code
 % month_ and molen_ are set in updateCASAinput
-if lower(use_sink(1)) == 'y' && month_ == 9
+if month_ == 9
     hleafpool = hleafpool - SINK/molen_;
     hleafpool = max(hleafpool, 0);
 end

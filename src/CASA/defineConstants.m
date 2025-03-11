@@ -1,6 +1,11 @@
 % Pretty hacky for now
 % Considering writing a Python entry point
-if ~exist('runname', 'var') || min(strfind(runname, 'vNRT')) == 1
+
+if ~exist('runname', 'var')
+    error('Must specify the variable runname ...');
+end
+
+if min(strfind(runname, 'vNRT')) == 1
     runname = 'vNRT';
     defineConstants_vNRT;
 elseif min(strfind(runname, 'v1')) == 1

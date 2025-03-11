@@ -21,12 +21,9 @@ herbivoreEff      = single(0.50);				% Efficiency of herbivory (part autotrophic
 VERSION  = '0';							% Version number
 do_daily = 'n';							% Run at a daily timestep (alternative is monthly)
 do_reprocess  = 'n';						% Reprocess/overwrite results
-do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
+do_deprecated = 'y';						% Use deprecated functionality (for debugging, etc.)
 do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
 do_nrt_meteo  = 'n';						% Use NRT meteorology?
-use_sink = 'y';							% Apply crop sink (recommended 'y', may deprecate 'n')
-use_crop_moisture  = 'n';					% Remove moisture limitation over indicated areas (recommended 'n', may deprecate 'y')
-use_crop_ppt_ratio = 'n';			
 
 do_spinup_stage1 = 'y';						% Do first  stage spin-up (as opposed to loading it)
 do_spinup_stage2 = 'y';						% Do second stage spin-up (as opposed to loading it)
@@ -37,11 +34,8 @@ spinUpYear1 = 250;
 spinUpYear2 = 1750;
 SOCadjustYear = 50;						% Number of years before startYear to adjust SOC
 
-%startYear = 2001;						% First year with interannual data
-%endYear   = 2024;						% Last  year with interannual data
-% Need to fix BA regridding
-startYear = 2003;						% First year with interannual data
-endYear   = 2013;						% Last  year with interannual data
+startYear = 2001;						% First year with interannual data
+endYear   = 2024;						% Last  year with interannual data
 startYearClim = 2003;						% First year to use in climatology
 endYearClim   = 2012;						% Last  year to use in climatology
 startYearTime = 1980;						% First year to use in time stamp
@@ -60,10 +54,8 @@ lon  = [-180+dx/2:dx:180-dx/2]';
 NLAT = numel(lat);
 NLON = numel(lon);
 
-if strcmp(runname,'v0/original-0.5deg')
+if strcmp(runname,'v0/original')
     do_daily = 'n';						% Run at a daily timestep (alternative is monthly)
-    do_deprecated = 'y';					% Use deprecated functionality (for debugging, etc.)
-    use_crop_moisture  = 'y';					% Remove moisture limitation over indicated areas (recommended 'n', may deprecate 'y')
     startYear = 2003;						% First year with interannual data
     endYear   = 2013;						% Last  year with interannual data
     startYearClim = 2003;					% First year to use in climatology
@@ -71,4 +63,5 @@ if strcmp(runname,'v0/original-0.5deg')
 end
 
 % Auto-generate some folders
-DIRMODV = [DIRCASA, '/v', VERSION, '/drivers'];			% Driver data dir
+% There are no v0 MODIS/VIIRS files; use v1 for testing
+DIRMODV = [DIRCASA, '/v1/drivers'];				% Driver data dir

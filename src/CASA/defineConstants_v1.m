@@ -24,9 +24,6 @@ do_reprocess  = 'n';						% Reprocess/overwrite results
 do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
 do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
 do_nrt_meteo  = 'n';						% Use NRT meteorology?
-use_sink = 'y';							% Apply crop sink (recommended 'y', may deprecate 'n')
-use_crop_moisture  = 'n';					% Remove moisture limitation over indicated areas (recommended 'n', may deprecate 'y')
-use_crop_ppt_ratio = 'n';			
 
 do_spinup_stage1 = 'n';						% Do first  stage spin-up (as opposed to loading it)
 do_spinup_stage2 = 'n';						% Do second stage spin-up (as opposed to loading it)

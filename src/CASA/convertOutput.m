@@ -15,6 +15,8 @@ ADDHER  = 1;					% Add herbivory to respiration?
 VARHER  = 'HER';				% Herbivory variable name
 
 % Output file settings
+% ---
+% Shouldn't this be in defineConstants?
 FEXT    = 'nc4';
 FORMAT  = 'netcdf4';
 % We do these afterwards since Matlab appears to have memory issues
