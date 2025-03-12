@@ -11,12 +11,12 @@ module load nco
 
 # Public URL and on-prem directories
 SERVE="https://portal.nccs.nasa.gov/datashare/gmao/geos_carb"
-ROOTNRT="/css/gmao/geos_carb/share"
 ROOTPUB="/css/gmao/geos_carb/pub"
+ROOTNRT="/css/gmao/geos_carb/share"
 
 # Rest should be generic
 # ---
-if [[ "$MIRUN" == "vNRT/daily-0.1deg" ]]; then
+if [[ "$MIRUN" == "vNRT" ]]; then
     VERSION="NRT"
     ROOTOUT="$ROOTNRT"
 else
@@ -24,11 +24,11 @@ else
     ROOTOUT="$ROOTPUB"
 fi
 
-[[ -z "$MIDIR" ]] && MIDIR="~/Projects/MiCASA"
+[[ -z "$MIDIR" ]] && MIDIR="$HOME/Projects/MiCASA"
 [[ -z "$REPRO" ]] && REPRO=false
 [[ -z "$REPROCOG" ]] && REPROCOG=false
 
-DIRIN="$MIDIR/data/holding/v$VERSION/daily-0.1deg/holding"
+DIRIN="$MIDIR/data/v$VERSION/holding"
 
 # The rest should auto-generate
 # ---
