@@ -304,7 +304,7 @@ for year = startYear:endYear
             end
         end
 
-    % Monthly (broken)
+    % Monthly
     % ---
     else
         % Make sure output folder exists
