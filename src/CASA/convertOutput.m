@@ -66,7 +66,7 @@ if ADDHER, disp('Adding herbivory to respiration ...'); end
 datasets = [fluxes; extras];
 
 % For extracting variables
-vaux = load([DIRIN, '/spinup1.mat'], 'mask', 'latitude');
+vaux = load([DIRCASA, '/', runname, '/spinup1.mat'], 'mask', 'latitude');
 mask = vaux.mask';
 inds = find(mask(:) == 1);
 temp = single(zeros(size(mask)));
@@ -307,6 +307,12 @@ for year = startYear:endYear
     % Monthly (broken)
     % ---
     else
+        % Make sure output folder exists
+        if ~isfolder(DIROUT)
+            [status, result] = system(['mkdir -p ', DIROUT]);
+        end
+
+        NSTEPS = 12;
         for nn = 1:numel(datasets)
             vin   = datasets(nn).orig;
             vout  = datasets(nn).name;
@@ -317,7 +323,6 @@ for year = startYear:endYear
             fout  = [DIROUT, '/', vout, '_', CASARES, ...
                 '_monthly_', syear, '.', FEXT];
 
-            NSTEPS = 12;
             xx = zeros(NLON, NLAT, NSTEPS);
 
             % Read
@@ -340,6 +345,9 @@ for year = startYear:endYear
                 vyear = [VARHER, syear];
                 tempin = tempin + load([DIRIN, '/', vyear, '.mat']).(vyear);
             end
+
+            % Compatibility bug fix: was catting on 3rd dim instead of 2nd
+            tempin = squeeze(tempin);
 
             % Reshape
             for nt = 1:NSTEPS

@@ -22,19 +22,21 @@
 % * Make more robust/consistent
 %===============================================================================
 
+runname = 'vNRT'; defineConstants;
+
+REPRO = 0;								% Reprocess?
+VERIN = '1';
+YEAR0 = 2001;								% Fit start
+YEARF = 2021;								% Fit end
+DNOUT = [datenum(2024,10,01):now-1];
+
 % Need to make this more robust; for now, happy not referencing
 % my own nobackup; NB: This will only work on systems that already have QFED
 DIRHEAD = '../..';
 QFDIR   = [DIRHEAD, '/data-aux/QFED/v2.6r1/sfc'];
 QFNRT   = [DIRHEAD, '/data-aux/QFED/v2.6r1-nrt/sfc'];
-DIRIN   = [DIRHEAD, '/data/burn'];
-DIROUT  = [DIRHEAD, '/data-nrt/burn'];
-
-VERIN = '1';
-REPRO = 0;								% Reprocess?
-YEAR0 = 2001;								% Fit start
-YEARF = 2021;								% Fit end
-DNOUT = [datenum(2024,10,01):now-1];
+DIRIN   = [DIRHEAD, '/data/v',VERIN, '/drivers'];
+DIROUT  = [DIRHEAD, '/data/',runname,'/drivers'];
 
 % Low resolution for scaling factors
 dxlo  = 4;
@@ -83,7 +85,8 @@ NBINS = 3;					% Wood, defo, and herb
 % Get grid data
 % ---
 % Assumes input version at same resolution (for now)
-fba = [DIRIN, '/2003/MiCASA_v', VERIN, '_burn_', CASARES, '_monthly_200301.nc4'];
+fba = [DIRIN, '/burn/2003/MiCASA_v', VERIN, '_burn_', CASARES, ...
+    '_monthly_200301.nc4'];
 fqf = [QFDIR, '/0.1/monthly/Y2003/M01', ...
     '/qfed2.emis_co2.061.x3600_y1800.200301mm.nc4'];
 
@@ -120,7 +123,7 @@ for year = YEAR0:YEARF
     for nm = 1:12
         smon = num2str(nm, '%02u');
 
-        fba = [DIRIN, '/', syear, '/MiCASA_v', VERIN, '_burn_', ...
+        fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', ...
             CASARES, '_monthly_', syear, smon, '.nc4'];
         fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M', smon, ...
             '/qfed2.emis_co2.061.x3600_y1800.', syear, smon, 'mm.nc4'];
@@ -160,7 +163,7 @@ toc;
 disp('Computing dailies ...');
 tic;
 % Bit of a hack ***FIXME***
-fvcf = [DIRHEAD, '/data/cover/MiCASA_v', VERIN, '_cover_', CASARES, ...
+fvcf = [DIRIN, '/cover/MiCASA_v', VERIN, '_cover_', CASARES, ...
     '_yearly_2024.nc4'];
 maxba(:,:,1) = area .* ncread(fvcf, 'ftree');
 maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
@@ -181,8 +184,8 @@ for id = 1:numel(DNOUT)
     fqf = [QFNRT, '/0.1/Y', syear, '/M', smon, ...
         '/qfed2.emis_co2.061.', syear, smon, sday, '.nc4'];
     % Brutal hack? ***FIXME***
-    fout = [DIROUT, '/', syear, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
-        '_daily_', syear, smon, sday, '.nc4'];
+    fout = [DIROUT, '/burn/', syear, '/MiCASA_v', VERSION, '_burn_', ...
+        CASARES, '_daily_', syear, smon, sday, '.nc4'];
 
     newqf(:,:,1) = ncread(fqf, 'biomass');
     newqf(:,:,2) = newqf(:,:,1);
@@ -216,7 +219,7 @@ for id = 1:numel(DNOUT)
     end
 
     % Make sure output folder exists
-    dnowout = [DIROUT, '/', syear];
+    dnowout = [DIROUT, '/burn/', syear];
     if ~isfolder(dnowout)
         [status, result] = system(['mkdir -p ', dnowout]);
     end
@@ -292,16 +295,15 @@ YRAVF = dvec(1);
 
 for year = YRAV0:YRAVF
     syear = num2str(year);
-    dnowout = [DIROUT, '/', syear];
-    dnowin  = [DIROUT, '/', syear];
+    dnowout = [DIROUT, '/burn/', syear];
 
     for nm = 1:12
         monlen = datenum(year, nm+1, 01) - datenum(year, nm, 01);
         smon = num2str(nm, '%02u');
 
-        fout = [DIROUT, '/', syear, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
+        fout = [dnowout, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
             '_monthly_', syear, smon, '.nc4'];
-        fins = [DIROUT, '/', syear, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
+        fins = [dnowout, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
             '_daily_', syear, smon, '??.nc4'];
 
         % Skip if file exists and not reprocessing
@@ -317,11 +319,6 @@ for year = YRAV0:YRAVF
         [status, result] = system(['ls -1 ', fins, ' | wc -l']);
         if status ~= 0 || ~strcmp(result(1:2), num2str(monlen))
             continue;
-        end
-
-        % Make sure output folder exists
-        if ~isfolder(dnowout)
-            [status, result] = system(['mkdir -p ', dnowout]);
         end
 
         % Recall BA is a total

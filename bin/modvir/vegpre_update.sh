@@ -12,5 +12,5 @@ ssh discover-cssrw "
     mkdir -p logs/vegpre/2024b
     cd logs/vegpre/2024b
     echo $hostname >> screenlog.0
-    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg 2024-08-01 --end 2024-09-30\"
+    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg 2024-08-01 --end 2024-09-30\"
     exit"

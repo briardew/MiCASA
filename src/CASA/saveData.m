@@ -16,9 +16,9 @@ for ii = 1:length(datasets)
 
         % First create an empty array, then concatenate every step
         if step == 1, eval([dd, ' = [];']); end
-        eval([dd, ' = cat(3, ', dd, ', ', datasets{ii}, ');']);
+        eval([dd, ' = cat(2, ', dd, ', ', datasets{ii}, ');']);
 
-        dout = [DIRNAT, '/monthly'];
+        dout = DIRNAT;
         if ~isfolder(dout)
             [status, result] = system(['mkdir -p ', dout]);
         end
@@ -33,6 +33,7 @@ for ii = 1:length(datasets)
     else
         dd =  datasets{ii};
 
+        % Note that the slashes in datestr give subdirs
         dout = [DIRNAT, '/', datestr(dnum, 'yyyy/mm/dd')];
 
         if ~isfolder(dout)

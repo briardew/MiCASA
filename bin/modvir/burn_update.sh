@@ -12,5 +12,5 @@ ssh discover21 "
     cd $MIDIR
     mkdir -p logs/burn/2024
     cd logs/burn/2024
-    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg 2024-08-01 --end 2024-09-30\"
+    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg 2024-08-01 --end 2024-09-30\"
     exit"

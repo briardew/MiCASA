@@ -13,4 +13,4 @@ exit 1
 cd $MIDIR
 mkdir -p logs/vegind/retro
 cd logs/vegind/retro
-screen -L -dmS modvir bash --login -c "cd $MIDIR;modvir vegind --mode fill --beg 2000-02-16"
+screen -L -dmS modvir bash --login -c "cd $MIDIR;modvir vegind --data $DATADIR --mode fill --beg 2000-02-16"

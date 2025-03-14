@@ -9,7 +9,7 @@ ssh discover-cssrw "
     mkdir -p logs/mirror/vegind
     cd logs/mirror/vegind
     echo $hostname >> screenlog.0
-    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode get --beg 2024-08-01 --end 2024-09-30\"
+    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode get --beg 2024-10-01 --end 2024-12-31\"
     exit
 "
 ssh discover-cssrw "
@@ -17,6 +17,6 @@ ssh discover-cssrw "
     mkdir -p logs/mirror/burn
     cd logs/mirror/burn
     echo $hostname >> screenlog.0
-    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode get --beg 2024-08-01 --end 2024-09-30\"
+    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode get --beg 2024-10-01 --end 2024-12-31\"
     exit
 "

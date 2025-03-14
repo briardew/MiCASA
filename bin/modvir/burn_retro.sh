@@ -16,7 +16,7 @@ for year in {2001..2003}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
 
@@ -26,7 +26,7 @@ for year in {2004..2007}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
 
@@ -36,7 +36,7 @@ for year in {2008..2011}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
 
@@ -46,7 +46,7 @@ for year in {2012..2015}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
 
@@ -56,7 +56,7 @@ for year in {2016..2019}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
 
@@ -66,6 +66,6 @@ for year in {2020..2022}; do
         cd $MIDIR
         mkdir -p logs/burn/${year}
         cd logs/burn/${year}
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir burn --data $DATADIR --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done

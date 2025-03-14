@@ -16,13 +16,13 @@ for year in {2000..2003}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover11 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
 
@@ -32,13 +32,13 @@ for year in {2004..2007}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover12 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
 
@@ -48,13 +48,13 @@ for year in {2008..2011}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover13 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
 
@@ -64,13 +64,13 @@ for year in {2012..2015}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover14 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
 
@@ -80,13 +80,13 @@ for year in {2016..2019}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover21 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
 
@@ -96,12 +96,12 @@ for year in {2020..2022}; do
         cd $MIDIR
         mkdir -p logs/vegpre/${year}a
         cd logs/vegpre/${year}a
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh discover23 "
         cd $MIDIR
         mkdir -p logs/vegpre/${year}b
         cd logs/vegpre/${year}b
-        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done
