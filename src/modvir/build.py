@@ -19,7 +19,6 @@ from modvir.cover  import Cover
 from modvir.vegind import VegInd
 from modvir.burn   import Burn
 
-MITAG = 'MiCASA_v1'
 FEXT = 'nc4'
 
 def cover(**kwargs):
@@ -36,6 +35,7 @@ def cover(**kwargs):
     dateF = kwargs['dateF']
     nlat  = kwargs['nlat']
     nlon  = kwargs['nlon']
+    ver   = kwargs['ver']
 
     # Use 2001 land cover for 2000
     date0 = max(date0, datetime(2001, 1, 1))
@@ -51,8 +51,8 @@ def cover(**kwargs):
         # Year-specific strings
         syear  = str(year)
         dirout = path.join(data, 'cover')
-        fout   = path.join(dirout, MITAG + '_cover_' + restag + '_yearly_' +
-            syear + '.' + FEXT)
+        fout   = path.join(dirout, 'MiCASA_v' + ver + '_cover_' + restag +
+            '_yearly_' + syear + '.' + FEXT)
 
         print('===    ________ ' + syear)
 
@@ -112,6 +112,7 @@ def vegind(**kwargs):
     dateF = kwargs['dateF']
     nlat  = kwargs['nlat']
     nlon  = kwargs['nlon']
+    ver   = kwargs['ver']
 
     # Initialize
     vv = VegInd(nlat=nlat, nlon=nlon)
@@ -146,9 +147,11 @@ def vegind(**kwargs):
         # Year-specific strings
         syear = str(year)
         dirpre  = path.join(data, 'vegpre', syear)
-        headpre = path.join(dirpre, MITAG + '_vegpre_' + restag + '_daily_')
+        headpre = path.join(dirpre, 'MiCASA_v' + ver + '_vegpre_' +
+            restag + '_daily_')
         dirveg  = path.join(data, 'vegind', syear)
-        headveg = path.join(dirveg, MITAG + '_vegind_' + restag + '_daily_')
+        headveg = path.join(dirveg, 'MiCASA_v' + ver + '_vegind_' +
+            restag + '_daily_')
 
         # Time period
         jday0 = max(datetime(year, 1, 1), date0)
@@ -228,6 +231,7 @@ def burn(**kwargs):
     dateF = kwargs['dateF']
     nlat  = kwargs['nlat']
     nlon  = kwargs['nlon']
+    ver   = kwargs['ver']
 
     # Initialize
     bb = Burn(nlat=nlat, nlon=nlon)
@@ -264,8 +268,10 @@ def burn(**kwargs):
         # Build burned area
         # ---
         dirout  = path.join(data, 'burn', syear)
-        headmon = path.join(dirout, MITAG + '_burn_' + restag + '_monthly_')
-        headday = path.join(dirout, MITAG + '_burn_' + restag + '_daily_')
+        headmon = path.join(dirout, 'MiCASA_v' + ver + '_burn_' +
+            restag + '_monthly_')
+        headday = path.join(dirout, 'MiCASA_v' + ver + '_burn_' +
+            restag + '_daily_')
 
         for nm in range(1,13):
             # Skip if before range
