@@ -5,6 +5,7 @@ if ~exist('runname', 'var')
     error('Must specify the variable runname ...');
 end
 
+% NB: If we get to v10, have that conditional BEFORE v1
 if min(strfind(runname, 'vNRT')) == 1
     runname = 'vNRT';
     defineConstants_vNRT;

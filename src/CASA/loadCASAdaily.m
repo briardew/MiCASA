@@ -6,7 +6,7 @@
 % Hack because v0 doesn't have MODIS/VIIRS files
 VERUSE = VERSION; if VERSION(1) == '0', VERUSE = '1'; end
 
-% Requires dnum variable as defined in CASA
+% Requires dnum variable as defined in updateCASAinput
 syear = datestr(dnum, 'yyyy');
 smon  = datestr(dnum, 'mm');
 sday  = datestr(dnum, 'dd');
