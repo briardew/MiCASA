@@ -47,7 +47,7 @@ else
         if year < startYear
             eval([dname ' = ' dname 'mo(:,month_);'])
         else
-            load([DIRCASA, '/', runname, '/climate/', dname, '.mat'])
+            load([DIRCASA, '/', runname, '/maps/climate/', dname, '.mat'])
             eval([dname ' = ' dname '(:,:,month_);'])
             eval([dname ' = maskfile(single(' dname '),mask);'])
         end
