@@ -114,7 +114,7 @@ avgqf = zeros(NLONQF, NLATQF, NBINS, 12);
 stdqf = zeros(NLONQF, NLATQF, NBINS, 12);
 maxqf = zeros(NLON, NLAT, NBINS);
 
-fclim = [DIROUT, '/maps/climate/burn.mat'];
+fclim = [DIRHEAD, '/data/', runname, '/maps/climate/burn.mat'];
 if isfile(fclim) && ~REPRO
     disp('Loading climatologies ...');
     tic;
