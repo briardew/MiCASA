@@ -77,8 +77,7 @@ for nyr = 1:TOTYRS
             else
                 sdm2 = sday;
             end
-            fbit = [M2HEAD, '_3hrly_', num2str(midYearClim), smon, sdm2, ...
-                '.', FEXT];
+            fbit = [M2HEAD, '_3hrly_', 'CLIM', smon, sdm2, '.', FEXT];
             fm2  = [DIRMET, '/', fbit];
 
             fprintf(repmat('\b', 1, lenmsg));

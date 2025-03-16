@@ -85,10 +85,11 @@ NBINS = 3;					% Wood, defo, and herb
 % Get grid data
 % ---
 % Assumes input version at same resolution (for now)
-fba = [DIRIN, '/burn/2003/MiCASA_v', VERIN, '_burn_', CASARES, ...
-    '_monthly_200301.nc4'];
-fqf = [QFDIR, '/0.1/monthly/Y2003/M01', ...
-    '/qfed2.emis_co2.061.x3600_y1800.200301mm.nc4'];
+syear = num2str(YEAR0);
+fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', CASARES, ...
+    '_monthly_', syear, '01.nc4'];
+fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M01', ...
+    '/qfed2.emis_co2.061.x3600_y1800.', syear, '01mm.nc4'];
 
 lat  = ncread(fba, 'lat');
 lon  = ncread(fba, 'lon');
@@ -113,50 +114,61 @@ avgqf = zeros(NLONQF, NLATQF, NBINS, 12);
 stdqf = zeros(NLONQF, NLATQF, NBINS, 12);
 maxqf = zeros(NLON, NLAT, NBINS);
 
-% Compute climatologies
-% ---
-disp('Computing climatologies ...');
-tic;
-for year = YEAR0:YEARF
-    ny = year - YEAR0 + 1;
-    syear = num2str(year);
-    for nm = 1:12
-        smon = num2str(nm, '%02u');
+fclim = [DIROUT, '/maps/climate/burn.mat'];
+if isfile(fclim) && ~REPRO
+    disp('Loading climatologies ...');
+    tic;
+    load(fclim);
+    toc;
+else
+    disp('Computing climatologies ...');
+    tic;
 
-        fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', ...
-            CASARES, '_monthly_', syear, smon, '.nc4'];
-        fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M', smon, ...
-            '/qfed2.emis_co2.061.x3600_y1800.', syear, smon, 'mm.nc4'];
+    % Compute climatologies
+    % ---
+    for year = YEAR0:YEARF
+        ny = year - YEAR0 + 1;
+        syear = num2str(year);
+        for nm = 1:12
+            smon = num2str(nm, '%02u');
 
-        newba(:,:,1) = ncread(fba, 'bawood');
-        newba(:,:,2) = ncread(fba, 'badefo');
-        newba(:,:,3) = ncread(fba, 'baherb');
+            fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', ...
+                CASARES, '_monthly_', syear, smon, '.nc4'];
+            fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M', smon, ...
+                '/qfed2.emis_co2.061.x3600_y1800.', syear, smon, 'mm.nc4'];
 
-        newqf(:,:,1) = ncread(fqf, 'biomass');
-        newqf(:,:,2) = newqf(:,:,1);
-        newqf(:,:,3) = newqf(:,:,1);
+            newba(:,:,1) = ncread(fba, 'bawood');
+            newba(:,:,2) = ncread(fba, 'badefo');
+            newba(:,:,3) = ncread(fba, 'baherb');
 
-	%% Online variance algorithm
-        prvba = avgba(:,:,:,nm);
-	prvqf = avgqf(:,:,:,nm);
+            newqf(:,:,1) = ncread(fqf, 'biomass');
+            newqf(:,:,2) = newqf(:,:,1);
+            newqf(:,:,3) = newqf(:,:,1);
 
-        %%% Hold these for online algorithm
-        outba = prvba + (newba - prvba)/ny;
-        outqf = prvqf + (newqf - prvqf)/ny;
+            %% Online variance algorithm
+            prvba = avgba(:,:,:,nm);
+            prvqf = avgqf(:,:,:,nm);
 
-        avgba(:,:,:,nm) = outba;
-        avgqf(:,:,:,nm) = outqf;
-        stdba(:,:,:,nm) = stdba(:,:,:,nm) + (newba - prvba).*(newba - outba);
-        stdqf(:,:,:,nm) = stdqf(:,:,:,nm) + (newqf - prvqf).*(newqf - outqf);
-	maxqf = max(maxqf, newqf);
+            %%% Hold these for online algorithm
+            outba = prvba + (newba - prvba)/ny;
+            outqf = prvqf + (newqf - prvqf)/ny;
+
+            avgba(:,:,:,nm) = outba;
+            avgqf(:,:,:,nm) = outqf;
+            stdba(:,:,:,nm) = stdba(:,:,:,nm) + (newba - prvba).*(newba - outba);
+            stdqf(:,:,:,nm) = stdqf(:,:,:,nm) + (newqf - prvqf).*(newqf - outqf);
+            maxqf = max(maxqf, newqf);
+        end
     end
+    % Sometimes we get very small negatives
+    stdba = sqrt(abs(stdba)/(YEARF - YEAR0 + 1));
+    stdqf = sqrt(abs(stdqf)/(YEARF - YEAR0 + 1));
+    % Threshold to avoid NaNs
+    stdqf = max(stdqf, max(stdqf(:))/1e9);
+
+    save(fclim, 'avgba', 'stdba', 'avgqf', 'stdqf', 'maxqf', '-v7');
+    toc;
 end
-% Sometimes we get very small negatives
-stdba = sqrt(abs(stdba)/(YEARF - YEAR0 + 1));
-stdqf = sqrt(abs(stdqf)/(YEARF - YEAR0 + 1));
-% Threshold to avoid NaNs
-stdqf = max(stdqf, max(stdqf(:))/1e9);
-toc;
 
 % Daily
 % ---
@@ -187,6 +199,21 @@ for id = 1:numel(DNOUT)
     fout = [DIROUT, '/burn/', syear, '/MiCASA_v', VERSION, '_burn_', ...
         CASARES, '_daily_', syear, smon, sday, '.nc4'];
 
+    % Skip if file exists and not reprocessing
+    if isfile(fout)
+        if REPRO
+            [status, result] = system(['rm ', fout]);
+        else
+            continue;
+        end
+    end
+
+    % Make sure output folder exists
+    dnowout = [DIROUT, '/burn/', syear];
+    if ~isfolder(dnowout)
+        [status, result] = system(['mkdir -p ', dnowout]);
+    end
+
     newqf(:,:,1) = ncread(fqf, 'biomass');
     newqf(:,:,2) = newqf(:,:,1);
     newqf(:,:,3) = newqf(:,:,1);
@@ -208,21 +235,6 @@ for id = 1:numel(DNOUT)
 
     % Threshold (could be before or after month conversion)
     newba = min(max(newba, 0), maxba);
-
-    % Skip if file exists and not reprocessing
-    if isfile(fout)
-        if REPRO
-            [status, result] = system(['rm ', fout]);
-        else
-            continue;
-        end
-    end
-
-    % Make sure output folder exists
-    dnowout = [DIROUT, '/burn/', syear];
-    if ~isfolder(dnowout)
-        [status, result] = system(['mkdir -p ', dnowout]);
-    end
 
     % Write it
     time = datenum(year, nm, nd) - datenum(YSTART, 1, 1);

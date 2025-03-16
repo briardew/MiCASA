@@ -121,7 +121,7 @@ for nyday = 1:365
 
     % Output variables (DIRMET defined in setup)
     dstr = ['CLIM', datestr(datenum(midYearClim,01,01)+nyday-1, 'mmdd')];
-    fbit = ['MiCASA_v', VERSION, '_meteo__x', num2str(NLON), '_y', ...
+    fbit = ['MiCASA_v', VERSION, '_meteo_x', num2str(NLON), '_y', ...
         num2str(NLAT), '_3hrly_', dstr, '.', FEXT];
     fout = [DIRMET, '/', fbit];
 
