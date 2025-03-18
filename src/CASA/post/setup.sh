@@ -11,8 +11,10 @@ module load nco
 
 # Public URL and on-prem directories
 SERVE="https://portal.nccs.nasa.gov/datashare/gmao/geos_carb"
-ROOTPUB="/css/gmao/geos_carb/pub"
-ROOTNRT="/css/gmao/geos_carb/share"
+#ROOTPUB="/css/gmao/geos_carb/pub"
+#ROOTNRT="/css/gmao/geos_carb/share"
+ROOTPUB="/discover/nobackup/projects/gmao/geos_carb/share"
+ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 # Rest should be generic
 # ---

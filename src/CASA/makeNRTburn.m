@@ -119,7 +119,7 @@ if isfile(fclim) && ~REPRO
     disp('Loading climatologies ...');
     tic;
     load(fclim);
-    toc;
+    disp(['Elapsed time is ', int2str(toc), ' seconds.']);
 else
     disp('Computing climatologies ...');
     tic;
@@ -167,7 +167,7 @@ else
     stdqf = max(stdqf, max(stdqf(:))/1e9);
 
     save(fclim, 'avgba', 'stdba', 'avgqf', 'stdqf', 'maxqf', '-v7');
-    toc;
+    disp(['Elapsed time is ', int2str(toc), ' seconds.']);
 end
 
 % Daily
@@ -293,7 +293,7 @@ for id = 1:numel(DNOUT)
     ncwriteatt(fout, 'baherb', 'units','m2');
     ncwriteatt(fout, 'baherb', 'long_name','Herbaceous burned area');
 end
-toc;
+disp(['Elapsed time is ', int2str(toc), ' seconds.']);
 
 % Monthly
 % ---
@@ -345,4 +345,4 @@ for year = YRAV0:YRAVF
         ncwrite(fout,    'time_bnds', [time; time+monlen]);
     end
 end
-toc;
+disp(['Elapsed time is ', int2str(toc), ' seconds.']);
