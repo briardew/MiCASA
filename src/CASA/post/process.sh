@@ -10,7 +10,7 @@ echo "---"
 COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
 
 usage() {
-    echo "usage: $0 year [month] [options]"
+    echo "usage: $0 year [options]"
     echo ""
     echo "Post-process MiCASA data"
     echo ""

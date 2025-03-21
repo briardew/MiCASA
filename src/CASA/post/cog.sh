@@ -8,7 +8,7 @@ echo "---"
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
 usage() {
-    echo "usage: $0 year [month] [options]"
+    echo "usage: $0 year [options]"
     echo ""
     echo "Create MiCASA COGs"
     echo ""
