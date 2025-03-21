@@ -10,10 +10,10 @@ POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
 
 if [[ "$#" -lt 1 || ! -f "$COMMAND" ]]; then
-    echo "ERROR: Please provide a valid command to run in batch. For example," 1>&2
-    echo "    $0 process" 1>&2
+    echo "ERROR: Please provide a valid command to run in batch. For example,"
+    echo "    $0 process"
     echo ""
-    echo "Valid commands are: process, cog, upload" 1>&2
+    echo "Valid commands are: process, cog, upload"
     exit 1
 fi
 
@@ -25,7 +25,7 @@ for year in {2001..2009}; do
         cd $MIDIR
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done
 
@@ -37,7 +37,7 @@ for year in {2010..2018}; do
         cd $MIDIR
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done
 
@@ -49,6 +49,6 @@ for year in {2019..2023}; do
         cd $MIDIR
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year batch\"
+        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done

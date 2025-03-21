@@ -7,30 +7,81 @@ echo "---"
 # Fancy way to source setup and support symlinks, spaces, etc.
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
-# Simple outputs, warnings, and errors
-# Would be nice to have a help file (***FIXME***)
-[[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..." 1>&2
+usage() {
+    echo "usage: $0 year [month] [options]"
+    echo ""
+    echo "Create MiCASA COGs"
+    echo ""
+    echo "positional arguments:"
+    echo "  year        4-digit year to post-process"
+    echo ""
+    echo "options:"
+    echo "  -h, --help  show this help message and exit"
+    echo "  --mon MON   only process month MON"
+    echo "  --batch     operate in batch mode (no user input)"
+}
+
+# Get and check arguments
+BATCH=false
+MON0=01
+MONF=12
+
+year="$1"
+if [[ "$year" == "--help" || "$year" == "-h" ]]; then
+    usage
+    exit
+elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
+    echo "ERROR: Invalid year $year"
+    echo ""
+    usage
+    exit 1
+fi
+
+ii=2
+while [[ "$ii" -le "$#" ]]; do
+    arg="${@:$ii:1}"
+    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
+        usage
+        exit
+    elif [[ "$arg" == "--batch" ]]; then
+        BATCH=true
+    elif [[ "$arg" == "--mon" ]]; then
+        ii=$((ii+1))
+        mon="${@:$ii:1}"
+        if [[ "$mon" -lt 1 || 12 -lt "$mon" ]]; then
+            echo "ERROR: Invalid month $mon"
+            echo ""
+            usage
+            exit 1
+        fi
+        MON0=$(printf %02d "$mon")
+        MONF=$(printf %02d "$mon")
+    else
+        echo "ERROR: Invalid $ii-th argument $arg"
+        echo ""
+        usage
+        exit 1
+    fi
+    ii=$((ii+1))
+done
+
+# Diagnostic outputs and warnings
+[[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..."
 
 echo "Input  directory: $DIROUT"
 echo "Output directory: $DIRCOG"
 echo "Collection: $COLTAG"
-
-year="$1"
-if [[ "$#" -lt 1 || "$year" -lt 0 || 9999 -lt "$year" ]]; then
-    echo "ERROR: Please provide a valid 4-digit year as an argument. For example," 1>&2
-    echo "    $0 2003" 1>&2
-    exit 1
-fi
 echo "Year: $year"
+echo "Month(s): $MON0..$MONF"
 
 # Give a chance to abort
-if [[ "$2" != batch ]]; then
+if [[ "$BATCH" != true ]]; then
     echo ""
     read -n1 -s -r -p $"Press any key to continue ..." unused
     echo ""
 fi
 
-for mon in {01..12}; do
+for mon in $(seq -f "%02g" $MON0 $MONF); do
     # Get daily files
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
     flist=()

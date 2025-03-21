@@ -4,8 +4,8 @@
 # ---
 # NCO utilities
 source "$LMOD_PKG"/init/bash
-# Worthwhile to keep a record, but modules aren't consistent across discover
-# nodes, especially over OS updates
+# Worthwhile to keep a record, but modules aren't consistent across
+# NCCS Discover nodes, especially over OS updates
 #module load nco/5.1.4						# Value used for v1
 module load nco
 
@@ -21,6 +21,12 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 if [[ "$MIRUN" == "vNRT" ]]; then
     VERSION="NRT"
     ROOTOUT="$ROOTNRT"
+    # We need this for now: 1) Forecast creates files that need to be
+    # overwritten and 2) Monthly means will be computed when the *forecast*
+    # completes the month; so they need to be overwritten too. Biggest
+    # downside is reprocessing a year takes A LOT of time; maybe move
+    # process.sh
+    REPRO=true
 else
     VERSION="1"
     ROOTOUT="$ROOTPUB"

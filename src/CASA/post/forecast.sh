@@ -34,7 +34,7 @@ echo "Start date: $daybeg"
 echo "Num days:   $NFCST"
 
 # Give a chance to abort
-if [[ "$2" != batch ]]; then
+if [[ "$2" != "--batch" ]]; then
     echo ""
     read -n1 -s -r -p $"Press any key to continue ..." unused
     echo ""

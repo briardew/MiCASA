@@ -19,7 +19,7 @@ def download(col, dateget, dirget, repro=False):
     # Suboptimal, but needed for discover hack
     return call(WGETCMD + ' ' + wgargs + ' ' +
         'https://e4ftl01.cr.usgs.gov/' + ardir[col[:3]] + '/' + col + '/' +
-        dateget + '/ -A "*.hdf,*.h5" -P ' + dirget, shell=True)
+        dateget + '/ -A "*.hdf,*.h5" -P "' + dirget + '"', shell=True)
 
 def swaphead(ff, headin, headout):
     '''Swap one MODIS/VIIRS collection header with another'''
