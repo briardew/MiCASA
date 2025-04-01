@@ -77,7 +77,7 @@ echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
 # Give a chance to abort
-if [[ "$BATCH" != true ]]; then
+if ! [[ "$BATCH" ]]; then
     echo ""
     read -n1 -s -r -p $"Press any key to continue ..." unused
     echo ""

@@ -7,10 +7,6 @@ through GES DISC while the driver data is not.
 
 * Have `restart.mat` saved at the very end? No need for `do_restart_all`?
 
-* Rename `modvir` inputs as below,
-    `MiCASA_v1_vegind_x3600_y1800_daily_20030803.nc4`
-    `MiCASA_v1_burn_x3600_y1800_daily_20030803.nc4`
-    `MiCASA_v1_cover_x3600_y1800_yearly_2003.nc4`
 * Compress, and stage on NCCS DataPortal (in a dir named `drivers`?). Don't
   concatenate into a single file (drastic time differences/applications).
 
@@ -18,7 +14,11 @@ through GES DISC while the driver data is not.
 * Clean up `masinfo` directory
 * Improve post-processing
 
-* Make a restarts directory and manually store some by date
+* Have everything reference a global configuration file. Right now the code
+  and data have to sit in the same root directory. This is because the
+  config is spread over Python, Matlab, and Bash scripts. I've done a lot
+  to make the config consistent, but this has relied upon fancy tricks,
+  not simplicity and directness.
 
 "Backlog"
 ---
