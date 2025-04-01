@@ -147,7 +147,7 @@ for num in $(seq $numbeg $numend); do
     year=$(($num/12))
     mon=$(($num - $year*12 + 1))
 
-    "$MIROOT"/src/CASA/post/process.sh $year --mon mon --ver $VERSION --batch
+    "$MIROOT"/src/CASA/post/process.sh $year --mon $mon --ver $VERSION --batch
 done
 
 # Forecast
