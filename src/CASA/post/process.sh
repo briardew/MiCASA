@@ -1,16 +1,14 @@
 #!/bin/bash
 
-echo "---"
-echo "MiCASA post-processing" 
-echo "---"
+COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
 
 # Fancy way to source setup and support symlinks, spaces, etc.
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
-COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
-
+# Get and check arguments
+# ---
 usage() {
-    echo "usage: $0 year [options]"
+    echo "usage: $(basename "$0") year [options]"
     echo ""
     echo "Post-process MiCASA data"
     echo ""
@@ -20,10 +18,10 @@ usage() {
     echo "options:"
     echo "  -h, --help  show this help message and exit"
     echo "  --mon MON   only process month MON"
+    echo "  --ver VER   version (default: $VERSION)"
     echo "  --batch     operate in batch mode (no user input)"
 }
 
-# Get and check arguments
 BATCH=false
 MON0=01
 MONF=12
@@ -58,6 +56,9 @@ while [[ "$ii" -le "$#" ]]; do
         fi
         MON0=$(printf %02d "$mon")
         MONF=$(printf %02d "$mon")
+    elif [[ "$arg" == "--ver" ]]; then
+        ii=$((ii+1))
+        VERSION="${@:$ii:1}"
     else
         echo "ERROR: Invalid $ii-th argument $arg"
         echo ""
@@ -67,7 +68,15 @@ while [[ "$ii" -le "$#" ]]; do
     ii=$((ii+1))
 done
 
-# Diagnostic outputs and warnings
+# Re-run setup in case $VERSION has changed
+. "$(dirname "$(readlink -f "$0")")"/setup.sh
+
+# Outputs and warnings
+# ---
+echo "---"
+echo "MiCASA post-processing" 
+echo "---"
+
 [[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..."
 
 echo "Input  directory: $DIRIN"
@@ -77,7 +86,7 @@ echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
 # Give a chance to abort
-if ! [[ "$BATCH" ]]; then
+if [[ "$BATCH" != true ]]; then
     echo ""
     read -n1 -s -r -p $"Press any key to continue ..." unused
     echo ""

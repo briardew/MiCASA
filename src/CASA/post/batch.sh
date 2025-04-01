@@ -1,17 +1,24 @@
 #!/bin/bash
 
+# This is a big script for batch reprocessing a retrospective stream.  It is
+# very NCCS Discover specific.  Not much effort has been put into
+# modularization because it's likely this will depend heavily on the computing
+# platform and hopefully only run a handful of times.
+
 echo "Only for checking final product. Beware running this for real ..."
 exit 1
 
 # Still really not great
-COMMAND="$1.sh"
+VERSION="1"
+COMMAND="$1.sh --ver $VERSION"
+
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
 
 if [[ "$#" -lt 1 || ! -f "$COMMAND" ]]; then
     echo "ERROR: Please provide a valid command to run in batch. For example,"
-    echo "    $0 process"
+    echo "    $(basename "$0") process"
     echo ""
     echo "Valid commands are: process, cog, upload"
     exit 1

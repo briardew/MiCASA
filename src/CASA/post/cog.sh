@@ -1,14 +1,12 @@
 #!/bin/bash
 
-echo "---"
-echo "MiCASA COG generation" 
-echo "---"
-
 # Fancy way to source setup and support symlinks, spaces, etc.
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
+# Get and check arguments
+# ---
 usage() {
-    echo "usage: $0 year [options]"
+    echo "usage: $(basename "$0") year [options]"
     echo ""
     echo "Create MiCASA COGs"
     echo ""
@@ -18,10 +16,10 @@ usage() {
     echo "options:"
     echo "  -h, --help  show this help message and exit"
     echo "  --mon MON   only process month MON"
+    echo "  --ver VER   version (default: $VERSION)"
     echo "  --batch     operate in batch mode (no user input)"
 }
 
-# Get and check arguments
 BATCH=false
 MON0=01
 MONF=12
@@ -56,6 +54,9 @@ while [[ "$ii" -le "$#" ]]; do
         fi
         MON0=$(printf %02d "$mon")
         MONF=$(printf %02d "$mon")
+    elif [[ "$arg" == "--ver" ]]; then
+        ii=$((ii+1))
+        VERSION="${@:$ii:1}"
     else
         echo "ERROR: Invalid $ii-th argument $arg"
         echo ""
@@ -65,7 +66,15 @@ while [[ "$ii" -le "$#" ]]; do
     ii=$((ii+1))
 done
 
-# Diagnostic outputs and warnings
+# Re-run setup in case $VERSION has changed
+. "$(dirname "$(readlink -f "$0")")"/setup.sh
+
+# Outputs and warnings
+# ---
+echo "---"
+echo "MiCASA COG generation" 
+echo "---"
+
 [[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..."
 
 echo "Input  directory: $DIROUT"

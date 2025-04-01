@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Converts to a lower resolution
+
 REPRO=true
 YEAR0=2001
 YEARF=2024

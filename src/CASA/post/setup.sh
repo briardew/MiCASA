@@ -18,8 +18,12 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 # Rest should be generic
 # ---
-if [[ "$MIRUN" == "vNRT" ]]; then
-    VERSION="NRT"
+[[ -z "$VERSION" ]] && VERSION="NRT"
+[[ -z "$MIDIR" ]] && MIDIR="$HOME/Projects/MiCASA"
+[[ -z "$REPRO" ]] && REPRO=false
+[[ -z "$REPROCOG" ]] && REPROCOG=false
+
+if [[ "$VERSION" == "NRT" ]]; then
     ROOTOUT="$ROOTNRT"
     # We need this for now: 1) Forecast creates files that need to be
     # overwritten and 2) Monthly means will be computed when the *forecast*
@@ -28,13 +32,8 @@ if [[ "$MIRUN" == "vNRT" ]]; then
     # process.sh
     REPRO=true
 else
-    VERSION="1"
     ROOTOUT="$ROOTPUB"
 fi
-
-[[ -z "$MIDIR" ]] && MIDIR="$HOME/Projects/MiCASA"
-[[ -z "$REPRO" ]] && REPRO=false
-[[ -z "$REPROCOG" ]] && REPROCOG=false
 
 DIRIN="$MIDIR/data/v$VERSION/holding"
 

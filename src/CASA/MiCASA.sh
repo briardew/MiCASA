@@ -1,28 +1,49 @@
 #!/bin/bash
 
-# Set environment variables (also used by post)
-MIROOT="$HOME/Projects/MiCASA"					# Root dir
-
 # Defaults
-VERSION="NRT"							# Run name
-daybegNRT=$(date -d "-1 days" +%F)
-dayendNRT=$(date -d "-1 days" +%F)
-daybegRP="$(date -d "-3 months" +%Y)-$(date -d "-3 months" +%m)-01"
-daybegRP="$(date -d "-2 months" +%Y)-$(date -d "-2 months" +%m)-01"
+# ---
+# NB: Different than modvir defaults, but those should probably be changed
+# (you're never going to want to push play and have it process 25+ years)
+export MIROOT="$HOME/Projects/MiCASA"				# Root dir (export needed by post)
+export VERSION="NRT"						# Version (export needed by post)
+RUNNAME="v$VERSION"						# Run name
+daybeg=$(date -d "-1 days" +%F)
+dayend=$(date -d "-1 days" +%F)
 BATCH=false
 
-# NB: Different than modvir defaults, but those should probably be changed
-# You're never going to want to just push play and have it process 25 years
+# Initialize environment
+# ---
+# This initialization is system specific. It needs to
+#     1) Activate the Python stack where MiCASA is installed,
+#     2) Load the NCO utilities,
+#     3) Load Matlab/Octave and define the appropriate $matlab command.
+# Note that it is theoretically possible to do this all in .bashrc, but
+# on NCCS Discover we don't (yet).
+
+# Conda is designed for interactive shells, gets cranky without this
+# May also define aliases which are not defined for non-interactive
+. ~/.bashrc
+conda activate
+
+module load nco
+# Can be replaced by Octave (in dev)
+module load matlab/R2020a
+export MLM_LICENSE_FILE="27000@ace64:28000@ls1,28000@ls2,28000@ls3"
+matlab="matlab -nosplash -nodesktop"
+
+# Get and check arguments
+# ---
 usage() {
-    echo "usage: $0 [options]"
+    echo "usage: $(basename "$0") [options]"
     echo ""
     echo "Run MiCASA"
     echo ""
     echo "options:"
     echo "  -h, --help   show this help message and exit"
-    echo "  --beg BEG    begin date (default: $daybegNRT for NRT; $daybegRP otherwise)"
-    echo "  --end END    end date (default: $dayendNRT for NRT; $dayendRP otherwise)"
+    echo "  --beg BEG    begin date (default: $daybeg)"
+    echo "  --end END    end date (default: $dayend)"
     echo "  --ver VER    version (default: $VERSION)"
+    echo "  --run RUN    run name (default: $RUNNAME)"
     echo "  --root ROOT  root directory (default: $MIROOT)"
     echo "  --batch      operate in batch mode (no user input)"
 }
@@ -58,12 +79,11 @@ while [[ "$ii" -le "$#" ]]; do
     elif [[ "$arg" == "--ver" ]]; then
         ii=$((ii+1))
         VERSION="${@:$ii:1}"
-        if ! [[ $(datecheck "$dayend") ]]; then
-            echo "ERROR: Invalid version $VERSION"
-            echo ""
-            usage
-            exit 1
-        fi
+        [[ "$RUNKEEP" != true ]] && RUNNAME="v$VERSION"
+    elif [[ "$arg" == "--run" ]]; then
+        ii=$((ii+1))
+        RUNNAME="${@:$ii:1}"
+        RUNKEEP=true
     elif [[ "$arg" == "--root" ]]; then
         ii=$((ii+1))
         MIROOT="${@:$ii:1}"
@@ -78,41 +98,25 @@ while [[ "$ii" -le "$#" ]]; do
     ii=$((ii+1))
 done
 
-# Needed for post-processing scripts
-export $MIROOT="$MIROOT"
+# Outputs and warnings
+# ---
+echo "---"
+echo "MiCASA" 
+echo "---"
 
-echo "WARNING: This will overwrite files in $MIROOT/data/v$VERSION"
+echo "WARNING: This will overwrite drivers in $MIROOT/data/v$VERSION/drivers"
+echo "WARNING:             and CASA output in $MIROOT/data/$RUNNAME"
 echo ""
 
 echo "Start date: $daybeg"
 echo "End   date: $dayend"
 
 # Give a chance to abort
-if ! [[ "$BATCH" ]]; then
+if [[ "$BATCH" != true ]]; then
     echo ""
     read -n1 -s -r -p $"Press any key to continue ..." unused
     echo ""
 fi
-
-# Initialize environment
-# ---
-# This initialization is system specific. It needs to 1) Activate the Python
-# stack where modvir is installed, 2) Load the NCO utilities, and
-# 3) Load Matlab/Octave and define the appropriate $mcons command.
-# Note that it is theoretically possible to do this all in .bashrc, but
-# on discover we don't (yet).
-
-# Conda is designed for interactive shells, gets cranky without this
-# May also define aliases which are not defined for non-interactive
-. ~/.bashrc
-conda activate
-
-module load nco
-# To be replaced by Octave once NCCS gets their act together
-module load matlab/R2020a
-export MLM_LICENSE_FILE="27000@ace64:28000@ls1,28000@ls2,28000@ls3"
-# Needed even if you have an interactive shell alias
-mcons="matlab -nosplash -nodesktop"
 
 # Run
 # ---
@@ -130,9 +134,9 @@ else
     modvir vegind --mode fill   --beg "$daybe4" --end "$dayend" "${MVARGS[@]}"
 fi
 cd "$MIROOT"/src/CASA || exit
-[[ "$VERSION" == "NRT" ]] && $mcons -r "makeNRTburn; exit"
-$mcons -r "runname = 'v$VERSION'; CASA; convertOutput; exit"
-$mcons -r "runname = 'v$VERSION'; lofi.make_sink; lofi.make_3hrly_land; exit"
+[[ "$VERSION" == "NRT" ]] && $matlab -r "makeNRTburn; exit"
+$matlab -r "runname = '$RUNNAME'; CASA; convertOutput; exit"
+$matlab -r "runname = '$RUNNAME'; lofi.make_sink; lofi.make_3hrly_land; exit"
 
 # Post process
 # ---
@@ -143,7 +147,7 @@ for num in $(seq $numbeg $numend); do
     year=$(($num/12))
     mon=$(($num - $year*12 + 1))
 
-    "$MIROOT"/src/CASA/post/process.sh $year --mon mon --batch
+    "$MIROOT"/src/CASA/post/process.sh $year --mon mon --ver $VERSION --batch
 done
 
 # Forecast
