@@ -18,8 +18,8 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 # Rest should be generic
 # ---
+[[ -z "$MIROOT" ]] && MIROOT="$HOME/Projects/MiCASA"
 [[ -z "$VERSION" ]] && VERSION="NRT"
-[[ -z "$MIDIR" ]] && MIDIR="$HOME/Projects/MiCASA"
 [[ -z "$REPRO" ]] && REPRO=false
 [[ -z "$REPROCOG" ]] && REPROCOG=false
 
@@ -35,7 +35,7 @@ else
     ROOTOUT="$ROOTPUB"
 fi
 
-DIRIN="$MIDIR/data/v$VERSION/holding"
+DIRIN="$MIROOT/data/v$VERSION/holding"
 
 # The rest should auto-generate
 # ---

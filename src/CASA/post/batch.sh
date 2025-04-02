@@ -29,10 +29,10 @@ for year in {2001..2009}; do
     NODE="discover21"
     [[ "$1" == "upload" ]] && NODE="discover31"				# Hack for upload
     ssh "$NODE" "
-        cd $MIDIR
+        cd $MIROOT
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
+        screen -L -dmS post bash --login -c \"cd $MIROOT;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done
 
@@ -41,10 +41,10 @@ for year in {2010..2018}; do
     NODE="discover22"
     [[ "$1" == "upload" ]] && NODE="discover32"				# Hack for upload
     ssh "$NODE" "
-        cd $MIDIR
+        cd $MIROOT
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
+        screen -L -dmS post bash --login -c \"cd $MIROOT;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done
 
@@ -53,9 +53,9 @@ for year in {2019..2023}; do
     NODE="discover23"
     [[ "$1" == "upload" ]] && NODE="discover33"				# Hack for upload
     ssh "$NODE" "
-        cd $MIDIR
+        cd $MIROOT
         mkdir -p logs/post/$year
         cd logs/post/$year
-        screen -L -dmS post bash --login -c \"cd $MIDIR;$POSTDIR/$COMMAND $year --batch\"
+        screen -L -dmS post bash --login -c \"cd $MIROOT;$POSTDIR/$COMMAND $year --batch\"
         exit"
 done
