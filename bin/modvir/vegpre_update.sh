@@ -8,9 +8,11 @@
 # discover22,24,31,32 are slow
 
 ssh discover-cssrw "
+    . ~/.bashrc
+    conda activate
     cd $MIDIR
     mkdir -p logs/vegpre/2024b
     cd logs/vegpre/2024b
     echo $hostname >> screenlog.0
-    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg 2024-08-01 --end 2024-09-30\"
+    screen -L -dmS modvir bash --login -c \"cd $MIDIR;modvir vegind --data $DATADIR --mode regrid --beg 2024-10-01 --end 2024-12-31\"
     exit"
