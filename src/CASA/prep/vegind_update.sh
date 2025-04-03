@@ -18,6 +18,6 @@ UPDATEB4=$(date -d "$UPDATE0-1 days" +%F)
 ssh "${HOSTS[0]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/vegind/update
-    cd "$MIROOT"/logs/vegpre/update || exit
+    cd "$MIROOT"/logs/vegind/update || exit
     screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg $UPDATEB4 --end $UPDATEF\"
     exit"
