@@ -132,6 +132,7 @@ if [[ "$VERSION" == "NRT" ]]; then
 else
     modvir vegind --mode regrid --beg "$daybeg" --end "$dayend" "${MVARGS[@]}"
     modvir vegind --mode fill   --beg "$daybe4" --end "$dayend" "${MVARGS[@]}"
+    modvir burn   --mode regrid --beg "$daybeg" --end "$dayend" "${MVARGS[@]}"
 fi
 cd "$MIROOT"/src/CASA || exit
 [[ "$VERSION" == "NRT" ]] && $matlab -r "makeNRTburn; exit"
