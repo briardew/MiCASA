@@ -18,15 +18,16 @@ UPDATEF="$year-12-31"				# End   date for update
 # But beware, this will launch ~25 screen sessions on your current machine
 #HOSTS=("$hostname")
 
-# NCCS Discover hosts: discover11-14, 21-24, 31-34
-# discover22,24,31,32 appear slow?
+# NCCS Discover hosts: discover11-14, 21-24 (not rn), 31-34
 HOSTS=(\
     "discover11" "discover11" "discover11" "discover11" \
     "discover12" "discover12" "discover12" "discover12" \
     "discover13" "discover13" "discover13" "discover13" \
     "discover14" "discover14" "discover14" "discover14" \
-    "discover21" "discover21" "discover21" "discover21" \
-    "discover23" "discover23" "discover23" "discover23")
+    "discover31" "discover31" "discover31" "discover31" \
+    "discover32" "discover32" "discover32" "discover32" \
+    "discover33" "discover33" "discover33" "discover33" \
+    "discover34" "discover34" "discover34" "discover34")
 
 . ~/.bashrc
 conda activate
