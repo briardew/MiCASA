@@ -16,7 +16,7 @@ UPDATEF="2024-12-31"				# End   date for update
 
 # You can use the below and comment out the NCCS Discover specific one below
 # But beware, this will launch ~25 screen sessions on your current machine
-#HOSTS=("$hostname")
+#HOSTS=("$HOSTNAME")
 
 # NCCS Discover hosts: discover11-14, 21-24 (not rn), 31-34
 HOSTS=(\

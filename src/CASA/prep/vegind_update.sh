@@ -19,5 +19,5 @@ ssh "${HOSTS[0]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/vegind/update
     cd "$MIROOT"/logs/vegpre/update || exit
-    screen -L -dmS modvir bash --login -c \"echo $hostname;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg $UPDATEB4 --end $UPDATEF\"
+    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg $UPDATEB4 --end $UPDATEF\"
     exit"

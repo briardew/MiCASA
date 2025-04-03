@@ -27,12 +27,12 @@ for year in $(seq -w $YEAR0VEG $YEARF); do
         . "$PREPDIR"/setup.sh
         mkdir -p "$MIROOT"/logs/vegpre/${year}a
         cd "$MIROOT"/logs/vegpre/${year}a || exit
-        screen -L -dmS modvir bash --login -c \"echo $hostname;modvir vegind --data "$MIROOT/$DATADIR" --mode regrid --beg $year-01-01 --end $year-06-30\"
+        screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode regrid --beg $year-01-01 --end $year-06-30\"
         exit"
     ssh "${HOSTS[$nn]}" "
         . "$PREPDIR"/setup.sh
         mkdir -p "$MIROOT"/logs/vegpre/${year}b
         cd "$MIROOT"/logs/vegpre/${year}b || exit
-        screen -L -dmS modvir bash --login -c \"echo $hostname;modvir vegind --data "$MIROOT/$DATADIR" --mode regrid --beg $year-07-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode regrid --beg $year-07-01 --end $year-12-31\"
         exit"
 done

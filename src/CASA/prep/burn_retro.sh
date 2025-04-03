@@ -24,6 +24,6 @@ for year in $(seq -w $YEAR0 $YEARF); do
         . "$PREPDIR"/setup.sh
         mkdir -p "$MIROOT"/logs/burn/$year
         cd "$MIROOT"/logs/burn/$year || exit
-        screen -L -dmS modvir bash --login -c \"echo $hostname;modvir burn --data "$MIROOT/$DATADIR" --mode regrid --beg $year-01-01 --end $year-12-31\"
+        screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir burn --data "$MIROOT/$DATADIR" --mode regrid --beg $year-01-01 --end $year-12-31\"
         exit"
 done
