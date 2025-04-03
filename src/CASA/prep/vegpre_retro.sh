@@ -13,6 +13,10 @@ echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
+echo "ERROR: This is turned off by default to avoid any accidents ..."
+echo "ERROR: Beware running this for real"
+exit 1
+
 # VI starts in the previous year (for fill)
 YEAR0VEG=$((YEAR0 - 1))
 

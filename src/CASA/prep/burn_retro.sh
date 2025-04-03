@@ -13,6 +13,10 @@ echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
+echo "ERROR: This is turned off by default to avoid any accidents ..."
+echo "ERROR: Beware running this for real"
+exit 1
+
 NUMHOSTS=${#HOSTS[@]}
 for year in $(seq -w $YEAR0 $YEARF); do
     nn=$((year - YEAR0 > NUMHOSTS - 1 ? NUMHOSTS - 1 : year - YEAR0))

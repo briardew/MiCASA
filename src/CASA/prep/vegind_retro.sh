@@ -13,6 +13,10 @@ echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
+echo "ERROR: This is turned off by default to avoid any accidents ..."
+echo "ERROR: Beware running this for real"
+exit 1
+
 ssh "${HOSTS[0]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/vegind/retro
