@@ -20,7 +20,7 @@ DNUM0 = datenum(1980, 01, 01);
 DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
 
 % Get met data
-M2HEAD = ['MiCASA_v', VERSION, '_x', num2str(NLON), '_y', ...
+M2HEAD = ['MiCASA_v', VERSION, '_meteo_x', num2str(NLON), '_y', ...
     num2str(NLAT)];
 
 TOTYRS = endYear - startYear + 1;
