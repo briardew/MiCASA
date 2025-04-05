@@ -25,12 +25,6 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 if [[ "$VERSION" == "NRT" ]]; then
     ROOTOUT="$ROOTNRT"
-    # We need this for now: 1) Forecast creates files that need to be
-    # overwritten and 2) Monthly means will be computed when the *forecast*
-    # completes the month; so they need to be overwritten too. Biggest
-    # downside is reprocessing a year takes A LOT of time; maybe move
-    # process.sh
-    REPRO=true
 else
     ROOTOUT="$ROOTPUB"
 fi

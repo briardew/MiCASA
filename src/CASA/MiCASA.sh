@@ -144,13 +144,13 @@ $matlab -r "runname = '$RUNNAME'; lofi.make_sink; lofi.make_3hrly_land; exit"
 numbeg=$(($(date -d "$daybeg" +%Y)*12 + $(date -d "$daybeg" +%m) - 1))
 numend=$(($(date -d "$dayend" +%Y)*12 + $(date -d "$dayend" +%m) - 1))
 
-# Post-process for NRT needs reprocessing on because forecast creates
-# future files; this is set in post/setup.sh
 for num in $(seq $numbeg $numend); do
     year=$(($num/12))
     mon=$(($num - $year*12 + 1))
 
-    "$MIROOT"/src/CASA/post/process.sh $year --mon $mon --ver $VERSION --batch
+    # NRT post MUST HAVE reprocessing on because forecast creates future files
+    # and will complete monthlies
+    "$MIROOT"/src/CASA/post/process.sh $year --mon $mon --ver $VERSION --repro --batch
 done
 
 # Forecast

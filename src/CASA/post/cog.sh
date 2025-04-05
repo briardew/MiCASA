@@ -17,6 +17,7 @@ usage() {
     echo "  -h, --help  show this help message and exit"
     echo "  --mon MON   only process month MON"
     echo "  --ver VER   version (default: $VERSION)"
+    echo "  --repro     reprocess/overwrite (default: false)"
     echo "  --batch     operate in batch mode (no user input)"
 }
 
@@ -41,8 +42,6 @@ while [[ "$ii" -le "$#" ]]; do
     if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
         usage
         exit
-    elif [[ "$arg" == "--batch" ]]; then
-        BATCH=true
     elif [[ "$arg" == "--mon" ]]; then
         ii=$((ii+1))
         mon="${@:$ii:1}"
@@ -57,6 +56,10 @@ while [[ "$ii" -le "$#" ]]; do
     elif [[ "$arg" == "--ver" ]]; then
         ii=$((ii+1))
         VERSION="${@:$ii:1}"
+    elif [[ "$arg" == "--repro" ]]; then
+        REPROCOG=true
+    elif [[ "$arg" == "--batch" ]]; then
+        BATCH=true
     else
         echo "ERROR: Invalid $ii-th argument $arg"
         echo ""
@@ -74,14 +77,16 @@ done
 echo "---"
 echo "MiCASA COG generation" 
 echo "---"
-
-[[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..."
-
 echo "Input  directory: $DIROUT"
 echo "Output directory: $DIRCOG"
 echo "Collection: $COLTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
+
+if [[ "$REPROCOG" == true ]]; then
+    echo ""
+    echo "WARNING: Reprocessing, will overwrite files ..."
+fi
 
 # Give a chance to abort
 if [[ "$BATCH" != true ]]; then
