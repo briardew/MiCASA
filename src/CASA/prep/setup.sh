@@ -6,10 +6,10 @@
 DATADIR="data/v1/drivers"
 
 YEAR0=2001					# First full year of retro product
-YEARF=2023					# Last  full year of retro product
+YEARF=2024					# Last  full year of retro product
 
-UPDATE0="2024-10-01"				# Start date for update
-UPDATEF="2024-12-31"				# End   date for update
+UPDATE0="2025-01-01"				# Start date for update
+UPDATEF="2025-01-31"				# End   date for update
 
 # HOSTS is a list of hosts to use for each year from $YEAR0 to $YEARF
 # The last host is persisted if the list runs out

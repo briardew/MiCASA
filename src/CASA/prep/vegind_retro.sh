@@ -17,9 +17,12 @@ echo "ERROR: This is turned off by default to avoid any accidents ..."
 echo "ERROR: Beware running this for real"
 exit 1
 
+# VI starts in the previous year (for fill)
+YEAR0=$((YEAR0 - 1))
+
 ssh "${HOSTS[0]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/vegind/retro
     cd "$MIROOT"/logs/vegpre/retro || exit
-    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg 2000-02-16\"
+    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg $YEAR0-01-01\"
     exit"
