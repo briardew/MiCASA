@@ -13,7 +13,7 @@ echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
-year=$((YEARF + 1))
+year=$(date -d "$UPDATE0-01-01" +%Y)
 ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/burn/$year

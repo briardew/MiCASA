@@ -13,16 +13,16 @@ echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
-year=$((YEARF + 1))
+year=$(date -d "$UPDATE0-01-01" +%Y)
 ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
-    mkdir -p "$MIROOT"/logs/mirror/burn-$year
-    cd "$MIROOT"/logs/mirror/burn-$year || exit
+    mkdir -p "$MIROOT"/logs/mirror/burn/$year
+    cd "$MIROOT"/logs/mirror/burn/$year || exit
     screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir burn --data "$MIROOT/$DATADIR" --mode get --beg $UPDATE0 --end $UPDATEF\"
     exit"
 ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
-    mkdir -p "$MIROOT"/logs/mirror/vegind-$year
-    cd "$MIROOT"/logs/mirror/vegind-$year || exit
+    mkdir -p "$MIROOT"/logs/mirror/vegind/$year
+    cd "$MIROOT"/logs/mirror/vegind/$year || exit
     screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode get --beg $UPDATE0 --end $UPDATEF\"
     exit"

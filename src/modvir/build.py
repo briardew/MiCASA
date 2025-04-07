@@ -274,8 +274,10 @@ def burn(**kwargs):
             restag + '_daily_')
 
         for nm in range(1,13):
-            # Skip if before range
+            # Skip if outside range
             if year == date0.year and nm < date0.month:
+                continue
+            elif year == dateF.year and dateF.month < nm:
                 continue
 
             jdmonth = datetime(year, nm, 1)
