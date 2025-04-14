@@ -9,11 +9,12 @@ echo "---"
 echo "MODIS/VIIRS data mirror update"
 echo "---"
 echo "WARNING: This will write files to $MIROOT/$DATADIR ..."
+echo "WARNING: Mirroring often fails. Re-run this to be sure"
 echo ""
 read -n1 -s -r -p $"Press any key to continue ..." unused
 echo ""
 
-year=$(date -d "$UPDATE0-01-01" +%Y)
+year=$(date -d "$UPDATE0" +%Y)
 ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/mirror/burn/$year
