@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Fancy way to point MIDIR to two directories higher
-# Should support symlinks, spaces, etc.
-[[ -z "$MIROOT" ]] && MIROOT="$HOME/Projects/MiCASA"
-DATADIR="data/v1/drivers"
+# Defaults, pretty hacky
+MIROOT="$HOME/Projects/MiCASA"
+VERSION="1"
+RESTAG="x3600_y1800"
+FEXT="nc4"
+
+DATADIR="data/v$VERSION/drivers"
 
 YEAR0=2001					# First full year of retro product
 YEARF=2024					# Last  full year of retro product

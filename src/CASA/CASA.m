@@ -135,6 +135,7 @@ if lower(do_restart_load(1)) == 'y' && isfile(frestart)
 end
 
 % Run individual years with annual driver data
+saveRestart = 0;
 for year = startYear:endYear
     if lower(do_daily(1)) == 'y'
         NSTEPS = datenum(year+1,01,01) - datenum(year,01,01);
@@ -175,8 +176,9 @@ for year = startYear:endYear
         try
             updateCASAinput
         catch
-            disp('Could not load input ...');
-            return;
+            disp('Could not load driver data ...');
+            step = step - 1;
+            break;
         end
 
         doPET
@@ -190,13 +192,15 @@ for year = startYear:endYear
 
         processData
         saveData
-        if lower(do_restart_all(1)) == 'y'
-            save(frestart, '-v7');
-        end
+
+        saveRestart = 1;
     end
 
-    % Save annual restart no matter what
-    save(frestart, '-v7');
+    % Save annual restart if we made a change
+    if saveRestart
+        save(frestart, '-v7');
+    end
+    saveRestart = 0;
 
     disp(['Year ', int2str(year), ', time used = ', ...
         int2str(toc), ' seconds']);

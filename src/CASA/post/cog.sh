@@ -21,9 +21,11 @@ usage() {
     echo "  --batch     operate in batch mode (no user input)"
 }
 
-BATCH=false
+# Defaults
 MON0=01
 MONF=12
+REPRO=false
+BATCH=false
 
 year="$1"
 if [[ "$year" == "--help" || "$year" == "-h" ]]; then
@@ -57,7 +59,7 @@ while [[ "$ii" -le "$#" ]]; do
         ii=$((ii+1))
         VERSION="${@:$ii:1}"
     elif [[ "$arg" == "--repro" ]]; then
-        REPROCOG=true
+        REPRO=true
     elif [[ "$arg" == "--batch" ]]; then
         BATCH=true
     else
@@ -83,7 +85,7 @@ echo "Collection: $COLTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$REPROCOG" == true ]]; then
+if [[ "$REPRO" == true ]]; then
     echo ""
     echo "WARNING: Reprocessing, will overwrite files ..."
 fi
@@ -136,7 +138,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         for var in NPP Rh FIRE FUEL ATMC NEE NBE; do
             fcog=$(basename "$fin" .nc).tif
             fcog=${fcog/_flux_/_"$var"_}
-            if [[ ! -f "$fcog" || "$REPROCOG" == true ]]; then
+            if [[ ! -f "$fcog" || "$REPRO" == true ]]; then
                 gdal_translate -q -a_srs EPSG:4326 NETCDF:"$ftmp":"$var" \
                     "$DIRUSE/$fcog" -of COG -co COMPRESS=DEFLATE -a_nodata nan
             fi

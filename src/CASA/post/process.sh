@@ -23,9 +23,11 @@ usage() {
     echo "  --batch     operate in batch mode (no user input)"
 }
 
-BATCH=false
+# Defaults
 MON0=01
 MONF=12
+REPRO=false
+BATCH=false
 
 year="$1"
 if [[ "$year" == "--help" || "$year" == "-h" ]]; then
@@ -103,7 +105,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fchk="${COLTAG}_3hrly_$year${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
-    monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
+    monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
@@ -119,15 +121,15 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         mkdir -p "$DIROUT/3hrly/$year/$mon"
 
         # A little extra in case $fin == $fout
-        ftmp="${fout%$FEXT}tmp.$FEXT"
+        ftmp="${fout%"$FEXT"}tmp.$FEXT"
         nccopy -s -d 9 "$fin" "$ftmp"
         mv "$ftmp" "$fout"
 
         ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
         ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
         ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESTAG v$VERSION" "$fout"
-        ncatted -O -h -a LongName,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESTAG" "$fout"
+        ncatted -O -h -a title,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+        ncatted -O -h -a LongName,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESLONG" "$fout"
         ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_3H' "$fout"
         ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
         ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"
@@ -165,7 +167,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fchk="${COLTAG}_daily_$year${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
-    monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
+    monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
@@ -181,15 +183,15 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         mkdir -p "$DIROUT/daily/$year/$mon"
 
         # A little extra in case $fin == $fout
-        ftmp="${fout%$FEXT}tmp.$FEXT"
+        ftmp="${fout%"$FEXT"}tmp.$FEXT"
         nccopy -s -d 9 "$fin" "$ftmp"
         mv "$ftmp" "$fout"
 
         ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
         ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
         ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESTAG v$VERSION" "$fout"
-        ncatted -O -h -a LongName,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESTAG" "$fout"
+        ncatted -O -h -a title,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG v$VERSION" "$fout"
+        ncatted -O -h -a LongName,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG" "$fout"
         ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_D' "$fout"
         ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
         ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"
@@ -234,15 +236,15 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     mkdir -p "$DIROUT/monthly/$year"
 
     # A little extra in case $fin == $fout
-    ftmp="${fout%$FEXT}tmp.$FEXT"
+    ftmp="${fout%"$FEXT"}tmp.$FEXT"
     nccopy -s -d 9 "$fin" "$ftmp"
     mv "$ftmp" "$fout"
 
     ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
     ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
     ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-    ncatted -O -h -a title,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESTAG v$VERSION" "$fout"
-    ncatted -O -h -a LongName,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESTAG" "$fout"
+    ncatted -O -h -a title,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG v$VERSION" "$fout"
+    ncatted -O -h -a LongName,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG" "$fout"
     ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_M' "$fout"
     ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
     ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"

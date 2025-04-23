@@ -2,11 +2,11 @@
 
 # Converts to a lower resolution
 
-REPRO=true
+REPRO=false
 YEAR0=2001
 YEARF=2024
 
-RESTAG="0.5 degree x 0.5 degree"
+RESLONG="0.5 degree x 0.5 degree"
 XIN=3600
 YIN=1800
 XOUT=720
@@ -44,8 +44,8 @@ for year in $(seq "$YEAR0" "$YEARF"); do
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/3hrly/$year/$mon"
             ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG v$VERSION" "$fout"
-            ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG" "$fout"
+            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+            ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
             ncatted -O -h -a remap_hostname,global,d,, "$fout"
             ncatted -O -h -a input_file,global,d,, "$fout"
             hisout="ncremap -m map_${GRIDIN}_to_${GRIDOUT}.nc $(basename "$fin") $(basename "$fout")"
@@ -64,8 +64,8 @@ for year in $(seq "$YEAR0" "$YEARF"); do
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/daily/$year/$mon"
             ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG v$VERSION" "$fout"
-            ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG" "$fout"
+            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+            ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
             ncatted -O -h -a remap_hostname,global,d,, "$fout"
             ncatted -O -h -a input_file,global,d,, "$fout"
             hisout="ncremap -m map_${GRIDIN}_to_${GRIDOUT}.nc $(basename "$fin") $(basename "$fout")"
@@ -83,8 +83,8 @@ for year in $(seq "$YEAR0" "$YEARF"); do
         echo "Converting $fin to $fout ..."
         mkdir -p "$DIROUT/monthly/$year"
         ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG v$VERSION" "$fout"
-        ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESTAG" "$fout"
+        ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+        ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
         ncatted -O -h -a remap_hostname,global,d,, "$fout"
         ncatted -O -h -a input_file,global,d,, "$fout"
         hisout="ncremap -m map_${GRIDIN}_to_${GRIDOUT}.nc $(basename "$fin") $(basename "$fout")"
