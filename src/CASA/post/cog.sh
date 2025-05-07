@@ -102,26 +102,26 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
     flist=()
     for day in $(seq -w 01 "$monlen"); do
-        ff="${COLTAG}_daily_$year$mon$day.nc"
-        fout="$DIROUT/daily/$year/$mon/$ff"
+        ff="${COLTAG}_daily_$year$mon$day.$FEXT"
+        fin="$DIROUT/daily/$year/$mon/$ff"
 
-        [[ -f "$fout" ]] && flist+=("$fout")
+        [[ -f "$fin" ]] && flist+=("$fin")
     done
 
     [[ ${#flist[@]} -eq 0 ]] && exit				# Exit if no files found
     mkdir -p "$DIRCOG/daily/$year/$mon"
 
     # Add monthly file if present
-    ff="${COLTAG}_monthly_$year$mon.nc"
-    fout="$DIROUT/monthly/$year/$ff"
+    ff="${COLTAG}_monthly_$year$mon.$FEXT"
+    fin="$DIROUT/monthly/$year/$ff"
     if [[ ${#flist[@]} -eq $monlen ]]; then
-        flist+=("$fout")
+        flist+=("$fin")
         mkdir -p "$DIRCOG/monthly/$year"
     fi
 
     for fin in "${flist[@]}"; do
         # Create derived variables (NEE & NBE)
-        ftmp="$DIRCOG/$(basename "$fin" .nc).tmp.nc"
+        ftmp="$DIRCOG/$(basename "$fin" ."$FEXT").tmp.$FEXT"
 
         ncap2 -O -h -s 'NEE=Rh-NPP-ATMC;NBE=Rh-NPP-ATMC+FIRE+FUEL' "$fin" "$ftmp"
         ncatted -O -h -a long_name,NEE,o,c,'Net ecosystem exchange'  "$ftmp"
@@ -136,7 +136,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 
         # Convert to COG
         for var in NPP Rh FIRE FUEL ATMC NEE NBE; do
-            fcog=$(basename "$fin" .nc).tif
+            fcog=$(basename "$fin" ".$FEXT").tif
             fcog=${fcog/_flux_/_"$var"_}
             if [[ ! -f "$fcog" || "$REPRO" == true ]]; then
                 gdal_translate -q -a_srs EPSG:4326 NETCDF:"$ftmp":"$var" \
