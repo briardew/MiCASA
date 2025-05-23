@@ -1,0 +1,18 @@
+# To create and activate, run:
+#     conda env create -f environment.yml
+#     conda activate MiCASA-dev
+# See README.md for more.
+name: MiCASA-dev
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.6
+  - numpy
+  - netCDF4
+  - dask
+  - pandas
+  - xarray
+  - rioxarray
+  - gdal
+  - libgdal-hdf5
+  - libgdal-netcdf

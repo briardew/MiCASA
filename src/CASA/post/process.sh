@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# NB: Keeping this named "process.sh", but may mv to "fluxes.sh"
+# But honestly, just transition this to a single Python executable already
+
 COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
 
 # Fancy way to source setup and support symlinks, spaces, etc.
@@ -10,7 +13,7 @@ COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emis
 usage() {
     echo "usage: $(basename "$0") year [options]"
     echo ""
-    echo "Post-process MiCASA data"
+    echo "Post-process MiCASA fluxes"
     echo ""
     echo "positional arguments:"
     echo "  year        4-digit year to post-process"
@@ -83,7 +86,7 @@ echo "MiCASA post-processing"
 echo "---"
 echo "Input  directory: $DIRIN"
 echo "Output directory: $DIROUT"
-echo "Collection: $COLTAG"
+echo "Collection: $FLXTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
@@ -102,14 +105,16 @@ fi
 for mon in $(seq -f "%02g" $MON0 $MONF); do
 #   3HRLY
 #==============================================================================
-    fchk="${COLTAG}_3hrly_$year${mon}_sha256.txt"
+    # BEWARE: Filenames have underscores that are valid in variable names
+    # Being extra cautious about protecting variables with braces in file name
+    fchk="${FLXTAG}_3hrly_${year}${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
-        ff="${COLTAG}_3hrly_$year$mon$day.$FEXT"
+        ff="${FLXTAG}_3hrly_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/3hrly/$year/$mon/$ff"
         fout="$DIROUT/3hrly/$year/$mon/$ff"
 
@@ -160,18 +165,18 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     done
 
     echo ""
-    echo "$year/$mon: Processed $nproc 3hrly files out of $ndays"
+    echo "$year/$mon: Processed $nproc 3hrly file(s) out of $ndays"
 
 #   DAILY
 #==============================================================================
-    fchk="${COLTAG}_daily_$year${mon}_sha256.txt"
+    fchk="${FLXTAG}_daily_${year}${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
     for day in $(seq -w 01 "$monlen"); do
-        ff="${COLTAG}_daily_$year$mon$day.$FEXT"
+        ff="${FLXTAG}_daily_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/daily/$year/$mon/$ff"
         fout="$DIROUT/daily/$year/$mon/$ff"
 
@@ -221,14 +226,14 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily files out of $ndays"
+    echo "$year/$mon: Processed $nproc daily file(s) out of $ndays"
 
 #   MONTHLY
 #==============================================================================
-    ff="${COLTAG}_monthly_$year$mon.$FEXT"
+    ff="${FLXTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$DIRIN/monthly/$year/$ff"
     fout="$DIROUT/monthly/$year/$ff"
-    fchk="${COLTAG}_monthly_$year${mon}_sha256.txt"
+    fchk="${FLXTAG}_monthly_${year}${mon}_sha256.txt"
 
     [[ -f "$fout" && "$REPRO" != true ]] && continue		# Skip if file exists and not reprocessing
     [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available

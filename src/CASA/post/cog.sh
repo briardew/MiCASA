@@ -120,11 +120,26 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fi
 
     for fin in "${flist[@]}"; do
-        # Create derived variables (NEE & NBE)
         ftmp="$DIRCOG/$(basename "$fin" ."$FEXT").tmp.$FEXT"
+        cp "$fin" "$ftmp"
 
-        ncap2 -O -h -s 'NEE=Rh-NPP-ATMC;NBE=Rh-NPP-ATMC+FIRE+FUEL' "$fin" "$ftmp"
-        ncatted -O -h -a long_name,NEE,o,c,'Net ecosystem exchange'  "$ftmp"
+        # Scale everything to g C m-2 day-1
+        ncap2 -A -h -s 'NPP=float(1e3*60*60*24*NPP)'   "$ftmp"
+        ncap2 -A -h -s 'Rh=float(1e3*60*60*24*Rh)'     "$ftmp"
+        ncap2 -A -h -s 'ATMC=float(1e3*60*60*24*ATMC)' "$ftmp"
+        ncap2 -A -h -s 'FIRE=float(1e3*60*60*24*FIRE)' "$ftmp"
+        ncap2 -A -h -s 'FUEL=float(1e3*60*60*24*FUEL)' "$ftmp"
+        ncap2 -A -h -s 'NEE=float(1e3*60*60*24*NEE)'   "$ftmp"
+
+        ncatted -O -h -a units,NPP,o,c,'g m-2 day-1'  "$ftmp"
+        ncatted -O -h -a units,Rh,o,c,'g m-2 day-1'   "$ftmp"
+        ncatted -O -h -a units,ATMC,o,c,'g m-2 day-1' "$ftmp"
+        ncatted -O -h -a units,FIRE,o,c,'g m-2 day-1' "$ftmp"
+        ncatted -O -h -a units,FUEL,o,c,'g m-2 day-1' "$ftmp"
+        ncatted -O -h -a units,NEE,o,c,'g m-2 day-1'  "$ftmp"
+
+        # Create derived variables (NBE)
+        ncap2 -A -h -s 'NBE=Rh-NPP-ATMC+FIRE+FUEL' "$ftmp"
         ncatted -O -h -a long_name,NBE,o,c,'Net biospheric exchange' "$ftmp"
 
         # Sort into daily and monthly folders

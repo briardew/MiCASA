@@ -24,7 +24,8 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 # Run specific settings
 # ---
-COLTAG="MiCASA_v${VERSION}_flux_x3600_y1800"
+RESTAG="x3600_y1800"
+FLXTAG="MiCASA_v${VERSION}_flux_${RESTAG}"
 RESLONG="0.1 degree x 0.1 degree"
 FEXT="nc4"
 
@@ -37,8 +38,9 @@ else
 fi
 
 DIRIN="$MIROOT/data/v$VERSION/holding"
+VEGIN="$MIROOT/data/v$VERSION/drivers"
 
-# Output
+# Output (fluxes)
 HEADOUT="MiCASA/v$VERSION/netcdf"
 DIROUT="$ROOTOUT/$HEADOUT"					# Form needed for URLs
 HEADDOC="MiCASA/v$VERSION"					# Form needed for URLs
@@ -46,3 +48,8 @@ HEADDOC="MiCASA/v$VERSION"					# Form needed for URLs
 # COG
 HEADCOG="MiCASA/v$VERSION/cog"
 DIRCOG="$ROOTOUT/$HEADCOG"					# Copying netCDF form
+
+# Drivers
+HEADVEG="MiCASA/v$VERSION/drivers"
+#DIRVEG="$ROOTOUT/$HEADVEG"					# Form needed for URLs
+DIRVEG="/css/gmao/geos_carb/pub/$HEADVEG"
