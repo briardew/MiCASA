@@ -62,7 +62,7 @@ echo "MiCASA COG uploader"
 echo "---"
 
 echo "COG directory: $DIRCOG"
-echo "Collection: $COLTAG"
+echo "Collection: $FLXTAG"
 echo "Year: $year"
 
 # Give a chance to abort

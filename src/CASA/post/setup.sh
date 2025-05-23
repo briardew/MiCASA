@@ -12,10 +12,8 @@ module load nco
 # Public URL and on-prem directories
 # ---
 SERVE="https://portal.nccs.nasa.gov/datashare/gmao/geos_carb"
-#ROOTPUB="/css/gmao/geos_carb/pub"
-#ROOTNRT="/css/gmao/geos_carb/share"
-ROOTPUB="/discover/nobackup/projects/gmao/geos_carb/share"
-ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
+ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/share"
+ROOTPUB="/css/gmao/geos_carb/pub"
 
 # Half-generic settings
 # ---
@@ -24,19 +22,13 @@ ROOTNRT="/discover/nobackup/projects/gmao/geos_carb/share"
 
 # Run specific settings
 # ---
+RESLONG="0.1 degree x 0.1 degree"
 RESTAG="x3600_y1800"
 FLXTAG="MiCASA_v${VERSION}_flux_${RESTAG}"
-RESLONG="0.1 degree x 0.1 degree"
 FEXT="nc4"
 
 # The rest should auto-generate
 # ---
-if [[ "$VERSION" == "NRT" ]]; then
-    ROOTOUT="$ROOTNRT"
-else
-    ROOTOUT="$ROOTPUB"
-fi
-
 DIRIN="$MIROOT/data/v$VERSION/holding"
 VEGIN="$MIROOT/data/v$VERSION/drivers"
 
@@ -47,9 +39,8 @@ HEADDOC="MiCASA/v$VERSION"					# Form needed for URLs
 
 # COG
 HEADCOG="MiCASA/v$VERSION/cog"
-DIRCOG="$ROOTOUT/$HEADCOG"					# Copying netCDF form
+DIRCOG="$ROOTPUB/$HEADCOG"					# Copying netCDF form
 
 # Drivers
 HEADVEG="MiCASA/v$VERSION/drivers"
-#DIRVEG="$ROOTOUT/$HEADVEG"					# Form needed for URLs
-DIRVEG="/css/gmao/geos_carb/pub/$HEADVEG"
+DIRVEG="$ROOTPUB/$HEADVEG"					# Form needed for URLs
