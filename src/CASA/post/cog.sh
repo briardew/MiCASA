@@ -81,7 +81,7 @@ echo "MiCASA COG generation"
 echo "---"
 echo "Input  directory: $DIROUT"
 echo "Output directory: $DIRCOG"
-echo "Collection: $COLTAG"
+echo "Collection: $FLXTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
@@ -102,7 +102,9 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")
     flist=()
     for day in $(seq -w 01 "$monlen"); do
-        ff="${COLTAG}_daily_$year$mon$day.$FEXT"
+        # BEWARE: Filenames have underscores that are valid in variable names
+        # Being extra cautious about protecting variables with braces in file name
+        ff="${FLXTAG}_daily_${year}${mon}${day}.${FEXT}"
         fin="$DIROUT/daily/$year/$mon/$ff"
 
         [[ -f "$fin" ]] && flist+=("$fin")
@@ -112,7 +114,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     mkdir -p "$DIRCOG/daily/$year/$mon"
 
     # Add monthly file if present
-    ff="${COLTAG}_monthly_$year$mon.$FEXT"
+    ff="${FLXTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$DIROUT/monthly/$year/$ff"
     if [[ ${#flist[@]} -eq $monlen ]]; then
         flist+=("$fin")
