@@ -157,7 +157,8 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     VEGTAG="MiCASA_v${VERSION}_vegind_${RESTAG}"
 
     fchk="${VEGTAG}_daily_${year}${mon}_sha256.txt"
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
+    # Delete old checksum if repro
+    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -167,9 +168,12 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         fin="$VEGIN/vegind/$year/$ff"
         fout="$DIRVEG/vegind/$year/$ff"
 
-        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        # Skip if input file is missing
+        [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if file exists and not repro
+
+        # Skip if file exists and not repro
+        [[ -f "$fout" && "$REPRO" != true ]] && continue
         nproc=$((nproc + 1))
 
         mkdir -p "$DIRVEG/vegind/$year"
@@ -219,11 +223,17 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 #==============================================================================
     ff="${VEGTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$VEGIN/vegind/$year/$ff"
-    fout="$DIRVEG/monthly/$year/$ff"
+    fout="$DIRVEG/vegind/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
     if [[ -f "$fout" || "$REPRO" == true ]]; then
-        [[ $ndays -ne $monlen ]] && break			# Skip if not all daily outputs are available
+        # Skip if not all daily outputs are available
+        [[ $ndays -ne $monlen ]] && break
+
+        # A little extra because we don't actually make veg monthlies
+        if [[ ! -f "$fin" ]]; then
+            ncea "$VEGIN/vegind/$year/${VEGTAG}_daily_${year}${mon}??.${FEXT}" "$fin"
+        fi
 
         mkdir -p "$DIRVEG/vegind/$year"
 
@@ -260,7 +270,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 
         # Overwrite checksum
         (
-        cd "$DIROUT/vegind/$year" || exit
+        cd "$DIRVEG/vegind/$year" || exit
         shasum -a 256 "$ff" > "$fchk"
         cd - > /dev/null || exit
         )
@@ -273,7 +283,8 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     VEGTAG="MiCASA_v${VERSION}_burn_${RESTAG}"
 
     fchk="${VEGTAG}_daily_${year}${mon}_sha256.txt"
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
+    # Delete old checksum if repro
+    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -283,9 +294,12 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         fin="$VEGIN/burn/$year/$ff"
         fout="$DIRVEG/burn/$year/$ff"
 
-        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        # Skip if input file is missing
+        [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if file exists and not repro
+
+        # Skip if file exists and not repro
+        [[ -f "$fout" && "$REPRO" != true ]] && continue
         nproc=$((nproc + 1))
 
         mkdir -p "$DIRVEG/burn/$year"
@@ -329,17 +343,18 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily burn file(s) out of $ndays"
+    echo "$year/$mon: Processed $nproc daily burn   file(s) out of $ndays"
 
 #   BIOMASS BURNING: MONTHLY
 #==============================================================================
     ff="${VEGTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$VEGIN/burn/$year/$ff"
-    fout="$DIRVEG/monthly/$year/$ff"
+    fout="$DIRVEG/burn/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
     if [[ -f "$fout" || "$REPRO" == true ]]; then
-        [[ $ndays -ne $monlen ]] && break			# Skip if not all daily outputs are available
+        # Skip if not all daily outputs are available
+        [[ $ndays -ne $monlen ]] && break
 
         mkdir -p "$DIRVEG/burn/$year"
 
@@ -376,11 +391,11 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 
         # Overwrite checksum
         (
-        cd "$DIROUT/burn/$year" || exit
+        cd "$DIRVEG/burn/$year" || exit
         shasum -a 256 "$ff" > "$fchk"
         cd - > /dev/null || exit
         )
 
-        echo "$year/$mon: Processed monthly burn file"
+        echo "$year/$mon: Processed monthly burn   file"
     fi
 done
