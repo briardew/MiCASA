@@ -226,13 +226,13 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fout="$DIRVEG/vegind/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ -f "$fout" || "$REPRO" == true ]]; then
+    if [[ ! -f "$fout" || "$REPRO" == true ]]; then
         # Skip if not all daily outputs are available
         [[ $ndays -ne $monlen ]] && break
 
         # A little extra because we don't actually make veg monthlies
         if [[ ! -f "$fin" ]]; then
-            ncea "$VEGIN/vegind/$year/${VEGTAG}_daily_${year}${mon}??.${FEXT}" "$fin"
+            ncea "$VEGIN/vegind/$year/${VEGTAG}_daily_${year}${mon}"??".${FEXT}" "$fin"
         fi
 
         mkdir -p "$DIRVEG/vegind/$year"
@@ -343,7 +343,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily burn   file(s) out of $ndays"
+    echo "$year/$mon: Processed $nproc daily burn file(s) out of $ndays"
 
 #   BIOMASS BURNING: MONTHLY
 #==============================================================================
@@ -352,7 +352,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fout="$DIRVEG/burn/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ -f "$fout" || "$REPRO" == true ]]; then
+    if [[ ! -f "$fout" || "$REPRO" == true ]]; then
         # Skip if not all daily outputs are available
         [[ $ndays -ne $monlen ]] && break
 
@@ -396,6 +396,6 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         cd - > /dev/null || exit
         )
 
-        echo "$year/$mon: Processed monthly burn   file"
+        echo "$year/$mon: Processed monthly burn file"
     fi
 done
