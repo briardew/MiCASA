@@ -226,10 +226,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fout="$DIRVEG/vegind/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ ! -f "$fout" || "$REPRO" == true ]]; then
-        # Skip if not all daily outputs are available
-        [[ $ndays -ne $monlen ]] && break
-
+    if [[ (! -f "$fout" || "$REPRO" == true) && $ndays -eq $monlen ]]; then
         # A little extra because we don't actually make veg monthlies
         if [[ ! -f "$fin" ]]; then
             ncea "$VEGIN/vegind/$year/${VEGTAG}_daily_${year}${mon}"??".${FEXT}" "$fin"
@@ -352,10 +349,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     fout="$DIRVEG/burn/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ ! -f "$fout" || "$REPRO" == true ]]; then
-        # Skip if not all daily outputs are available
-        [[ $ndays -ne $monlen ]] && break
-
+    if [[ (! -f "$fout" || "$REPRO" == true) && $ndays -eq $monlen ]]; then
         mkdir -p "$DIRVEG/burn/$year"
 
         # A little extra in case $fin == $fout
