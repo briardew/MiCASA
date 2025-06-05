@@ -162,6 +162,10 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         shasum -a 256 "$ff" >> "$fchk"
         cd - > /dev/null || exit
         )
+
+        # Publish
+        cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+        cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
 
     echo ""
@@ -224,6 +228,10 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         shasum -a 256 "$ff" >> "$fchk"
         cd - > /dev/null || exit
         )
+
+        # Publish
+        cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+        cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
 
     echo "$year/$mon: Processed $nproc daily file(s) out of $ndays"
@@ -277,6 +285,10 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     shasum -a 256 "$ff" > "$fchk"
     cd - > /dev/null || exit
     )
+
+    # Publish
+    cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+    cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
 
     echo "$year/$mon: Processed monthly file"
 done

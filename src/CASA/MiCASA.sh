@@ -2,8 +2,8 @@
 
 # Defaults
 # ---
-# NB: Different than modvir defaults, but those should probably be changed
-# (you're never going to want to push play and have it process 25+ years)
+# Note: Different than modvir defaults, but those should probably be changed
+# (You're never going to want to push play and have it process 25+ years)
 export MIROOT="$HOME/Projects/MiCASA"				# Root dir (export needed by post)
 export VERSION="NRT"						# Version (export needed by post)
 RUNNAME="v$VERSION"						# Run name
@@ -17,8 +17,8 @@ BATCH=false
 #     1) Activate the Python stack where MiCASA is installed,
 #     2) Load the NCO utilities,
 #     3) Load Matlab/Octave and define the appropriate $matlab command.
-# Note that it is theoretically possible to do this all in .bashrc, but
-# on NCCS Discover we don't (yet).
+# Note: It's theoretically possible to do this all in .bashrc, but on
+# NCCS Discover we don't (yet).
 
 # Conda is designed for interactive shells, gets cranky without this
 # May also define aliases which are not defined for non-interactive
@@ -27,7 +27,8 @@ conda activate
 
 module load nco
 # Can be replaced by Octave (in dev)
-module load matlab/R2020a
+#module load matlab/R2020a		# Previous version, keeping for records
+module load matlab
 export MLM_LICENSE_FILE="27000@ace64:28000@ls1,28000@ls2,28000@ls3"
 matlab="matlab -nosplash -nodesktop"
 
@@ -118,11 +119,14 @@ if [[ "$BATCH" != true ]]; then
     echo ""
 fi
 
-# Run
+# Create drivers
 # ---
 MVARGS=("--ver" "$VERSION" "--data" "data/v$VERSION/drivers")
 # A day before start so fill works
 daybe4=$(date -d "$daybeg-1 days" +%F)
+# Convenient vars for loops
+numbeg=$(($(date -d "$daybeg" +%Y)*12 + $(date -d "$daybeg" +%m) - 1))
+numend=$(($(date -d "$dayend" +%Y)*12 + $(date -d "$dayend" +%m) - 1))
 
 cd "$MIROOT" || exit
 if [[ "$VERSION" == "NRT" ]]; then
@@ -134,28 +138,38 @@ else
     modvir vegind --mode fill   --beg "$daybe4" --end "$dayend" "${MVARGS[@]}"
     modvir burn   --mode regrid --beg "$daybeg" --end "$dayend" "${MVARGS[@]}"
 fi
+
 cd "$MIROOT"/src/CASA || exit
+# Different processing of NRT biomass burning
 [[ "$VERSION" == "NRT" ]] && $matlab -r "makeNRTburn; exit"
-$matlab -r "runname = '$RUNNAME'; CASA; convertOutput; exit"
-$matlab -r "runname = '$RUNNAME'; lofi.make_sink; lofi.make_3hrly_land; exit"
-
-# Post process
-# ---
-numbeg=$(($(date -d "$daybeg" +%Y)*12 + $(date -d "$daybeg" +%m) - 1))
-numend=$(($(date -d "$dayend" +%Y)*12 + $(date -d "$dayend" +%m) - 1))
-
+# Post-process drivers
 for num in $(seq $numbeg $numend); do
     year=$(($num/12))
     mon=$(($num - $year*12 + 1))
 
-    # NRT post MUST HAVE reprocessing on because forecast creates future files
-    # and will complete monthlies
-    "$MIROOT"/src/CASA/post/process.sh $year --mon $mon --ver $VERSION --repro --batch
+    "$MIROOT"/src/CASA/post/drivers.sh $year --mon $mon --ver "$VERSION" --batch
+done
+
+# Run CASA
+# ---
+$matlab -r "runname = '$RUNNAME'; CASA; convertOutput; exit"
+$matlab -r "runname = '$RUNNAME'; lofi.make_sink; lofi.make_3hrly_land; exit"
+
+# Post-process fluxes
+for num in $(seq $numbeg $numend); do
+    year=$(($num/12))
+    mon=$(($num - $year*12 + 1))
+
+    # NRT MUST REPROCESS because forecast creates future files and
+    # will complete monthlies with those files
+    ppargs=("$year" "--mon" "$mon" "--ver" "$VERSION" "--batch")
+    [[ "$VERSION" == "NRT" ]] && ppargs+=("--repro")
+    "$MIROOT"/src/CASA/post/process.sh "${ppargs[@]}"
 done
 
 # Forecast
 # ---
-# A hack for now (persistence). May want to add a climatological adjustment (ML?)?
+# A hack for now: persistence. Add a climatological adjustment? ML?
 # Note: Even if you had a met forecast, you don't have a VI and BA forecast.
 # From what we've seen in other fields, it may be better to try to train a forecast
 # of MET -> BA, VI or MET, C0 -> PP, ER?
