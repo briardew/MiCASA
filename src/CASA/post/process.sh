@@ -107,7 +107,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 #==============================================================================
     # BEWARE: Filenames have underscores that are valid in variable names
     # Being extra cautious about protecting variables with braces in file name
-    fchk="${FLXTAG}_3hrly_${year}${mon}_sha256.txt"
+    fchk="$DIROUT/3hrly/$year/$mon/${FLXTAG}_3hrly_${year}${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
@@ -143,7 +143,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
         ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/AS9U6AWVTY69' "$fout"
 #       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$ff" "$fout"
-#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$fchk" "$fout"
+#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$(basename "$fchk")" "$fout"
         ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
         ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
         ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
@@ -173,7 +173,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 
 #   DAILY
 #==============================================================================
-    fchk="${FLXTAG}_daily_${year}${mon}_sha256.txt"
+    fchk="$DIROUT/daily/$year/$mon/${FLXTAG}_daily_${year}${mon}_sha256.txt"
     [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
@@ -209,7 +209,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
         ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/ZBXSA1LEN453' "$fout"
 #       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$ff" "$fout"
-#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$fchk" "$fout"
+#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$(basename "$fchk")" "$fout"
         ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
         ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
         ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
@@ -241,7 +241,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     ff="${FLXTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$DIRIN/monthly/$year/$ff"
     fout="$DIROUT/monthly/$year/$ff"
-    fchk="${FLXTAG}_monthly_${year}${mon}_sha256.txt"
+    fchk="$DIROUT/monthly/$year/${FLXTAG}_monthly_${year}${mon}_sha256.txt"
 
     [[ -f "$fout" && "$REPRO" != true ]] && continue		# Skip if file exists and not reprocessing
     [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available
@@ -266,7 +266,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
     ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/UCFEAAIDIUEQ' "$fout"
 #   ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$ff" "$fout"
-#   ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$fchk" "$fout"
+#   ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$(basename "$fchk")" "$fout"
     ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
     ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-01" "$fout"
     ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
