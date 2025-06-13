@@ -7,5 +7,6 @@ echo "---"
 #DIRCHECK="/discover/nobackup/projects/gmao/geos_carb/pub/MiCASA/v1/netcdf"
 DIRCHECK="/css/gmao/geos_carb/pub/MiCASA/v1/netcdf"
 
-#find $DIRCHECK -name "*_sha256.txt" -exec shasum -a 256 -c {} \;
-find $DIRCHECK -name "*_sha256.txt" -exec echo {} \;
+while read -r ff; do
+    cd "$(dirname "$ff")" && shasum -a 256 -c "$ff"
+done <<< "$(find "$DIRCHECK" -name "*_sha256.txt")"
