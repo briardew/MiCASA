@@ -4,11 +4,11 @@
 % * Think about parallelization (spatially trivial)
 % * Be able to save/load current state (in netCDF)
 
-
 % CASA = Carnegie-Ames-Stanford-Approach. biogeochemical model developed in
 % the 1990s to simulate terrestrial carbon exchange. Further developed and
 % accounted for fires; Global Fire Emissions Database (GFED)
 clearvars -except runname
+KEEPVARS = '^(?!runname$|frestart$|DIRRUN$).';				% Regex to protect vars on load
 defineConstants
 
 DIRRUN = [DIRCASA, '/', runname];					% Root run dir
@@ -87,7 +87,7 @@ else
     % The stage1 data only needs to be loaded if it is going to be used by stage2
     if lower(do_spinup_stage2(1)) == 'y'
         % Allows sharing of spinup/restart across runs
-        load([DIRRUN, '/spinup1.mat'], '-regexp', '^(?!runname$|frestart$).');
+        load([DIRRUN, '/spinup1.mat'], '-regexp', KEEPVARS);
         defineConstants
     end
 end
@@ -120,7 +120,7 @@ if lower(do_spinup_stage2(1)) == 'y'
     save([DIRRUN, '/spinup2.mat'], '-v7');
 else
     % Allows sharing of spinup/restart across runs
-    load([DIRRUN, '/spinup2.mat'], '-regexp', '^(?!runname$|frestart$).');
+    load([DIRRUN, '/spinup2.mat'], '-regexp', KEEPVARS);
     defineConstants
 end
 
@@ -128,7 +128,7 @@ end
 frestart = [DIRRUN, '/restart.mat'];
 if lower(do_restart_load(1)) == 'y' && isfile(frestart)
     % Allows sharing of spinup/restart across runs
-    load(frestart, '-regexp', '^(?!runname$|frestart$).');
+    load(frestart, '-regexp', KEEPVARS);
     defineConstants;
 
     startYear = year;
