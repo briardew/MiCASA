@@ -230,6 +230,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
 
         # Publish
+        mkdir -p "$ROOTPUB/$year/$mon"
         cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
         cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done

@@ -78,7 +78,7 @@ ftmp="list.txt.pid$$.tmp"
 find "$DIRCOG/daily/$year"   ! -name "$(printf "*\n*")" -name '*.tif' >  "$ftmp"
 find "$DIRCOG/monthly/$year" ! -name "$(printf "*\n*")" -name '*.tif' >> "$ftmp"
 while IFS= read -r ff; do
-    fbit=${ff#$ROOTOUT/}
+    fbit=${ff#$ROOTPUB/}
     fbit=${fbit/\/cog/}
 
     checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
