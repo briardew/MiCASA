@@ -164,6 +164,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
 
         # Publish
+        mkdir -p "$ROOTPUB/$HEADOUT/3hrly/$year/$mon"
         cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
         cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
@@ -230,7 +231,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
         )
 
         # Publish
-        mkdir -p "$ROOTPUB/$year/$mon"
+        mkdir -p "$ROOTPUB/$HEADOUT/daily/$year/$mon"
         cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
         cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
@@ -288,6 +289,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     )
 
     # Publish
+    mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
     cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
 
