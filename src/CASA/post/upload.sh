@@ -80,7 +80,7 @@ while IFS= read -r -d '' ff; do
     checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
 
     # NB: Uses the AWS profile ghgc
-    echo aws s3api put-object --bucket ghgc-data-store-develop \
+    aws s3api put-object --bucket ghgc-data-store-develop \
         --key "$fbit" --body "$ff" --checksum-sha256 "$checksum" \
         --profile ghgc
 done < <(find "$DIRCOG/daily/$year" "$DIRCOG/monthly/$year" \
