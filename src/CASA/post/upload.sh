@@ -77,6 +77,8 @@ while IFS= read -r -d '' ff; do
     fbit=${fbit/\/cog/}
     fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
 
+    echo "Uploading $fbit ..."
+
     checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
 
     # NB: Uses the AWS profile ghgc
