@@ -72,26 +72,16 @@ if [[ "$BATCH" != true ]]; then
     echo ""
 fi
 
-# Do it
-# ---
-ftmp="list.txt.pid$$.tmp"
-find "$DIRCOG/daily/$year"   ! -name "$(printf "*\n*")" -name '*.tif' >  "$ftmp"
-find "$DIRCOG/monthly/$year" ! -name "$(printf "*\n*")" -name '*.tif' >> "$ftmp"
-while IFS= read -r ff; do
+while IFS= read -r -d '' ff; do
     fbit=${ff#$ROOTPUB/}
     fbit=${fbit/\/cog/}
+    fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
 
     checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
 
-    aws s3api put-object --bucket ghgc-data-store-dev \
-        --key "$fbit" --body "$ff" --checksum-sha256 "$checksum"
-done < "$ftmp"
-rm "$ftmp"
-
-# Keeping just in case
-#   aws s3 cp "$DIRCOG/monthly/$year" \
-#       "s3://ghgc-data-store-dev/MiCASA/v$VERSION/monthly/$year/" \
-#       --recursive --exclude "*" --include "*.tif"
-#   aws s3 cp "$DIRCOG/daily/$year" \
-#       "s3://ghgc-data-store-dev/MiCASA/v$VERSION/daily/$year/" \
-#       --recursive --exclude "*" --include "*.tif"
+    # NB: Uses the AWS profile ghgc
+    echo aws s3api put-object --bucket ghgc-data-store-develop \
+        --key "$fbit" --body "$ff" --checksum-sha256 "$checksum" \
+        --profile ghgc
+done < <(find "$DIRCOG/daily/$year" "$DIRCOG/monthly/$year" \
+    -name '*.tif' -print0)
