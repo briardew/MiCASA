@@ -11,9 +11,13 @@ echo "---"
 # Fancy way to source setup and support symlinks, spaces, etc.
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
-if [[ "$NFCST" -le 0 || 1000 -le "$NFCST" ]]; then
-    echo "WARNING: Using the default forecast number of days"
-    NFCST=7
+# Por robusto
+NFDEF=14
+if [[ -z "$NFCST" ]]; then
+    NFCST="$NFDEF"
+elif [[ "$NFCST" -le 0 || 366 -gt "$NFCST" ]]; then
+    echo "WARNING: '$NFCST' is out of range. Setting to $NFDEF"
+    NFCST="$NFDEF"
 fi
 
 # Simple outputs, warnings, and errors

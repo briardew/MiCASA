@@ -7,8 +7,8 @@
 export MIROOT="$HOME/Projects/MiCASA"				# Root dir (export needed by post)
 export VERSION="NRT"						# Version (export needed by post)
 RUNNAME="v$VERSION"						# Run name
-daybeg=$(date -d "-1 days" +%F)
-dayend=$(date -d "-1 days" +%F)
+daybeg=$(date -d "-2 days" +%F)
+dayend=$(date -d "-2 days" +%F)
 BATCH=false
 
 # Initialize environment
