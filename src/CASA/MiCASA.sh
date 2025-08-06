@@ -124,9 +124,9 @@ fi
 MVARGS=("--ver" "$VERSION" "--data" "data/v$VERSION/drivers")
 # A day before start so fill works
 daybe4=$(date -d "$daybeg-1 days" +%F)
-# Convenient vars for loops
-numbeg=$(($(date -d "$daybeg" +%Y)*12 + $(date -d "$daybeg" +%m) - 1))
-numend=$(($(date -d "$dayend" +%Y)*12 + $(date -d "$dayend" +%m) - 1))
+# Convenient vars for loops (the 10# strips leading zeros)
+numbeg=$(($(date -d "$daybeg" +%Y)*12 + 10#$(date -d "$daybeg" +%m) - 1))
+numend=$(($(date -d "$dayend" +%Y)*12 + 10#$(date -d "$dayend" +%m) - 1))
 
 cd "$MIROOT" || exit
 if [[ "$VERSION" == "NRT" ]]; then
