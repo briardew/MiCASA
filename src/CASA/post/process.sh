@@ -52,14 +52,15 @@ while [[ "$ii" -le "$#" ]]; do
     elif [[ "$arg" == "--mon" ]]; then
         ii=$((ii+1))
         mon="${@:$ii:1}"
-        if [[ "$mon" -lt 1 || 12 -lt "$mon" ]]; then
+        # Force base 10 interpretation of 08 and 09
+        if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
             echo "ERROR: Invalid month $mon"
             echo ""
             usage
             exit 1
         fi
-        MON0=$(printf %02d "$mon")
-        MONF=$(printf %02d "$mon")
+        MON0=$(printf %02g "$mon")
+        MONF=$(printf %02g "$mon")
     elif [[ "$arg" == "--ver" ]]; then
         ii=$((ii+1))
         VERSION="${@:$ii:1}"
@@ -102,7 +103,7 @@ if [[ "$BATCH" != true ]]; then
     echo ""
 fi
 
-for mon in $(seq -f "%02g" $MON0 $MONF); do
+for mon in $(seq -f %02g "$MON0" "$MONF"); do
 #   3HRLY
 #==============================================================================
     # BEWARE: Filenames have underscores that are valid in variable names
@@ -113,7 +114,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
-    for day in $(seq -w 01 "$monlen"); do
+    for day in $(seq -f "%02g" 01 "$monlen"); do
         ff="${FLXTAG}_3hrly_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/3hrly/$year/$mon/$ff"
         fout="$DIROUT/3hrly/$year/$mon/$ff"
@@ -180,7 +181,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
-    for day in $(seq -w 01 "$monlen"); do
+    for day in $(seq -f "%02g" 01 "$monlen"); do
         ff="${FLXTAG}_daily_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/daily/$year/$mon/$ff"
         fout="$DIROUT/daily/$year/$mon/$ff"

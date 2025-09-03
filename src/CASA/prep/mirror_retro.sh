@@ -27,7 +27,7 @@ ssh "${HOSTS[0]}" "
     exit"
 
 NUMHOSTS=${#HOSTS[@]}
-for year in $(seq -w $YEAR0 $YEARF); do
+for year in $(seq "$YEAR0" "$YEARF"); do
     nn=$((year - YEAR0 > NUMHOSTS - 1 ? NUMHOSTS - 1 : year - YEAR0))
     ssh "${HOSTS[$nn]}" "
         . "$PREPDIR"/setup.sh

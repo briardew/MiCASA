@@ -52,14 +52,15 @@ while [[ "$ii" -le "$#" ]]; do
     elif [[ "$arg" == "--mon" ]]; then
         ii=$((ii+1))
         mon="${@:$ii:1}"
-        if [[ "$mon" -lt 1 || 12 -lt "$mon" ]]; then
+        # Force base 10 interpretation of 08 and 09
+        if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
             echo "ERROR: Invalid month $mon"
             echo ""
             usage
             exit 1
         fi
-        MON0=$(printf %02d "$mon")
-        MONF=$(printf %02d "$mon")
+        MON0=$(printf %02g "$mon")
+        MONF=$(printf %02g "$mon")
     elif [[ "$arg" == "--ver" ]]; then
         ii=$((ii+1))
         VERSION="${@:$ii:1}"
@@ -130,14 +131,14 @@ if [[ -f "$fin" ]]; then
     fi
 fi
 
-for mon in $(seq -f "%02g" $MON0 $MONF); do
+for mon in $(seq -f %02g "$MON0" "$MONF"); do
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
 
 #   VEGIND
 #==============================================================================
     ndays=0
     nproc=0
-    for day in $(seq -w 01 "$monlen"); do
+    for day in $(seq -f %02g 01 "$monlen"); do
         ff="MiCASA_v${VERSION}_vegind_${RESTAG}_daily_$year$mon$day.$FEXT"
         fin="$DIRIN/vegind/$year/$ff"
         fout="$DIROUT/vegind/$year/$ff"
@@ -235,7 +236,7 @@ for mon in $(seq -f "%02g" $MON0 $MONF); do
 #==============================================================================
     ndays=0
     nproc=0
-    for day in $(seq -w 01 "$monlen"); do
+    for day in $(seq -f %02g 01 "$monlen"); do
         ff="MiCASA_v${VERSION}_burn_${RESTAG}_daily_$year$mon$day.$FEXT"
         fin="$DIRIN/burn/$year/$ff"
         fout="$DIROUT/burn/$year/$ff"

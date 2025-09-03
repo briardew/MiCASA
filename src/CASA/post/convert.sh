@@ -32,7 +32,7 @@ fi
 
 for year in $(seq "$YEAR0" "$YEARF"); do
     echo $year
-    for mon in $(seq -w 01 12); do
+    for mon in $(seq -f %02g 01 12); do
         # 3-hourly
         timespan="3-hourly"
         fhead="$DIRIN/3hrly/$year/$mon/MiCASA_v${VERSION}_flux_${GRIDIN}_3hrly_$year$mon"
