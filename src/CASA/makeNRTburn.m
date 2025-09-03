@@ -20,6 +20,7 @@
 % TODO:
 % * Split into 2 phases for fit and use? (takes about 10 minutes)
 % * Make more robust/consistent
+% * Make latency more robust (an argument?)
 %===============================================================================
 
 runname = 'vNRT'; defineConstants;
@@ -28,7 +29,7 @@ REPRO = 0;								% Reprocess?
 VERIN = '1';
 YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
-DNOUT = [datenum(2024,10,01):now-1];
+DNOUT = [datenum(2024,10,01):now-2];
 
 % Need to make this more robust; for now, happy not referencing
 % my own nobackup; NB: This will only work on systems that already have QFED
