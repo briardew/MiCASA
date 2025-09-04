@@ -143,6 +143,7 @@ for year = startYear:endYear
                 ncwriteatt(fout, 'time', 'units',TSTAMP);
                 ncwriteatt(fout, 'time', 'long_name','time');
                 ncwriteatt(fout, 'time', 'bounds','time_bnds');
+                ncwriteatt(fout, 'time', 'calendar','standard');
                 ncwrite(fout,    'time', time);
 
                 nccreate(fout,   'time_bnds', ...

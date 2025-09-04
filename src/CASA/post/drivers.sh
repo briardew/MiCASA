@@ -218,7 +218,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily vegind file(s) out of $ndays"
+    echo "$year/$mon: Processed $nproc out of $ndays daily vegind file(s)"
 
 #   VEGETATION INDICES: MONTHLY
 #==============================================================================
@@ -341,7 +341,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         )
     done
 
-    echo "$year/$mon: Processed $nproc daily burn file(s) out of $ndays"
+    echo "$year/$mon: Processed $nproc out of $ndays daily burn file(s)"
 
 #   BIOMASS BURNING: MONTHLY
 #==============================================================================
