@@ -18,13 +18,12 @@ from modvir.geometry import edges, centers, singrid, sinarea
 from modvir.utils import swaphead
 
 def _regrid(dsout, dirin, headburn, headcov, headvcf):
-    # Set up output grid
+    # Output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
-
     late, lone = edges(nlat, nlon)
 
-    # Allocate arrays
+    # Output arrays
     num  = np.zeros((nlat, nlon))
     burn = np.zeros((nlat, nlon))
     herb = np.zeros((nlat, nlon))
@@ -32,12 +31,13 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
     defo = np.zeros((nlat, nlon))
     date = np.zeros((nlat, nlon))
 
-    # Get files to process and return if none
+    # Read and regrid files in dirin
+    # ---
     flist = glob(path.join(dirin, '*.hdf'))
     if len(flist) == 0:
-        return dsout
+        raise EOFError('No files found in ' + dirin)
 
-    fused = flist
+    fused = []
     for ff in flist:
         fcov = swaphead(ff, headburn, headcov)
         fvcf = swaphead(ff, headburn, headvcf)
@@ -46,16 +46,19 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
         if fcov is None:
             print('Missing land cover data for ' + ff)
             continue
-
         if fvcf is None:
             print('Missing VCF data for ' + ff)
             continue
 
-        fused = fused + [fcov, fvcf]
+        try:
+            dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
+            dscov = rxr.open_rasterio(fcov).squeeze(drop=True)
+            dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
+        except Exception as e:
+            print(e)
+            continue
 
-        dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
-        dscov = rxr.open_rasterio(fcov).squeeze(drop=True)
-        dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
+        fused = fused + [ff, fcov, fvcf]
 
         # Compute lat/lon mesh for MODIS sin grid
         LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
@@ -120,7 +123,7 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
     iok = num > 0
     date[iok] = date[iok]/num[iok]
 
-    # Fill Dataset
+    # Fill dataset
     dsout['batot'].values  = burn.astype(dsout['batot'].dtype)
     dsout['baherb'].values = herb.astype(dsout['baherb'].dtype)
     dsout['bawood'].values = wood.astype(dsout['bawood'].dtype)

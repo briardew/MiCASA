@@ -34,24 +34,31 @@ fPMIN = 0.01
 fPMAX = 0.95
 
 def _regrid(dsout, dirin, mask=None):
+    # Output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
-
     late, lone = edges(nlat, nlon)
 
-    flist = glob(path.join(dirin, '*.hdf'))
-    if len(flist) == 0:
-        raise EOFError('no files to open')
-
-    # Keeping num in case we want Red and NIR outputs
-    num = np.zeros((nlat, nlon))
+    # Output arrays
+    num = np.zeros((nlat, nlon)) # Keeping in case we want Red and NIR outputs
     red = np.zeros((nlat, nlon))
     nir = np.zeros((nlat, nlon))
 
-    # Read and regrid (bin)
-    # ---------------------
+    # Read and regrid files in dirin
+    # ---
+    flist = glob(path.join(dirin, '*.hdf'))
+    if len(flist) == 0:
+        raise EOFError('No files found in ' + dirin)
+
+    fused = []
     for ff in flist:
-        dsin = rxr.open_rasterio(ff).squeeze(drop=True)
+        try:
+            dsin = rxr.open_rasterio(ff).squeeze(drop=True)
+        except Exception as e:
+            print(e)
+            continue
+
+        fused = fused + [ff]
 
         # Compute lat/lon mesh for MODIS sin grid
         LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
@@ -91,9 +98,9 @@ def _regrid(dsout, dirin, mask=None):
         ndvi = (ndvi - NDVIMIN)*mask + NDVIMIN
 #       ndvi = ndvi * mask
 
-    # Fill Dataset
+    # Fill dataset
     dsout['NDVI'].values = ndvi.astype(dsout['NDVI'].dtype)
-    dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in flist])
+    dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
     return dsout
 

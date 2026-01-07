@@ -67,12 +67,12 @@ datasets = [fluxes; extras];
 
 % For extracting variables
 vaux = load([DIRCASA, '/', runname, '/spinup1.mat'], 'mask', 'latitude');
-mask = vaux.mask';
-inds = find(mask(:) == 1);
-temp = single(zeros(size(mask)));
+mast = vaux.mask';
+inds = find(mast(:) == 1);
+temp = single(zeros(size(mast)));
 
 % For debugging
-test = zeros(size(mask));
+test = zeros(size(mast));
 test(inds) = vaux.latitude;
 test = fliplr(test);
 

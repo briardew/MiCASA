@@ -280,6 +280,9 @@ totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon, RADIUS);
 total = totre .* weight;
 
 %% CASA-specific stuff
+% *** THIS MAY ALSO HAVE A BUG ***
+% If everything needs to be per m2 of tree/herb/defo, then this would need
+% should be?: SINK = SINK./FHC;
 SINK = flipud(total');
 
 EMAX = 0.40 * ones(size(SINK));
@@ -300,7 +303,6 @@ for ii = 1:length(datasets)
 end
 
 %%% Soil carbon and texture components
-%
 % Plan for extension w/ modularity:
 % The block below should go into some subroutine, say,
 %     +makeCASAinput/soil.m
@@ -318,7 +320,7 @@ end
 % package instead of within CASA. Also all of this assumes the data are
 % already downloaded, and for things like peat fraction, a shell
 % conversion is probably the easiest.
-%
+
 % Will want the option to pick between HWSD v1.2, v2, and SoilGrids here
 NSOILDAT = 1;
 if NSOILDAT == 1
@@ -330,6 +332,7 @@ if NSOILDAT == 1
     fill = flipud(ncread(fin, 'fill')');
 
     fin = [DIRAUX, '/soil/HWSD/v2/HWSD2_20-40cm.', CASARES, '.nc'];
+    % NB: ORGC is a total and sand/silt/clay/fill are percentages
     ORGC_top = ORGC_top + 0.50*flipud(ncread(fin, 'soc')');
     sand = 0.75*sand + 0.25*flipud(ncread(fin, 'sand')');
     silt = 0.75*silt + 0.25*flipud(ncread(fin, 'silt')');
@@ -352,6 +355,11 @@ elseif NSOILDAT == 2
     clay = flipud(ncread(fin, 't_clay')');
     fill = flipud(ncread(fin, 't_fill')');
 end
+
+% *** MAY HAVE A BUG ***
+% I think we may have wanted to do:
+% should be?: ORGC_top = ORGC_top./(FHC + FTC + FDC);
+% should be?: ORGC_sub = ORGC_sub./(FHC + FTC + FDC);
 
 %%% Soil texture class
 % Percentages of sand-silt-clay from Potter et al. (1993)

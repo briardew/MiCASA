@@ -87,3 +87,4 @@ git stash
 git pull
 git stash pop
 ```
+If you don't wish to keep changes to files, simply delete them and then pull.

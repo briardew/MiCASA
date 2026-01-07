@@ -29,18 +29,24 @@ NPPtemp(AIRT < -10) = 0;
 NPPtemp(NPPtemp > 1) = 1;
 
 epsilon = EMAX .* NPPtemp .* NPPmoist;
-% bweir: needs to account for total vegetated fraction
-% Was a bug previously where FTC + FHC very often was maxed out at 1
+% bweir:
+% 1) Needs to account for total vegetated fraction
+%    CF: This seems to make everything per m2 tree/herb/defo (no regr?)
+%    What does that mean for SINK, ORGC_top, ORGC_sub, and fuelwooddemand?
+% 2) Was a bug previously where FTC + FHC very often was maxed out at 1
+%    But what does that bug mean in the context of the above where maybe
+%    even doing the division was a bug
+% *** CERTAINLY FRACTIONAL COVER DESERVES REVISITING ***
 NPP = epsilon .* IPAR ./ (FTC + FHC + FDC);
 
 % Derive abiotic effect for each timestep in the cycle
 % ---
-% bweir: Change to Lloyd and Taylor approach
+% bweir: Change to Lloyd and Taylor approach?
 % A. Old, Q10-style
 bgtemp = Q10.^((AIRT - TEMP0) ./ 10);
 bgtemp(bgtemp > 1) = 1;
 
-% B. Lloyd and Taylor (1994; )
+% B. Lloyd and Taylor (1994; https://doi.org/10.2307/2389824)
 %bgtemp = R10 * exp(308.56 * (1/56.02 - 1./(AIRT + 46.02)));
 %bgtemp(AIRT <= -46.02) = 0;
 

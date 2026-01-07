@@ -11,17 +11,17 @@ if step == NSTEPS
     % measured C in top 30 cm and armored matches measured C in 30-100 cm.
 
     % lower top 30 with carbon already in soil 
-    ORGC_toph = ORGC_top - hsoilmetpool - hsoilstrpool - hsoilmicpool;
     ORGC_topw = ORGC_top -  soilmetpool -  soilstrpool -  soilmicpool;
+    ORGC_toph = ORGC_top - hsoilmetpool - hsoilstrpool - hsoilmicpool;
 
-    ORGC_toph(ORGC_toph < 0) = 0;
     ORGC_topw(ORGC_topw < 0) = 0;
+    ORGC_toph(ORGC_toph < 0) = 0;
 
-    ORGC_subh = ORGC_sub - harmoredpool;
     ORGC_subw = ORGC_sub -  armoredpool;
+    ORGC_subh = ORGC_sub - harmoredpool;
 
-    ORGC_subh(ORGC_subh < 0) = 0;
     ORGC_subw(ORGC_subw < 0) = 0;
+    ORGC_subh(ORGC_subh < 0) = 0;
 
     % adjust slowpool and turnover rate
     inds = slowpool < ORGC_topw;

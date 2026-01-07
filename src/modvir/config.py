@@ -57,7 +57,7 @@ def check_cols(date, **kwargs):
     colburn = kwargs.get('colburn', 'MCD64A1.061')
 
     # Brutal hack, needs better treatment (not working anyways)
-    if 2025 < date.year:
+    if 2026 < date.year:
         colcov  = 'VNP12Q1.001'
         colvcf  = 'VNP44B.001'
         colveg  = 'VNP43IA4.002'

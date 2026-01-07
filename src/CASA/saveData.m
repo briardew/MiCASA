@@ -8,7 +8,7 @@ end
 
 syear = int2str(year);
 datasets = {fluxes{:}, 'COMdefo', 'COMpeat', 'NPPmoist', 'NPPtemp', ...
-    'bgmoist', 'soilm', 'EET'};
+    'bgmoist', 'soilm', 'EET', 'AGBD'};
 
 for ii = 1:length(datasets)
     if NSTEPS == 12

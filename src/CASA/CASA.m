@@ -176,7 +176,7 @@ for year = startYear:endYear
         try
             updateCASAinput
         catch
-            disp('Could not load driver data ...');
+            disp(['Could not load driver data for step ', num2str(step), ' ...']);
             step = step - 1;
             break;
         end

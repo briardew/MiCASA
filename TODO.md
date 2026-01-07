@@ -1,3 +1,11 @@
+For v1A and v1B
+---
+1. Fix `RangeBeginningTime` and `RangeEndingTime` in 3hrly collection
+2. Add `calendar` attribute to `time` variable. Suggest `proleptic_gregorian`
+even though `tai` is more right (no leap seconds). It looks like pandas, etc.
+support for the latter is not great.
+3. Fix `FTC`, `FHC` bugs
+
 This initial software release will focus on two use cases: 1. Production of
 public MiCASA data, and 2. Derivative experiments by users with different
 constants, assumptions, etc. The latter will be well enabled by housing MiCASA

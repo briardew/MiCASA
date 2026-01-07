@@ -18,24 +18,39 @@ from modvir.geometry import edges, centers, singrid
 from modvir.utils import swaphead
 
 def _regrid(dsout, dirin, headcov, headvcf):
+    # Set up output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
-
     late, lone = edges(nlat, nlon)
 
-    flist = glob(path.join(dirin, '*.hdf'))
-    if len(flist) == 0:
-        raise EOFError('no files to open')
-
+    # Output arrays
     ftype = np.zeros((NTYPE, nlat, nlon))
     num   = np.zeros((nlat, nlon))
     fbare = np.zeros((nlat, nlon))
     fherb = np.zeros((nlat, nlon))
     ftree = np.zeros((nlat, nlon))
 
-    fused = flist
+    # Read and regrid files in dirin
+    # ---
+    flist = glob(path.join(dirin, '*.hdf'))
+    if len(flist) == 0:
+        raise EOFError('No files found in ' + dirin)
+
+    fused = []
     for ff in flist:
-        dsin = rxr.open_rasterio(ff).squeeze(drop=True)
+        fvcf = swaphead(ff, headcov, headvcf)
+        if fvcf is None:
+            print('Missing VCF data for ' + ff)
+            continue
+
+        try:
+            dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
+            dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
+        except Exception as e:
+            print(e)
+            continue
+
+        fused = fused + [ff, fvcf]
 
         # Compute lat/lon mesh for MODIS sin grid
         LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
@@ -45,7 +60,7 @@ def _regrid(dsout, dirin, headcov, headvcf):
         typein[typein == 255] = NTYPE
 
         # Compute totals of each type in each cell
-        # ----------------------------------------
+        # ---
         for nn in range(NTYPE):
             ime = (typein == nn + 1)
             if not np.any(ime): continue
@@ -54,15 +69,6 @@ def _regrid(dsout, dirin, headcov, headvcf):
             ftype[nn,:,:] = ftype[nn,:,:] + totme
 
         # Read VCF (percent tree, herbaceous, and barren)
-        fvcf = swaphead(ff, headcov, headvcf)
-        if fvcf is None:
-            print('Missing VCF data for ' + ff)
-            continue
-
-        fused = fused + [fvcf]
-
-        dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
-
         pbarehi = dsvcf['Percent_NonVegetated']
         pherbhi = dsvcf['Percent_NonTree_Vegetation']
         ptreehi = dsvcf['Percent_Tree_Cover']
@@ -95,6 +101,7 @@ def _regrid(dsout, dirin, headcov, headvcf):
         ftree = ftree + ftreegran
 
     dsin.close()
+    dsvcf.close()
 
     # Set missing tiles to type NMISS (ocean)
     tots = np.sum(ftype, axis=0)
