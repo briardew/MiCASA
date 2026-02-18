@@ -4,46 +4,40 @@ Entry point for modvir module
 '''
 
 import sys
+import argparse
 from datetime import datetime
-from argparse import ArgumentParser
 
 from modvir.config import defaults
 from modvir import build
 
 # Parse command-line options
-class MVParser(ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('\n*** ERROR *** %s\n\n' % message)
-        self.print_help()
-        sys.exit(2)
+NAMELIST = ['cover', 'vegind', 'burn', 'all']
+MODELIST = ['get', 'regrid', 'fill', 'all']
 
-# Read arguments
-parser = MVParser(description=__doc__,
-    usage='modvir name [options]')
-parser.add_argument('name', help='name of product to build: cover, vegind, ' +
-    'burn, all')
-parser.add_argument('--mode', help='operation mode (get, regrid, fill, ' +
-    'all, default: %(default)s)', default='all')
-parser.add_argument('--data', help='data directory (default: %(default)s)',
-    default=defaults['data'])
-parser.add_argument('--beg', help='begin date (default: %(default)s)',
-    default=defaults['date0'].strftime('%Y-%m-%d'))
-parser.add_argument('--end', help='end date (default: %(default)s)',
-    default=defaults['dateF'].strftime('%Y-%m-%d'))
-parser.add_argument('--nlat', help='latitude dimension (default: %(default)s)',
-    type=int, default=defaults['nlat'])
-parser.add_argument('--nlon', help='longitude dimension (default: %(default)s)',
-    type=int, default=defaults['nlon'])
-parser.add_argument('--ver', help='version (default: %(default)s)',
-    default='1')
+parser = argparse.ArgumentParser(description=__doc__,
+    usage='modvir name [options]',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('name', metavar='name', type=str, choices=NAMELIST,
+    help='name of product to build: ' + ', '.join(NAMELIST))
+parser.add_argument('-m', '--mode', metavar='MODE', type=str, choices=MODELIST,
+    default='all', help='operation mode: ' + ', '.join(MODELIST))
+parser.add_argument('-v', '--ver', default=defaults['ver'], help='version')
+parser.add_argument('--beg', metavar='YYYY-MM-DD',
+    default=defaults['date0'].strftime('%Y-%m-%d'), help='begin date')
+parser.add_argument('--end', metavar='YYYY-MM-DD',
+    default=defaults['dateF'].strftime('%Y-%m-%d'), help='end date')
+parser.add_argument('--nlat', type=int, default=defaults['nlat'],
+    help='latitude dimension')
+parser.add_argument('--nlon', type=int, default=defaults['nlon'],
+    help='longitude dimension')
+parser.add_argument('-o', '--output', metavar='DIR', default=defaults['output'],
+    help='output directory')
 # These are hard coded, but a pain to do right
-parser.add_argument('--repro', help='reprocess/overwrite (default: false)',
-    action='store_true')
-parser.add_argument('--nrt', help='near real time mode (default: false)',
-    action='store_true')
-parser.add_argument('--tidy', help='remove downloads (default: false)',
-    action='store_true')
-parser.add_argument('--rc', help='run control settings yaml file')
+parser.add_argument('-f', '--force', action='store_true',
+    help='overwrite files')
+parser.add_argument('-t', '--tidy', action='store_true',
+    help='remove downloads')
+parser.add_argument('--yaml', help='yaml settings file')
 
 def main():
     # Construct argument dictionary

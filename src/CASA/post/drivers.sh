@@ -1,84 +1,21 @@
 #!/bin/bash
 
+BLURB="MiCASA driver post-processor"
+
 # Fancy way to source setup and support symlinks, spaces, etc.
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+POSTDIR=$(dirname "$(readlink -f "$0")")
+. "$POSTDIR"/setup.sh
 
 # Get and check arguments
-# ---
-usage() {
-    echo "usage: $(basename "$0") year [options]"
-    echo ""
-    echo "Post-process MiCASA drivers"
-    echo ""
-    echo "positional arguments:"
-    echo "  year        4-digit year to post-process"
-    echo ""
-    echo "options:"
-    echo "  -h, --help  show this help message and exit"
-    echo "  --mon MON   only process month MON"
-    echo "  --ver VER   version (default: $VERSION)"
-    echo "  --repro     reprocess/overwrite (default: false)"
-    echo "  --batch     operate in batch mode (no user input)"
-}
-
-# Defaults
-MON0=01
-MONF=12
-REPRO=false
-BATCH=false
-
-year="$1"
-if [[ "$year" == "--help" || "$year" == "-h" ]]; then
-    usage
-    exit
-elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
-    echo "ERROR: Invalid year $year"
-    echo ""
-    usage
-    exit 1
-fi
-
-ii=2
-while [[ "$ii" -le "$#" ]]; do
-    arg="${@:$ii:1}"
-    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
-        usage
-        exit
-    elif [[ "$arg" == "--mon" ]]; then
-        ii=$((ii+1))
-        mon="${@:$ii:1}"
-        # Force base 10 interpretation of 08 and 09
-        if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
-            echo "ERROR: Invalid month $mon"
-            echo ""
-            usage
-            exit 1
-        fi
-        MON0=$(printf %02g "$mon")
-        MONF=$(printf %02g "$mon")
-    elif [[ "$arg" == "--ver" ]]; then
-        ii=$((ii+1))
-        VERSION="${@:$ii:1}"
-    elif [[ "$arg" == "--repro" ]]; then
-        REPRO=true
-    elif [[ "$arg" == "--batch" ]]; then
-        BATCH=true
-    else
-        echo "ERROR: Invalid $ii-th argument $arg"
-        echo ""
-        usage
-        exit 1
-    fi
-    ii=$((ii+1))
-done
+argparse "$(basename "$0")" "$BLURB" "$@"
 
 # Re-run setup in case $VERSION has changed
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
-echo "MiCASA driver post-processing" 
+echo "$BLURB" 
 echo "---"
 echo "Input  directory: $VEGIN"
 echo "Output directory: $DIRVEG"
@@ -86,9 +23,9 @@ echo "Collection(s): cover, vegind, burn"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$REPRO" == true ]]; then
+if [[ "$FORCE" == true ]]; then
     echo ""
-    echo "WARNING: Reprocessing, will overwrite files ..."
+    echo "WARNING: Overwriting existing files ..."
 fi
 
 # Give a chance to abort
@@ -108,7 +45,7 @@ fin="$VEGIN/cover/$ff"
 fout="$DIRVEG/cover/$ff"
 fchk="${VEGTAG}_yearly_${year}_sha256.txt"
 
-if [[ ! -f "$fout" || "$REPRO" == true ]]; then
+if [[ ! -f "$fout" || "$FORCE" == true ]]; then
     mkdir -p "$DIRVEG/cover"
 
     # A little extra in case $fin == $fout
@@ -158,8 +95,8 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     VEGTAG="MiCASA_v${VERSION}_vegind_${RESTAG}"
 
     fchk="${VEGTAG}_daily_${year}${mon}_sha256.txt"
-    # Delete old checksum if repro
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"
+    # Delete old checksum if overwriting
+    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -173,8 +110,8 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
 
-        # Skip if file exists and not repro
-        [[ -f "$fout" && "$REPRO" != true ]] && continue
+        # Skip if file exists and not overwriting
+        [[ -f "$fout" && "$FORCE" != true ]] && continue
         nproc=$((nproc + 1))
 
         mkdir -p "$DIRVEG/vegind/$year"
@@ -227,7 +164,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     fout="$DIRVEG/vegind/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ (! -f "$fout" || "$REPRO" == true) && $ndays -eq $monlen ]]; then
+    if [[ (! -f "$fout" || "$FORCE" == true) && $ndays -eq $monlen ]]; then
         # A little extra because we don't actually make veg monthlies
         if [[ ! -f "$fin" ]]; then
             ncea "$VEGIN/vegind/$year/${VEGTAG}_daily_${year}${mon}"??".${FEXT}" "$fin"
@@ -281,8 +218,8 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     VEGTAG="MiCASA_v${VERSION}_burn_${RESTAG}"
 
     fchk="${VEGTAG}_daily_${year}${mon}_sha256.txt"
-    # Delete old checksum if repro
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"
+    # Delete old checksum if overwriting
+    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -296,8 +233,8 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
 
-        # Skip if file exists and not repro
-        [[ -f "$fout" && "$REPRO" != true ]] && continue
+        # Skip if file exists and not overwriting 
+        [[ -f "$fout" && "$FORCE" != true ]] && continue
         nproc=$((nproc + 1))
 
         mkdir -p "$DIRVEG/burn/$year"
@@ -350,7 +287,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     fout="$DIRVEG/burn/$year/$ff"
     fchk="${VEGTAG}_monthly_${year}${mon}_sha256.txt"
 
-    if [[ (! -f "$fout" || "$REPRO" == true) && $ndays -eq $monlen ]]; then
+    if [[ (! -f "$fout" || "$FORCE" == true) && $ndays -eq $monlen ]]; then
         mkdir -p "$DIRVEG/burn/$year"
 
         # A little extra in case $fin == $fout

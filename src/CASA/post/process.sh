@@ -4,86 +4,22 @@
 # But honestly, just transition this to a single Python executable already
 
 COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
+BLURB="MiCASA flux post-processor"
 
 # Fancy way to source setup and support symlinks, spaces, etc.
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+POSTDIR=$(dirname "$(readlink -f "$0")")
+. "$POSTDIR"/setup.sh
 
 # Get and check arguments
-# ---
-usage() {
-    echo "usage: $(basename "$0") year [options]"
-    echo ""
-    echo "Post-process MiCASA fluxes"
-    echo ""
-    echo "positional arguments:"
-    echo "  year        4-digit year to post-process"
-    echo ""
-    echo "options:"
-    echo "  -h, --help  show this help message and exit"
-    echo "  --mon MON   only process month MON"
-    echo "  --ver VER   version (default: $VERSION)"
-    echo "  --repro     reprocess/overwrite (default: false)"
-    echo "  --batch     operate in batch mode (no user input)"
-}
-
-# Defaults
-MON0=01
-MONF=12
-REPRO=false
-BATCH=false
-
-year="$1"
-if [[ "$year" == "--help" || "$year" == "-h" ]]; then
-    usage
-    exit
-elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
-    echo "ERROR: Invalid year $year"
-    echo ""
-    usage
-    exit 1
-fi
-
-ii=2
-while [[ "$ii" -le "$#" ]]; do
-    arg="${@:$ii:1}"
-    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
-        usage
-        exit
-    elif [[ "$arg" == "--mon" ]]; then
-        ii=$((ii+1))
-        mon="${@:$ii:1}"
-        # Force base 10 interpretation of 08 and 09
-        if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
-            echo "ERROR: Invalid month $mon"
-            echo ""
-            usage
-            exit 1
-        fi
-        MON0=$(printf %02g "$mon")
-        MONF=$(printf %02g "$mon")
-    elif [[ "$arg" == "--ver" ]]; then
-        ii=$((ii+1))
-        VERSION="${@:$ii:1}"
-    elif [[ "$arg" == "--repro" ]]; then
-        REPRO=true
-    elif [[ "$arg" == "--batch" ]]; then
-        BATCH=true
-    else
-        echo "ERROR: Invalid $ii-th argument $arg"
-        echo ""
-        usage
-        exit 1
-    fi
-    ii=$((ii+1))
-done
+argparse "$(basename "$0")" "$BLURB" "$@"
 
 # Re-run setup in case $VERSION has changed
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
-echo "MiCASA post-processing" 
+echo "$BLURB" 
 echo "---"
 echo "Input  directory: $DIRIN"
 echo "Output directory: $DIROUT"
@@ -91,9 +27,9 @@ echo "Collection: $FLXTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$REPRO" == true ]]; then
+if [[ "$FORCE" == true ]]; then
     echo ""
-    echo "WARNING: Reprocessing, will overwrite files ..."
+    echo "WARNING: Overwriting existing files ..."
 fi
 
 # Give a chance to abort
@@ -109,7 +45,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     # BEWARE: Filenames have underscores that are valid in variable names
     # Being extra cautious about protecting variables with braces in file name
     fchk="$DIROUT/3hrly/$year/$mon/${FLXTAG}_3hrly_${year}${mon}_sha256.txt"
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
+    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if overwriting
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -121,7 +57,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
 
         [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if 3hrly file exists and not repro
+        [[ -f "$fout" && "$FORCE" != true ]] && continue	# Skip if 3hrly file exists and not overwriting
         nproc=$((nproc + 1))
 
         mkdir -p "$DIROUT/3hrly/$year/$mon"
@@ -176,7 +112,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
 #   DAILY
 #==============================================================================
     fchk="$DIROUT/daily/$year/$mon/${FLXTAG}_daily_${year}${mon}_sha256.txt"
-    [[ "$REPRO" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if repro
+    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if overwriting
 
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
@@ -188,7 +124,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
 
         [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$REPRO" != true ]] && continue	# Skip if file exists and not repro
+        [[ -f "$fout" && "$FORCE" != true ]] && continue	# Skip if file exists and not overwriting
         nproc=$((nproc + 1))
 
         mkdir -p "$DIROUT/daily/$year/$mon"
@@ -246,7 +182,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     fout="$DIROUT/monthly/$year/$ff"
     fchk="$DIROUT/monthly/$year/${FLXTAG}_monthly_${year}${mon}_sha256.txt"
 
-    [[ -f "$fout" && "$REPRO" != true ]] && continue		# Skip if file exists and not reprocessing
+    [[ -f "$fout" && "$FORCE" != true ]] && continue		# Skip if file exists and not overwriting
     [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available
 
     mkdir -p "$DIROUT/monthly/$year"

@@ -60,10 +60,6 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
 
         fused = fused + [ff, fcov, fvcf]
 
-        # Compute lat/lon mesh for MODIS sin grid
-        LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
-        areain     = sinarea(dsin['y'].values, dsin['x'].values)
-
         datein = dsin['Burn Date'].values.T
         typein = dscov[LCVAR].values.T
         # Unclassified set to NTYPE
@@ -92,6 +88,10 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
         fherbin = fherbin/fbothin
 
         fdefoin = typein == 2
+
+        # Compute lat/lon mesh for MODIS sin grid
+        LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
+        areain     = sinarea(dsin['y'].values, dsin['x'].values)
 
         burnin = areain
         herbin = areain * fherbin
@@ -135,6 +135,7 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
         {'units':'day of the year', 'long_name':'Day of burning'}))
 
     dscov.close()
+    dsvcf.close()
 
     return dsout
 

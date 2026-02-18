@@ -5,7 +5,7 @@ They may be useful to the general audience or generalizable, but right now I'm
 happy enough that it doesn't reference my nobackup.
 
 Notes:
-- By default, these utilities place everything in directories two levels
-  higher. This can be changed in `setup.sh`.
+- By default, these utilities place everything in `$HOME/Projects/MiCASA`.
+  This can be changed in `setup.sh`.
 - It's good practice to mirror before you generate products as this takes quite
   a bit of time and can fail. This is why the mirroring is separated.

@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Defaults, pretty hacky
-MIROOT="$HOME/Projects/MiCASA"
-VERSION="1"
-RESTAG="x3600_y1800"
+# These should be better protected against something else defininit them
+[[ -z "$MIROOT" ]]  && MIROOT="$HOME/Projects/MiCASA"
+[[ -z "$VERSION" ]] && VERSION="1"
+[[ -z "$RESTAG" ]]  && RESTAG="x3600_y1800"
 FEXT="nc4"
 
 DATADIR="data/v$VERSION/drivers"

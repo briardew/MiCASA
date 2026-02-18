@@ -6,15 +6,15 @@ from datetime import datetime
 
 # NB: NBAR data start 2000-02-16
 defaults = {
-    'data': 'data',
+    'output': '.',
     'date0': datetime(2001, 1, 1),
     'dateF': datetime.now(),
     # 0.1 deg regular grid
     'nlat': 1800,
     'nlon': 3600,
+    'ver': '1',
     # run switches (values currently ignored in __main__)
-    'repro': False,
-    'nrt': False,
+    'force': False,
     'tidy': False,
     # translated from inputs; fixme?
     'regrid': True,
@@ -50,30 +50,39 @@ def check_args(**kwargs):
 def check_cols(date, **kwargs):
     '''Check and fill collection tags'''
 
-    # Shouldn't these be specified in defaults?
-    colcov  = kwargs.get('colcov',  'MCD12Q1.061')
-    colvcf  = kwargs.get('colvcf',  'MOD44B.006')
-    colveg  = kwargs.get('colveg',  'MCD43A4.061')
-    colburn = kwargs.get('colburn', 'MCD64A1.061')
+    ver = kwargs.get('ver', defaults['ver'])
 
-    # Brutal hack, needs better treatment (not working anyways)
-    if 2026 < date.year:
-        colcov  = 'VNP12Q1.001'
-        colvcf  = 'VNP44B.001'
-        colveg  = 'VNP43IA4.002'
-        colburn = 'VNP64A1.002'
+    # Should these be specified in defaults?
+    colcovdef  = 'MCD12Q1.061'
+    colvcfdef  = 'MOD44B.006'
+    colvegdef  = 'MCD43A4.061'
+    colburndef = 'MCD64A1.061'
+    if ver == '1A':
+        colvegdef  = 'MCD43A4.061'
+        colburndef = 'MCD64A1.061'
+    elif ver == '1B':
+        colvegdef  = 'VNP43IA4.002'
+        colburndef = 'VNP64A1.002'
+    elif ver == '1C':
+        colvegdef  = 'VJ143IA4.002'
+        colburndef = 'VJ164A1.002'
+    elif ver == '1D':
+        colvegdef  = 'VJ243IA4.002'
+        colburndef = 'VJ264A1.002'
+    elif ver == 'NRT':
+        if date.year < 2027:
+            colvegdef = 'MCD43A4N.061'
+        else:
+            colvegdef = 'VJ143IA4N.002'
 
-    # Needs better treatment
-    if kwargs.get('nrt', defaults['nrt']): colveg = 'MCD43A4N.061'
+    kwargs['colcov']  = kwargs.get('colcov',  colcovdef)
+    kwargs['colvcf']  = kwargs.get('colvcf',  colvcfdef)
+    kwargs['colveg']  = kwargs.get('colveg',  colvegdef) 
+    kwargs['colburn'] = kwargs.get('colburn', colburndef)
 
     # MOD44B.061 excludes data above 60N, unusable
-    if colvcf == 'MOD44B.061':
-        raise ValueError('Cannot use ' + colvcf + ' for VCF since it ' +
+    if kwargs['colvcf'] == 'MOD44B.061':
+        raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
             'is missing Arctic data')
-
-    kwargs['colcov']  = colcov
-    kwargs['colvcf']  = colvcf
-    kwargs['colveg']  = colveg
-    kwargs['colburn'] = colburn
 
     return kwargs

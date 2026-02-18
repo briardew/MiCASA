@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is a big script for batch reprocessing a retrospective stream.  It is
+# This is a big script for batch processing a retrospective stream.  It is
 # very NCCS Discover specific.  Not much effort has been put into
 # modularization because it's likely this will depend heavily on the computing
 # platform and hopefully only run a handful of times.

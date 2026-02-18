@@ -14,3 +14,5 @@ rioxarray
 gdal
 libgdal-hdf5
 libgdal-netcdf
+earthaccess
+h5netcdf

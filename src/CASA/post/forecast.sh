@@ -11,7 +11,7 @@ echo "---"
 # Fancy way to source setup and support symlinks, spaces, etc.
 . "$(dirname "$(readlink -f "$0")")"/setup.sh
 
-# Por robusto
+# Forecast length
 NFDEF=14
 if [[ -z "$NFCST" ]]; then
     NFCST="$NFDEF"

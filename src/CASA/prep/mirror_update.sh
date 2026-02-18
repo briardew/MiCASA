@@ -19,11 +19,11 @@ ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/mirror/burn/$year
     cd "$MIROOT"/logs/mirror/burn/$year || exit
-    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir burn --data "$MIROOT/$DATADIR" --mode get --beg $UPDATE0 --end $UPDATEF\"
+    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir burn --mode get --ver "$VERSION" --output "$MIROOT/$DATADIR" --beg $UPDATE0 --end $UPDATEF\"
     exit"
 ssh "${HOSTS[-1]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/mirror/vegind/$year
     cd "$MIROOT"/logs/mirror/vegind/$year || exit
-    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode get --beg $UPDATE0 --end $UPDATEF\"
+    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --mode get --ver "$VERSION" --output "$MIROOT/$DATADIR" --beg $UPDATE0 --end $UPDATEF\"
     exit"

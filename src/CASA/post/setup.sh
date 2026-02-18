@@ -17,7 +17,8 @@ ROOTPUB="/css/gmao/geos_carb/pub"
 
 # Half-generic settings
 # ---
-[[ -z "$MIROOT" ]] && MIROOT="$HOME/Projects/MiCASA"
+# These should be better protected against something else defininit them
+[[ -z "$MIROOT" ]]  && MIROOT="$HOME/Projects/MiCASA"
 [[ -z "$VERSION" ]] && VERSION="NRT"
 
 # Run specific settings
@@ -44,3 +45,77 @@ DIRCOG="$ROOTPUB/$HEADCOG"					# Copying netCDF form
 # Drivers
 HEADVEG="MiCASA/v$VERSION/drivers"
 DIRVEG="$ROOTPUB/$HEADVEG"					# Form needed for URLs
+
+# Get and check arguments
+# ---
+usage() {
+    echo "usage: $1 year [options]"
+    echo ""
+    echo "$2"
+    echo ""
+    echo "positional arguments:"
+    echo "  year               4-digit year to process"
+    echo ""
+    echo "options:"
+    echo "  -h, --help         show this help message and exit"
+    echo "  -m MON, --mon MON  only process month MON (default: None)"
+    echo "  -v VER, --ver VER  version (default: $VERSION)"
+    echo "  -f, --force        overwrite files (default: False)"
+    echo "  -b, --batch        operate in batch mode (default: False)"
+}
+
+argparse() {
+    # Defaults
+    MON0=01
+    MONF=12
+    FORCE=false
+    BATCH=false
+
+    year="$3"
+    if [[ "$year" == "-h" || "$year" == "--help" ]]; then
+        usage "$1" "$2"
+        exit
+    elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
+        echo "ERROR: Invalid year $year"
+        echo ""
+        usage "$1" "$2"
+        exit 1
+    fi
+
+    ii=4
+    while [[ "$ii" -le "$#" ]]; do
+        arg="${@:$ii:1}"
+        if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+            usage "$1" "$2"
+            exit
+        elif [[ "$arg" == "-m" || "$arg" == "--mon" ]]; then
+            ii=$((ii+1))
+            mon="${@:$ii:1}"
+            # Force base 10 interpretation of 08 and 09
+            if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
+                echo "ERROR: Invalid month $mon"
+                echo ""
+                usage "$1" "$2"
+                exit 1
+            fi
+            MON0=$(printf %02g "$mon")
+            MONF=$(printf %02g "$mon")
+        elif [[ "$arg" == "-v" || "$arg" == "--ver" ]]; then
+            ii=$((ii+1))
+            VERSION="${@:$ii:1}"
+        elif [[ "$arg" == "-f" || "$arg" == "--force" ]]; then
+            FORCE=true
+        elif [[ "$arg" == "-b" || "$arg" == "--batch" ]]; then
+            BATCH=true
+        elif [[ "$arg" == "-fb" || "$arg" == "-bf" ]]; then
+            FORCE=true
+            BATCH=true
+        else
+            echo "ERROR: Invalid $ii-th argument $arg"
+            echo ""
+            usage "$1" "$2"
+            exit 1
+        fi
+        ii=$((ii+1))
+    done
+}

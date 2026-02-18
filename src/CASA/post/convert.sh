@@ -2,7 +2,7 @@
 
 # Converts to a lower resolution
 
-REPRO=false
+FORCE=false
 YEAR0=2001
 YEARF=2024
 
@@ -22,7 +22,7 @@ DIROUT="/css/gmao/geos_carb/pub/MiCASA/v$VERSION/netcdf-0.5deg"
 # RUN
 module load nco
 OMP_NUM_THREADS=40
-[[ "$REPRO" == true ]] && echo "WARNING: Reprocessing, will overwrite files ..." 1>&2
+[[ "$FORCE" == true ]] && echo "WARNING: Overwriting existing files ..."
 
 if [[ ! -f "map_${GRIDIN}_to_${GRIDOUT}.nc" ]]; then
     ncremap -g "grid_$GRIDIN.nc"  -G latlon="$YIN","$XIN"#lon_typ=180_wst
@@ -39,7 +39,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
         for fin in "$fhead"??.nc4; do
             fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
-            [[ "$REPRO" != true && -f "$fout" ]] && continue
+            [[ "$FORCE" != true && -f "$fout" ]] && continue
 
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/3hrly/$year/$mon"
@@ -59,7 +59,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
         for fin in "$fhead"??.nc4; do
             fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
-            [[ "$REPRO" != true && -f "$fout" ]] && continue
+            [[ "$FORCE" != true && -f "$fout" ]] && continue
 
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/daily/$year/$mon"
@@ -78,7 +78,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
         fin="$DIRIN/monthly/$year/MiCASA_v${VERSION}_flux_${GRIDIN}_monthly_$year$mon.nc4"
         fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
-        [[ "$REPRO" != true && -f "$fout" ]] && continue
+        [[ "$FORCE" != true && -f "$fout" ]] && continue
 
         echo "Converting $fin to $fout ..."
         mkdir -p "$DIROUT/monthly/$year"

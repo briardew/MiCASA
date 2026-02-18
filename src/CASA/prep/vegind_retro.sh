@@ -24,5 +24,5 @@ ssh "${HOSTS[0]}" "
     . "$PREPDIR"/setup.sh
     mkdir -p "$MIROOT"/logs/vegind/retro
     cd "$MIROOT"/logs/vegpre/retro || exit
-    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --data "$MIROOT/$DATADIR" --mode fill --beg $YEAR0-01-01\"
+    screen -L -dmS modvir bash --login -c \"echo $HOSTNAME;modvir vegind --mode fill --ver "$VERSION" --output "$MIROOT/$DATADIR" --beg $YEAR0-01-01\"
     exit"

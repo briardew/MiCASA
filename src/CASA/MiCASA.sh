@@ -121,7 +121,7 @@ fi
 
 # Create drivers
 # ---
-MVARGS=("--ver" "$VERSION" "--data" "data/v$VERSION/drivers")
+MVARGS=("--ver" "$VERSION" "--output" "data/v$VERSION/drivers")
 # A day before start so fill works
 daybe4=$(date -d "$daybeg-1 days" +%F)
 # Convenient vars for loops (the 10# strips leading zeros)
@@ -163,7 +163,7 @@ for num in $(seq $numbeg $numend); do
     # NRT MUST REPROCESS because forecast creates future files and
     # will complete monthlies with those files
     ppargs=("$year" "--mon" "$mon" "--ver" "$VERSION" "--batch")
-    [[ "$VERSION" == "NRT" ]] && ppargs+=("--repro")
+    [[ "$VERSION" == "NRT" ]] && ppargs+=("--force")
     "$MIROOT"/src/CASA/post/process.sh "${ppargs[@]}"
 done
 

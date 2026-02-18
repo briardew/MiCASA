@@ -46,28 +46,44 @@ def _regrid(dsout, dirin, mask=None):
 
     # Read and regrid files in dirin
     # ---
-    flist = glob(path.join(dirin, '*.hdf'))
+    # MODIS
+    XVAR = 'x'
+    YVAR = 'y'
+    VARPRE = 'Nadir_Reflectance_Band'
+    QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_Band'
+    kwargs = {'engine':'rasterio'}
+    xyargs = {'engine':'rasterio'}
+    flist  = glob(path.join(dirin, '*.hdf'))
     if len(flist) == 0:
-        raise EOFError('No files found in ' + dirin)
+        # VIIRS
+        XVAR = 'XDim'
+        YVAR = 'YDim'
+        VARPRE = 'Nadir_Reflectance_I'
+        QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_I'
+        kwargs = {'engine':'h5netcdf', 'phony_dims':'sort',
+            'group':'/HDFEOS/GRIDS/VIIRS_Grid_BRDF/Data Fields'}
+        xyargs = {'engine':'h5netcdf', 'phony_dims':'sort',
+            'group':'/HDFEOS/GRIDS/VIIRS_Grid_BRDF'}
+        flist  = glob(path.join(dirin, '*.h5'))
+        if len(flist) == 0:
+            raise EOFError('No files found in ' + dirin)
 
     fused = []
     for ff in flist:
         try:
-            dsin = rxr.open_rasterio(ff).squeeze(drop=True)
+            dsin = xr.open_dataset(ff, **kwargs).squeeze(drop=True)
+            dsxy = xr.open_dataset(ff, **xyargs).squeeze(drop=True)
         except Exception as e:
             print(e)
             continue
 
         fused = fused + [ff]
 
-        # Compute lat/lon mesh for MODIS sin grid
-        LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
-
         # Read Red, NIR and QCs
-        redin = dsin['Nadir_Reflectance_Band1'].values.T
-        redqc = dsin['BRDF_Albedo_Band_Mandatory_Quality_Band1'].values.T
-        nirin = dsin['Nadir_Reflectance_Band2'].values.T
-        nirqc = dsin['BRDF_Albedo_Band_Mandatory_Quality_Band2'].values.T
+        redin = dsin[VARPRE+'1'].values.T
+        redqc = dsin[QCFPRE+'1'].values.T
+        nirin = dsin[VARPRE+'2'].values.T
+        nirqc = dsin[QCFPRE+'2'].values.T
 
         # Red and NIR can have different QC
         # QC = 255 and val = 32767 are equiv, but sometimes val = -32767
@@ -76,6 +92,9 @@ def _regrid(dsout, dirin, mask=None):
         iok = np.logical_and.reduce((abs(redin) != 32767, redqc != 255,
             abs(nirin) != 32767, nirqc != 255,
             NDVIMIN*(nirin + redin) <= nirin - redin))
+
+        # Compute lat/lon mesh for MODIS sin grid
+        LAin, LOin = singrid(dsxy[YVAR].values, dsxy[XVAR].values)
 
         numgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone))[0]
         redgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
@@ -86,7 +105,9 @@ def _regrid(dsout, dirin, mask=None):
         num = num + numgran
         red = red + redgran
         nir = nir + nirgran
-    dsin.close()
+
+        dsin.close()
+        dsxy.close()
 
     # Divide without complaining about NaNs
     with np.errstate(divide='ignore', invalid='ignore'):

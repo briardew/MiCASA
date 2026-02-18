@@ -1,84 +1,21 @@
 #!/bin/bash
 
+BLURB="MiCASA COG generator"
+
 # Fancy way to source setup and support symlinks, spaces, etc.
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+POSTDIR=$(dirname "$(readlink -f "$0")")
+. "$POSTDIR"/setup.sh
 
 # Get and check arguments
-# ---
-usage() {
-    echo "usage: $(basename "$0") year [options]"
-    echo ""
-    echo "Create MiCASA COGs"
-    echo ""
-    echo "positional arguments:"
-    echo "  year        4-digit year to post-process"
-    echo ""
-    echo "options:"
-    echo "  -h, --help  show this help message and exit"
-    echo "  --mon MON   only process month MON"
-    echo "  --ver VER   version (default: $VERSION)"
-    echo "  --repro     reprocess/overwrite (default: false)"
-    echo "  --batch     operate in batch mode (no user input)"
-}
-
-# Defaults
-MON0=01
-MONF=12
-REPRO=false
-BATCH=false
-
-year="$1"
-if [[ "$year" == "--help" || "$year" == "-h" ]]; then
-    usage
-    exit
-elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
-    echo "ERROR: Invalid year $year"
-    echo ""
-    usage
-    exit 1
-fi
-
-ii=2
-while [[ "$ii" -le "$#" ]]; do
-    arg="${@:$ii:1}"
-    if [[ "$arg" == "--help" || "$arg" == "-h" ]]; then
-        usage
-        exit
-    elif [[ "$arg" == "--mon" ]]; then
-        ii=$((ii+1))
-        mon="${@:$ii:1}"
-        # Force base 10 interpretation of 08 and 09
-        if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
-            echo "ERROR: Invalid month $mon"
-            echo ""
-            usage
-            exit 1
-        fi
-        MON0=$(printf %02g "$mon")
-        MONF=$(printf %02g "$mon")
-    elif [[ "$arg" == "--ver" ]]; then
-        ii=$((ii+1))
-        VERSION="${@:$ii:1}"
-    elif [[ "$arg" == "--repro" ]]; then
-        REPRO=true
-    elif [[ "$arg" == "--batch" ]]; then
-        BATCH=true
-    else
-        echo "ERROR: Invalid $ii-th argument $arg"
-        echo ""
-        usage
-        exit 1
-    fi
-    ii=$((ii+1))
-done
+argparse "$(basename "$0")" "$BLURB" "$@"
 
 # Re-run setup in case $VERSION has changed
-. "$(dirname "$(readlink -f "$0")")"/setup.sh
+. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
-echo "MiCASA COG generation" 
+echo "$BLURB" 
 echo "---"
 echo "Input  directory: $DIROUT"
 echo "Output directory: $DIRCOG"
@@ -86,9 +23,9 @@ echo "Collection: $FLXTAG"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$REPRO" == true ]]; then
+if [[ "$FORCE" == true ]]; then
     echo ""
-    echo "WARNING: Reprocessing, will overwrite files ..."
+    echo "WARNING: Overwriting existing files ..."
 fi
 
 # Give a chance to abort
@@ -156,7 +93,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         for var in NPP Rh FIRE FUEL ATMC NEE NBE; do
             fcog=$(basename "$fin" ".$FEXT").tif
             fcog=${fcog/_flux_/_"$var"_}
-            if [[ ! -f "$fcog" || "$REPRO" == true ]]; then
+            if [[ ! -f "$fcog" || "$FORCE" == true ]]; then
                 gdal_translate -q -a_srs EPSG:4326 NETCDF:"$ftmp":"$var" \
                     "$DIRUSE/$fcog" -of COG -co COMPRESS=DEFLATE -a_nodata nan
             fi
