@@ -5,10 +5,11 @@ For v1A and v1B
 3. Add `calendar` attribute to `time` variable. Suggest `proleptic_gregorian`
 although `tai` is more right (no leap seconds). It looks like pandas, etc.
 support for the latter is not great.
-4. Fire daily variability bug
-5. Fix `FTC`, `FHC` bugs
-6. Always use GEOS IT met?
-7. Revisit NBAR QC, esp. for NRT (was choppy?)
+4. Fix driver metadata
+5. Fire daily variability bug
+6. Fix `FTC`, `FHC` bugs
+7. Always use GEOS IT met?
+8. Revisit NBAR QC, esp. for NRT (was choppy?)
 
 This initial software release will focus on two use cases: 1. Production of
 public MiCASA data, and 2. Derivative experiments by users with different

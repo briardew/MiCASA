@@ -39,7 +39,7 @@ def download(col, dateget, dirget, force=False):
     SLEEPLEN = 60
     for nn in range(MAXTRIES):
         try:
-            auth = earthaccess.login(strategy="netrc")
+            auth = earthaccess.login(strategy='netrc')
             results = earthaccess.search_data(short_name=shorty,
                 granule_name=granny)
             if len(results) == 0:

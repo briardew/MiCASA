@@ -1,5 +1,5 @@
 '''
-MODIS/VIIRS burned area module
+MiCASA burned area module
 '''
 
 # * Generalize to include VIIRS (will need to look for *.h5)
@@ -119,6 +119,10 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
         wood = wood + woodgran
         defo = defo + defogran
 
+        dsin.close()
+        dscov.close()
+        dsvcf.close()
+
     # NB: Burned areas are sums, not averages
     iok = num > 0
     date[iok] = date[iok]/num[iok]
@@ -133,9 +137,6 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
     # Assign day information
     dsout = dsout.assign(date=(['lat','lon'], date.astype(datein.dtype),
         {'units':'day of the year', 'long_name':'Day of burning'}))
-
-    dscov.close()
-    dsvcf.close()
 
     return dsout
 
@@ -181,7 +182,7 @@ class Burn(xr.Dataset):
             attrs={'Conventions':'CF-1.9',
                 'institution':'NASA Goddard Space Flight Center',
                 'contact':'Brad Weir <brad.weir@nasa.gov>',
-                'title':'MODIS/VIIRS daily burned area data',
+                'title':'MiCASA daily burned area data',
                 'input_files':''})
 
     def regrid(self, *args, **kwargs):
@@ -202,12 +203,12 @@ class Burn(xr.Dataset):
         return ds
 
     def to_netcdf(self, *args, **kwargs):
-        # Fill history with (close enough) timestamp
-        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
-
         # Set _FillValue to None instead of NaN by default
         if 'encoding' not in kwargs:
             kwargs['encoding'] = {var:{'_FillValue':None}
                 for var in self.variables}
+
+        # Fill history with (close enough) timestamp
+        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
 
         return super().to_netcdf(*args, **kwargs)

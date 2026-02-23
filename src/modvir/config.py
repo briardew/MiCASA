@@ -4,12 +4,13 @@ MODIS/VIIRS configuration module
 
 from datetime import datetime
 
-# NB: NBAR data start 2000-02-16
 defaults = {
     'output': '.',
+    # NB: NBAR data start 2000-02-16
     'date0': datetime(2001, 1, 1),
     'dateF': datetime.now(),
     # 0.1 deg regular grid
+    # This should be transitioned to lats and lons
     'nlat': 1800,
     'nlon': 3600,
     'ver': '1',
@@ -20,6 +21,8 @@ defaults = {
     'regrid': True,
     'get': True,
     'fill': True,
+    'institution': 'NASA Goddard Space Flight Center',
+    'contact': 'Brad Weir <brad.weir@nasa.gov>',
 }
 
 # Land cover type variable, number of types, number of missing type
@@ -54,7 +57,9 @@ def check_cols(date, **kwargs):
 
     # Should these be specified in defaults?
     colcovdef  = 'MCD12Q1.061'
-    colvcfdef  = 'MOD44B.006'
+#   colvcfdef  = 'MOD44B.006'
+    # For testing (***FIXME***)
+    colvcfdef  = 'MOD44B.061'
     colvegdef  = 'MCD43A4.061'
     colburndef = 'MCD64A1.061'
     if ver == '1A':
@@ -81,8 +86,9 @@ def check_cols(date, **kwargs):
     kwargs['colburn'] = kwargs.get('colburn', colburndef)
 
     # MOD44B.061 excludes data above 60N, unusable
-    if kwargs['colvcf'] == 'MOD44B.061':
-        raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
-            'is missing Arctic data')
+    # For testing (***FIXME***)
+#   if kwargs['colvcf'] == 'MOD44B.061':
+#       raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
+#           'is missing Arctic data')
 
     return kwargs

@@ -1,5 +1,5 @@
 '''
-MODIS/VIIRS vegetation index module
+MiCASA vegetation index module
 '''
 
 # * Generalize to include VIIRS (will need to look for *.h5)
@@ -221,7 +221,7 @@ class VegInd(xr.Dataset):
             attrs={'Conventions':'CF-1.9',
                 'institution':'NASA Goddard Space Flight Center',
                 'contact':'Brad Weir <brad.weir@nasa.gov>',
-                'title':'MODIS/VIIRS daily vegetation (NDVI/fPAR) data',
+                'title':'MiCASA daily vegetation (NDVI/fPAR) data',
                 'input_files':''})
 
     def ndvi2fpar(self, lctype):
@@ -237,12 +237,12 @@ class VegInd(xr.Dataset):
         return _regrid(self, *args, **kwargs)
 
     def to_netcdf(self, *args, **kwargs):
-        # Fill history with (close enough) timestamp
-        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
-
         # Set _FillValue to None instead of NaN by default
         if 'encoding' not in kwargs:
             kwargs['encoding'] = {var:{'_FillValue':None}
                 for var in self.variables}
+
+        # Fill history with (close enough) timestamp
+        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
 
         return super().to_netcdf(*args, **kwargs)

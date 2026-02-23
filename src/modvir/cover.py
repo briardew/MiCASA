@@ -1,5 +1,5 @@
 '''
-MODIS/VIIRS land cover type module
+MiCASA land cover type module
 '''
 
 # * Generalize to include VIIRS (will need to look for *.h5)
@@ -100,8 +100,8 @@ def _regrid(dsout, dirin, headcov, headvcf):
         fherb = fherb + fherbgran
         ftree = ftree + ftreegran
 
-    dsin.close()
-    dsvcf.close()
+        dsin.close()
+        dsvcf.close()
 
     # Set missing tiles to type NMISS (ocean)
     tots = np.sum(ftype, axis=0)
@@ -153,7 +153,7 @@ def _regrid(dsout, dirin, headcov, headvcf):
     return dsout
 
 class Cover(xr.Dataset):
-    '''MODIS/VIIRS land cover type class'''
+    '''MiCASA land cover type class'''
     __slots__ = ()
 
     def __init__(self, dataset=None, nlat=defaults['nlat'],
@@ -214,19 +214,19 @@ class Cover(xr.Dataset):
             attrs={'Conventions':'CF-1.9',
                 'institution':'NASA Goddard Space Flight Center',
                 'contact':'Brad Weir <brad.weir@nasa.gov>',
-                'title':'MODIS/VIIRS annual land cover type data',
+                'title':'MiCASA annual land cover type data',
                 'input_files':''})
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)
 
     def to_netcdf(self, *args, **kwargs):
-        # Fill history with (close enough) timestamp
-        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
-
         # Set _FillValue to None instead of NaN by default
         if 'encoding' not in kwargs:
             kwargs['encoding'] = {var:{'_FillValue':None}
                 for var in self.variables}
+
+        # Fill history with (close enough) timestamp
+        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
 
         return super().to_netcdf(*args, **kwargs)
