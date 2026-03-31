@@ -6,9 +6,6 @@ function [maskedfile] = maskfile(filetomask,mask)
 % in: maskfile(the file to mask, mask);
 % out: the maskedfile (one column)
 
-% CASA library, Guido van der Werf 2003
-% guido@ltpmailx.gsfc.nasa.gov
-
 % maskedfile = filetomask(mask==1);
 
 % old

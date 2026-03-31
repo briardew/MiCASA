@@ -4,7 +4,6 @@ MODIS/VIIRS processing utlities
 
 from os import path
 from glob import glob
-#from subprocess import call
 from datetime import datetime
 from requests.exceptions import HTTPError
 from time import sleep
@@ -12,15 +11,6 @@ import earthaccess
 
 def download(col, dateget, dirget, force=False):
     '''Download MODIS/VIIRS collections from LP DAAC'''
-#    ardir = {'MOD':'MOLT', 'MYD':'MOLA', 'MCD':'MOTA', 'VNP':'VIIRS'}
-#
-#    wgargs = '-r -np -nd -nv -e robots=off'
-#    if not force: wgargs = '-nc ' + wgargs
-#
-#    # Suboptimal, but needed for discover hack
-#    return call('wget ' + wgargs + ' ' +
-#        'https://e4ftl01.cr.usgs.gov/' + ardir[col[:3]] + '/' + col + '/' +
-#        dateget + '/ -A "*.hdf,*.h5" -P "' + dirget + '"', shell=True)
 
     # Convert date input (originally designed for %Y.%m.%d format)
     if len(dateget) == 10:
@@ -42,11 +32,17 @@ def download(col, dateget, dirget, force=False):
             auth = earthaccess.login(strategy='netrc')
             results = earthaccess.search_data(short_name=shorty,
                 granule_name=granny)
-            if len(results) == 0:
+            # Hack to deal with broken metadata MCD43A4.061
+            urls = []
+            for rr in results:
+                for ll in rr.data_links():
+                    if not (ll.endswith('.jpg') or ll.endswith('.xml')):
+                        urls.append(ll)
+            if len(urls) == 0:
                 print(f'No granules found matching {granny}')
                 return
 
-            files = earthaccess.download(results, dirget)
+            files = earthaccess.download(urls, dirget)
             break
         except HTTPError as e:
             print(e)

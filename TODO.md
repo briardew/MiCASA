@@ -25,6 +25,7 @@ through GES DISC while the driver data is not.
 
 * Clean up `bin` directory
 * Clean up `masinfo` directory
+* Compute LAI?
 * Improve post-processing
 
 * Have everything reference a global configuration file. Right now the code

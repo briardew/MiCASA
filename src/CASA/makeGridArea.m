@@ -4,8 +4,7 @@
 %    resolution where x=# lat bands, y=# lon bands. So a 1 degree map
 %    would have 180 lats and 360 lons
 %
-% Author(s):	Guido van der Werf <guido@ltpmail.gsfc.nasa.gov>
-% 		Brad Weir <brad.weir@nasa.gov>
+% Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
 % 2003-01-01	Initial version (GvdW)

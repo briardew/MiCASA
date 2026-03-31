@@ -10,7 +10,7 @@ from glob import glob
 from datetime import datetime
 
 import numpy as np
-import xarray as xr
+from modvir.patches import xarray as xr
 import rioxarray as rxr
 
 from modvir.config import defaults, LCVAR, NTYPE
@@ -42,7 +42,8 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
         fcov = swaphead(ff, headburn, headcov)
         fvcf = swaphead(ff, headburn, headvcf)
 
-        # h08v11, h01v07 have burning and no land cover (***FIXME***)
+        # Can't believe we have to do this
+        # h08v11, h01v07 have burning and no land cover
         if fcov is None:
             print('Missing land cover data for ' + ff)
             continue
@@ -50,13 +51,9 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
             print('Missing VCF data for ' + ff)
             continue
 
-        try:
-            dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
-            dscov = rxr.open_rasterio(fcov).squeeze(drop=True)
-            dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
-        except Exception as e:
-            print(e)
-            continue
+        dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
+        dscov = rxr.open_rasterio(fcov).squeeze(drop=True)
+        dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
 
         fused = fused + [ff, fcov, fvcf]
 
@@ -152,38 +149,39 @@ class Burn(xr.Dataset):
 
         lat, lon = centers(nlat, nlon)
 
-        coords = {'lat':(['lat'], lat.astype(np.single),
+        coords = {
+            'lat':(['lat'], lat.astype(np.single),
                 {'long_name':'latitude','units':'degrees_north'}),
             'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees_east'})}
+                {'long_name':'longitude','units':'degrees_east'}),
+        }
 
-        blank = np.nan * np.ones((nlat, nlon))
+        nansxy = np.nan * np.ones((nlat, nlon))
 
-        batot = xr.DataArray(data=blank.astype(np.single),
+        batot = xr.DataArray(
+            data=nansxy.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Total burned area', 'units':'m2'})
-
-        baherb = xr.DataArray(data=blank.astype(np.single),
+            attrs={'long_name':'Total burned area', 'units':'m2'},
+        )
+        baherb = xr.DataArray(
+            data=nansxy.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Herbaceous burned area', 'units':'m2'})
-
-        bawood = xr.DataArray(data=blank.astype(np.single),
+            attrs={'long_name':'Herbaceous burned area', 'units':'m2'},
+        )
+        bawood = xr.DataArray(
+            data=nansxy.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Woody burned area', 'units':'m2'})
-
-        badefo = xr.DataArray(data=blank.astype(np.single),
+            attrs={'long_name':'Woody burned area', 'units':'m2'},
+        )
+        badefo = xr.DataArray(
+            data=nansxy.astype(np.single),
             dims=['lat','lon'], coords=coords,
-            attrs={'long_name':'Deforestation burned area', 'units':'m2'})
+            attrs={'long_name':'Deforestation burned area', 'units':'m2'},
+        )
 
         self = xr.Dataset.__init__(self,
             data_vars={'batot':batot, 'baherb':baherb, 'bawood':bawood,
-                'badefo':badefo},
-            # Read institution and contact from settings (***FIXME***)
-            attrs={'Conventions':'CF-1.9',
-                'institution':'NASA Goddard Space Flight Center',
-                'contact':'Brad Weir <brad.weir@nasa.gov>',
-                'title':'MiCASA daily burned area data',
-                'input_files':''})
+                'badefo':badefo})
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)
@@ -201,14 +199,3 @@ class Burn(xr.Dataset):
         ds['badefo'].values[ino] = 0 * ds['badefo'].values[ino]
 
         return ds
-
-    def to_netcdf(self, *args, **kwargs):
-        # Set _FillValue to None instead of NaN by default
-        if 'encoding' not in kwargs:
-            kwargs['encoding'] = {var:{'_FillValue':None}
-                for var in self.variables}
-
-        # Fill history with (close enough) timestamp
-        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
-
-        return super().to_netcdf(*args, **kwargs)

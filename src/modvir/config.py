@@ -4,35 +4,42 @@ MODIS/VIIRS configuration module
 
 from datetime import datetime
 
-defaults = {
-    'output': '.',
-    # NB: NBAR data start 2000-02-16
-    'date0': datetime(2001, 1, 1),
-    'dateF': datetime.now(),
-    # 0.1 deg regular grid
-    # This should be transitioned to lats and lons
-    'nlat': 1800,
-    'nlon': 3600,
-    'ver': '1',
-    # run switches (values currently ignored in __main__)
-    'force': False,
-    'tidy': False,
-    # translated from inputs; fixme?
-    'regrid': True,
-    'get': True,
-    'fill': True,
-    'institution': 'NASA Goddard Space Flight Center',
-    'contact': 'Brad Weir <brad.weir@nasa.gov>',
-}
-
 # Land cover type variable, number of types, number of missing type
 # NB: fPAR and burned area both depend on these choices
 LCVAR = 'LC_Type1'
 NTYPE = 18					# Including unclassified as a type
 NMISS = 16					# Missing tiles assumed water
 
+FEXT = 'nc4'					# Output file extension; see defaults['Format'] below
+YMINCOV = 2001					# Minimum year for land cover
 YMAXCOV = 2021					# Maximum year for land cover
+YMINVCF = 2007					# Minimum year for VCF (2003-2006 are corrputed)
 YMAXVCF = 2020					# Maximum year for VCF
+
+defaults = {
+    'output':'.',
+    # NB: NBAR data start 2000-02-16
+    'date0':datetime(2001, 1, 1),
+    'dateF':datetime.now(),
+    # 0.1 deg regular grid
+    # This should be transitioned to lats and lons
+    'nlat':1800,
+    'nlon':3600,
+    'ver':'1',
+    # Run switches
+    'force':False,
+    'tidy':False,
+    # Translated from args; fixme?
+    'regrid':True,
+    'get':True,
+    'fill':True,
+    # Output metadata
+    'Format':'netCDF',
+    'Conventions':'CF-1.9',
+    'ProcessingLevel':'4',
+    'institution':'NASA Goddard Space Flight Center',
+    'contact':'Brad Weir <brad.weir@nasa.gov>',
+}
 
 def check_args(**kwargs):
     '''Argument error check and standardization'''
@@ -48,6 +55,16 @@ def check_args(**kwargs):
     for key in defaults:
         kwargs[key] = kwargs.get(key, defaults[key])
 
+    # Set spatial attributes (needs to be generalized)
+    nlat = kwargs['nlat']
+    nlon = kwargs['nlon']
+    kwargs['Resolution'] = (f'{round(180/nlat,3)} degree x ' +
+        f'{round(360/nlon,3)} degree')
+    kwargs['NorthernmostLatiude']  = '90.0'
+    kwargs['WesternmostLongitude'] = '-180.0'
+    kwargs['SouthernmostLatitude'] = '-90.0'
+    kwargs['EasternmostLongitude'] = '180.0'
+
     return kwargs
 
 def check_cols(date, **kwargs):
@@ -57,9 +74,7 @@ def check_cols(date, **kwargs):
 
     # Should these be specified in defaults?
     colcovdef  = 'MCD12Q1.061'
-#   colvcfdef  = 'MOD44B.006'
-    # For testing (***FIXME***)
-    colvcfdef  = 'MOD44B.061'
+    colvcfdef  = 'MOD44B.006'
     colvegdef  = 'MCD43A4.061'
     colburndef = 'MCD64A1.061'
     if ver == '1A':
@@ -86,9 +101,8 @@ def check_cols(date, **kwargs):
     kwargs['colburn'] = kwargs.get('colburn', colburndef)
 
     # MOD44B.061 excludes data above 60N, unusable
-    # For testing (***FIXME***)
-#   if kwargs['colvcf'] == 'MOD44B.061':
-#       raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
-#           'is missing Arctic data')
+    if kwargs['colvcf'] == 'MOD44B.061':
+        raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
+            'is missing Arctic data')
 
     return kwargs

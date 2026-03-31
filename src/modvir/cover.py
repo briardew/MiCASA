@@ -10,7 +10,7 @@ from glob import glob
 from datetime import datetime
 
 import numpy as np
-import xarray as xr
+from modvir.patches import xarray as xr
 import rioxarray as rxr
 
 from modvir.config import defaults, LCVAR, NTYPE, NMISS
@@ -36,31 +36,20 @@ def _regrid(dsout, dirin, headcov, headvcf):
     if len(flist) == 0:
         raise EOFError('No files found in ' + dirin)
 
-    fused = []
+    fused = flist
     for ff in flist:
-        fvcf = swaphead(ff, headcov, headvcf)
-        if fvcf is None:
-            print('Missing VCF data for ' + ff)
-            continue
-
-        try:
-            dsin  = rxr.open_rasterio(ff  ).squeeze(drop=True)
-            dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
-        except Exception as e:
-            print(e)
-            continue
-
-        fused = fused + [ff, fvcf]
+        dsin = rxr.open_rasterio(ff).squeeze(drop=True)
 
         # Compute lat/lon mesh for MODIS sin grid
         LAin, LOin = singrid(dsin['y'].values, dsin['x'].values)
 
+        # Read land cover types
+        # ---
         typein = dsin[LCVAR].values.T
         # Unclassified set to NTYPE (simplifies loops)
         typein[typein == 255] = NTYPE
 
         # Compute totals of each type in each cell
-        # ---
         for nn in range(NTYPE):
             ime = (typein == nn + 1)
             if not np.any(ime): continue
@@ -69,6 +58,14 @@ def _regrid(dsout, dirin, headcov, headvcf):
             ftype[nn,:,:] = ftype[nn,:,:] + totme
 
         # Read VCF (percent tree, herbaceous, and barren)
+        # ---
+        fvcf = swaphead(ff, headcov, headvcf)
+        if fvcf is None:
+            print('Missing VCF data for ' + ff)
+            continue
+        fused = fused + [ff, fvcf]
+        dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
+
         pbarehi = dsvcf['Percent_NonVegetated']
         pherbhi = dsvcf['Percent_NonTree_Vegetation']
         ptreehi = dsvcf['Percent_Tree_Cover']
@@ -165,68 +162,50 @@ class Cover(xr.Dataset):
         lat, lon = centers(nlat, nlon)
         typedim = np.linspace(1, NTYPE, NTYPE)
 
-        coords = {'type':(['type'], typedim.astype(np.short),
+        coords = {
+            'type':(['type'], typedim.astype(np.short),
                 {'long_name':'land cover type','units':'none'}),
             'lat':(['lat'], lat.astype(np.single),
                 {'long_name':'latitude','units':'degrees_north'}),
             'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees_east'})}
+                {'long_name':'longitude','units':'degrees_east'}),
+        }
+        coordsxy = {'lat':coords['lat'], 'lon':coords['lon']}
 
-        ftype = np.zeros((NTYPE, nlat, nlon))
-
-        datype = xr.DataArray(data=ftype.astype(np.single),
+        zerosxyn = np.zeros((NTYPE, nlat, nlon))
+        ftype = xr.DataArray(
+            data=zerosxyn.astype(np.single),
             dims=['type','lat','lon'], coords=coords,
-            attrs={'long_name':'Percentage of land cover type',
-                'units':'%'})
+            attrs={'long_name':'Percentage of land cover type', 'units':'%'},
+        )
 
-        mode = np.ones((nlat, nlon))
+        onesxy = np.ones((nlat, nlon))
+        mode = xr.DataArray(
+            data=onesxy.astype(np.short),
+            dims=['lat','lon'], coords=coordsxy,
+            attrs={'long_name':'Most common land cover type', 'units':'none'},
+        )
 
-        damode = xr.DataArray(data=mode.astype(np.short),
-            dims=['lat','lon'],
-            coords={'lat':coords['lat'], 'lon':coords['lon']},
-            attrs={'long_name':'Most common land cover type',
-                'units':'none'})
-
-        fbare = np.zeros((nlat, nlon))
-        fherb = np.zeros((nlat, nlon))
-        ftree = np.zeros((nlat, nlon))
-
-        dabare = xr.DataArray(data=fbare.astype(np.single),
-            dims=['lat','lon'],
-            coords={'lat':coords['lat'], 'lon':coords['lon']},
-            attrs={'long_name':'Fraction bare ground cover',
-                'units':'1'})
-        daherb = xr.DataArray(data=fherb.astype(np.single),
-            dims=['lat','lon'],
-            coords={'lat':coords['lat'], 'lon':coords['lon']},
-            attrs={'long_name':'Fraction herbaceous cover',
-                'units':'1'})
-        datree = xr.DataArray(data=ftree.astype(np.single),
-            dims=['lat','lon'],
-            coords={'lat':coords['lat'], 'lon':coords['lon']},
-            attrs={'long_name':'Fraction tree cover',
-                'units':'1'})
+        zerosxy = np.zeros((nlat, nlon))
+        fbare = xr.DataArray(
+            data=zerosxy.astype(np.single),
+            dims=['lat','lon'], coords=coordsxy,
+            attrs={'long_name':'Fraction bare ground cover', 'units':'1'},
+        )
+        fherb = xr.DataArray(
+            data=zerosxy.astype(np.single),
+            dims=['lat','lon'], coords=coordsxy,
+            attrs={'long_name':'Fraction herbaceous cover', 'units':'1'},
+        )
+        ftree = xr.DataArray(
+            data=zerosxy.astype(np.single),
+            dims=['lat','lon'], coords=coordsxy,
+            attrs={'long_name':'Fraction tree cover', 'units':'1'},
+        )
 
         self = xr.Dataset.__init__(self,
-            data_vars={'ftype':datype, 'mode':damode, 'fbare':dabare,
-                'fherb':daherb, 'ftree':datree},
-            # Read institution and contact from settings (***FIXME***)
-            attrs={'Conventions':'CF-1.9',
-                'institution':'NASA Goddard Space Flight Center',
-                'contact':'Brad Weir <brad.weir@nasa.gov>',
-                'title':'MiCASA annual land cover type data',
-                'input_files':''})
+            data_vars={'ftype':ftype, 'mode':mode, 'fbare':fbare,
+                'fherb':fherb, 'ftree':ftree})
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)
-
-    def to_netcdf(self, *args, **kwargs):
-        # Set _FillValue to None instead of NaN by default
-        if 'encoding' not in kwargs:
-            kwargs['encoding'] = {var:{'_FillValue':None}
-                for var in self.variables}
-
-        # Fill history with (close enough) timestamp
-        self.attrs['history'] = 'Created on ' + datetime.now().isoformat()
-
-        return super().to_netcdf(*args, **kwargs)

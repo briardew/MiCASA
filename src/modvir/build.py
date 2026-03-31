@@ -13,7 +13,7 @@
 
 import sys
 import numpy as np
-import xarray as xr
+from modvir.patches import xarray as xr
 
 from os import path, makedirs, remove, rmdir
 from glob import glob
@@ -21,13 +21,11 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 
 from modvir.config import (defaults, check_args, check_cols,
-    YMAXCOV, YMAXVCF)
-from modvir.utils  import download
-from modvir.cover  import Cover
+    YMINCOV, YMAXCOV, YMINVCF, YMAXVCF, FEXT)
+from modvir.utils import download
+from modvir.cover import Cover
 from modvir.vegind import VegInd
-from modvir.burn   import Burn
-
-FEXT = 'nc4'
+from modvir.burn import Burn
 
 def cover(**kwargs):
     '''Build (re)gridded MiCASA land cover dataset'''
@@ -45,73 +43,80 @@ def cover(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
-    # Use 2001 land cover for 2000
-    date0 = max(date0, datetime(2001, 1, 1))
-    dateF = max(dateF, datetime(2001, 1, 1))
+    restag = 'x' + str(nlon) + '_y' + str(nlat)
 
     # Initialize
     cc = Cover(nlat=nlat, nlon=nlon)
-    restag = 'x' + str(nlon) + '_y' + str(nlat)
+    cc.attrs['ShortName'] = 'MICASA_COVER_Y'
+    cc.attrs['LongName'] = ('MiCASA Yearly Land Cover ' +
+        kwargs.get('Resolution', ''))
+    cc.attrs['VersionID'] = ver
+    cc.attrs['title'] = cc.attrs['LongName'] + ' v' + ver
+    for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
+        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
+        'SouthernmostLatitude', 'EasternmostLongitude']:
+        if key in kwargs: cc.attrs[key] = kwargs[key]
 
     for year in range(date0.year, dateF.year+1):
         jdnow = datetime(year, 1, 1)
 
-        # Year-specific strings
-        syear  = str(year)
-        dirout = path.join(output, 'cover')
-        fout   = path.join(dirout, 'MiCASA_v' + ver + '_cover_' + restag +
-            '_yearly_' + syear + '.' + FEXT)
+        print(f'===    ________ {year}')
 
-        print('===    ________ ' + syear)
-
-        # Land cover vars
+        # Land cover input vars
         colcov  = check_cols(jdnow, **kwargs)['colcov']
-        yearcov = min(year, YMAXCOV)
+        yearcov = min(max(year, YMINCOV), YMAXCOV)
         datecov = datetime(yearcov, 1, 1).strftime('%Y.%m.%d')
-        ystrcov = datetime(yearcov, 1, 1).strftime('%Y')
-        dircov  = path.join(output, colcov, ystrcov, '001')
-        headcov = path.join(output, colcov, ystrcov, '001',
-            colcov[:-4] + '.A' + ystrcov + '001.')
+        dircov  = path.join(output, colcov, f'{yearcov}', '001')
+        headcov = path.join(dircov, colcov[:-4] + f'.A{yearcov}001.')
 
-        # VCF vars
+        # VCF input vars
         colvcf  = check_cols(jdnow, **kwargs)['colvcf']
-        yearvcf = min(year, YMAXVCF)
+        yearvcf = min(max(year, YMINVCF), YMAXVCF)
         datevcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y.%m.%d')
-        ystrvcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y')
-        dirvcf  = path.join(output, colvcf, ystrvcf, '065')
-        headvcf = path.join(output, colvcf, ystrvcf, '065',
-            colvcf[:-4] + '.A' + ystrvcf + '065.')
+        dirvcf  = path.join(output, colvcf, f'{yearvcf}', '065')
+        headvcf = path.join(dirvcf, colvcf[:-4] + f'.A{yearvcf}065.')
 
-        if kwargs['get']:
+        # Output vars
+        dirout = path.join(output, 'cover')
+        fgran  = f'MiCASA_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
+        fout   = path.join(dirout, fgran)
+
+        # Download if requested or needed for regrid
+        get4regrid = kwargs['regrid'] and (not path.isfile(fout)
+            or kwargs['force'])
+        if kwargs['get'] or get4regrid:
             print('===    ____________ Downloading')
             download(colcov, datecov, dircov)
             download(colvcf, datevcf, dirvcf)
 
-        # Read or regrid
-        if not kwargs['regrid']: continue
-
-        print('===    ____________ Regridding')
-        if path.isfile(fout) and not kwargs['force']:
-            cc = Cover(xr.open_dataset(fout))
-        else:
-            makedirs(dirout, exist_ok=True)
-            cc = cc.regrid(dircov, headcov, headvcf)
-            cc.to_netcdf(fout)
+        if kwargs['regrid']:
+            print('===    ____________ Regridding')
+            if path.isfile(fout) and not kwargs['force']:
+                cc = Cover(xr.open_dataset(fout))
+            else:
+                cc.attrs['RangeBeginningDate'] = f'{year}-01-01'
+                cc.attrs['RangeBeginningTime'] = '00:00:00.000000'
+                cc.attrs['RangeEndingDate'] = f'{year}-12-31'
+                cc.attrs['RangeEndingTime'] = '23:59:59.999999'
+                cc.attrs['GranuleID'] = fgran
+                cc = cc.regrid(dircov, headcov, headvcf)
+                makedirs(dirout, exist_ok=True)
+                cc.to_netcdf(fout)
 
         # Slightly terrifying
         if kwargs['tidy']:
             try:
                 for ff in glob(headcov + '*'): remove(ff)
-                rmdir(path.join(output, colcov, ystrcov, '001'))
-                rmdir(path.join(output, colcov, ystrcov))
+                rmdir(path.join(output, colcov, f'{yearcov}', '001'))
+                rmdir(path.join(output, colcov, f'{yearcov}'))
                 rmdir(path.join(output, colcov))
             except Exception as e:
                 print(e)
 
             try:
                 for ff in glob(headvcf + '*'): remove(ff)
-                rmdir(path.join(output, colvcf, ystrvcf, '065'))
-                rmdir(path.join(output, colvcf, ystrvcf))
+                rmdir(path.join(output, colvcf, f'{yearvcf}', '065'))
+                rmdir(path.join(output, colvcf, f'{yearvcf}'))
                 rmdir(path.join(output, colvcf))
             except Exception as e:
                 print(e)
@@ -134,9 +139,19 @@ def vegind(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
+    restag = 'x' + str(nlon) + '_y' + str(nlat)
+
     # Initialize
     vv = VegInd(nlat=nlat, nlon=nlon)
-    restag = 'x' + str(nlon) + '_y' + str(nlat)
+    vv.attrs['ShortName'] = 'MICASA_VEGIND_D'
+    vv.attrs['LongName'] = ('MiCASA Daily Vegetation Indices ' +
+        kwargs.get('Resolution', ''))
+    vv.attrs['VersionID'] = ver
+    vv.attrs['title'] = vv.attrs['LongName'] + ' v' + ver
+    for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
+        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
+        'SouthernmostLatitude', 'EasternmostLongitude']:
+        if key in kwargs: vv.attrs[key] = kwargs[key]
 
     for year in range(date0.year, dateF.year+1):
         # Compute vegetation mask
@@ -144,6 +159,8 @@ def vegind(**kwargs):
         if kwargs['regrid'] or kwargs['fill']:
             # Build/read land cover
             kwargs_cov = kwargs
+            kwargs_cov['get'] = False
+            kwargs_cov['regrid'] = True
             kwargs_cov['date0'] = datetime(year, 1, 1)
             kwargs_cov['dateF'] = datetime(year,12,31)
             cc = cover(**kwargs_cov)
@@ -161,13 +178,10 @@ def vegind(**kwargs):
         # Build/read daily vegetation indices
         # ---
         # Year-specific strings
-        syear = str(year)
-        dirpre  = path.join(output, 'vegpre', syear)
-        headpre = path.join(dirpre, 'MiCASA_v' + ver + '_vegpre_' +
-            restag + '_daily_')
-        dirind  = path.join(output, 'vegind', syear)
-        headind = path.join(dirind, 'MiCASA_v' + ver + '_vegind_' +
-            restag + '_daily_')
+        dirpre  = path.join(output, 'vegpre', f'{year}')
+        headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{restag}_daily_')
+        dirind  = path.join(output, 'vegind', f'{year}')
+        headind = path.join(dirind, f'MiCASA_v{ver}_vegind_{restag}_daily_')
 
         # Time period
         jday0 = max(datetime(year, 1, 1), date0)
@@ -179,24 +193,25 @@ def vegind(**kwargs):
 
             print('===    ________ ' + jdnow.strftime('%Y-%m-%d'))
 
-            # Vegetation vars
+            # Vegetation input vars
             dateveg = jdnow.strftime('%Y.%m.%d')
             jdayveg = jdnow.strftime('%j')
             colveg  = check_cols(jdnow, **kwargs)['colveg']
-            dirveg  = path.join(output, colveg, syear, jdayveg)
-            headveg = path.join(output, colveg, syear, jdayveg,
-                colveg[:-4] + '.A' + syear + jdayveg + '.')
+            dirveg  = path.join(output, colveg, f'{year}', jdayveg)
+            headveg = path.join(output, colveg, f'{year}', jdayveg,
+                colveg[:-4] + f'.A{year}{jdayveg}.')
 
+            # Output vars
             dateout = jdnow.strftime('%Y%m%d')
             find = headind + dateout + '.' + FEXT
             fpre = headpre + dateout + '.' + FEXT
 
-            # Download
-            if kwargs['get']:
+            # Download if requested or needed for regrid
+            get4regrid = kwargs['regrid'] and (not path.isfile(fpre)
+                or kwargs['force'])
+            if kwargs['get'] or get4regrid:
                 print('===    ____________ Downloading')
                 download(colveg, dateveg, dirveg)
-
-            if not kwargs['regrid'] and not kwargs['fill']: continue
 
             vvold = vv.copy(deep=True)
 
@@ -206,13 +221,17 @@ def vegind(**kwargs):
                 if path.isfile(fpre) and not kwargs['force']:
                     vv = VegInd(xr.open_dataset(fpre))
                 else:
+                    vv.attrs['RangeBeginningDate'] = jdnow.strftime('%Y-%m-%d')
+                    vv.attrs['RangeBeginningTime'] = '00:00:00.000000'
+                    vv.attrs['RangeEndingDate'] = jdnow.strftime('%Y-%m-%d')
+                    vv.attrs['RangeEndingTime'] = '23:59:59.999999'
+                    # Some days have outages
                     try:
                         vv = vv.regrid(dirveg, mask=mask)
                     except EOFError as message:
                         sys.stderr.write('No files to process, proceeding ...\n')
                     else:
                         makedirs(dirpre, exist_ok=True)
-                        vv.attrs['title'] += ' (Preliminary, no persistence)'
                         vv.to_netcdf(fpre)
 
             # Read or regrid filled file
@@ -227,8 +246,9 @@ def vegind(**kwargs):
                     vv['NDVI'].values[inan] = vvold['NDVI'].values[inan]
                     vv = vv.ndvi2fpar(cc['mode'].values)
 
+                    vv.attrs['GranuleID'] = find
+
                     makedirs(dirind, exist_ok=True)
-                    vv.attrs['title'] += ' (Final, filled with persistence)'
                     vv.to_netcdf(find)
 
             # Slightly terrifying
@@ -236,8 +256,8 @@ def vegind(**kwargs):
                 try:
                     for ff in glob(headveg + '*'): remove(ff)
                     for ff in glob('BROWSE.' + headveg + '*'): remove(ff)
-                    rmdir(path.join(output, colveg, syear, jdayveg))
-                    rmdir(path.join(output, colveg, syear))
+                    rmdir(path.join(output, colveg, f'{year}', jdayveg))
+                    rmdir(path.join(output, colveg, f'{year}'))
                     rmdir(path.join(output, colveg))
                 except Exception as e:
                     print(e)
@@ -262,34 +282,40 @@ def burn(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
-    # Initialize
-    bb = Burn(nlat=nlat, nlon=nlon)
     restag = 'x' + str(nlon) + '_y' + str(nlat)
 
+    # Initialize
+    bb = Burn(nlat=nlat, nlon=nlon)
+    bb.attrs['ShortName'] = 'MICASA_BURN_D'
+    bb.attrs['LongName'] = ('MiCASA Daily Biomass Burning ' +
+        kwargs.get('Resolution', ''))
+    bb.attrs['VersionID'] = ver
+    bb.attrs['title'] = bb.attrs['LongName'] + ' v' + ver
+    for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
+        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
+        'SouthernmostLatitude', 'EasternmostLongitude']:
+        if key in kwargs: bb.attrs[key] = kwargs[key]
+
     for year in range(date0.year, dateF.year+1):
-        syear = str(year)
         jdyear = datetime(year, 1, 1)
 
-        print('===    ________ ' + syear)
+        print(f'===    ________ {year}')
 
-        # Land cover vars
+        # Land cover input vars
         colcov  = check_cols(jdyear, **kwargs)['colcov']
-        yearcov = min(year, YMAXCOV)
+        yearcov = min(max(year, YMINCOV), YMAXCOV)
         datecov = datetime(yearcov, 1, 1).strftime('%Y.%m.%d')
-        ystrcov = datetime(yearcov, 1, 1).strftime('%Y')
-        dircov  = path.join(output, colcov, ystrcov, '001')
-        headcov = path.join(output, colcov, ystrcov, '001',
-            colcov[:-4] + '.A' + ystrcov + '001.')
+        dircov  = path.join(output, colcov, f'{yearcov}', '001')
+        headcov = path.join(dircov, colcov[:-4] + f'.A{yearcov}001.')
 
-        # VCF vars
+        # VCF input vars
         colvcf = check_cols(jdyear, **kwargs)['colvcf']
-        yearvcf = min(year, YMAXVCF)
+        yearvcf = min(max(year, YMINVCF), YMAXVCF)
         datevcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y.%m.%d')
-        ystrvcf = (datetime(yearvcf, 1, 1) + timedelta(64)).strftime('%Y')
-        dirvcf  = path.join(output, colvcf, ystrvcf, '065')
-        headvcf = path.join(output, colvcf, ystrvcf, '065',
-            colvcf[:-4] + '.A' + ystrvcf + '065.')
+        dirvcf  = path.join(output, colvcf, f'{yearvcf}', '065')
+        headvcf = path.join(dirvcf, colvcf[:-4] + f'.A{yearvcf}065.')
 
+        # Download if requested or needed for regrid
         if kwargs['get'] and kwargs['regrid']:
             print('===    ____________ Downloading')
             download(colcov, datecov, dircov)
@@ -297,11 +323,9 @@ def burn(**kwargs):
 
         # Build burned area
         # ---
-        dirout  = path.join(output, 'burn', syear)
-        headmon = path.join(dirout, 'MiCASA_v' + ver + '_burn_' +
-            restag + '_monthly_')
-        headday = path.join(dirout, 'MiCASA_v' + ver + '_burn_' +
-            restag + '_daily_')
+        dirout  = path.join(output, 'burn', f'{year}')
+        headmon = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_monthly_')
+        headday = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_daily_')
 
         for nm in range(1,13):
             # Skip if outside range
@@ -314,48 +338,56 @@ def burn(**kwargs):
 
             print('===    ________ ' + jdmonth.strftime('%Y-%m'))
 
-            # Burned area vars
+            # Burned area input vars
             colburn  = check_cols(jdmonth, **kwargs)['colburn']
             dateburn = jdmonth.strftime('%Y.%m.%d')
             jdayburn = jdmonth.strftime('%j')
-            dirburn  = path.join(output, colburn, syear, jdayburn)
-            headburn = path.join(output, colburn, syear, jdayburn,
-                colburn[:-4] + '.A' + syear + jdayburn + '.')
+            dirburn  = path.join(output, colburn, f'{year}', jdayburn)
+            headburn = path.join(dirburn, colburn[:-4] + f'.A{year}{jdayburn}.')
 
-            if kwargs['get']:
+            # Output vars
+            fmon = headmon + jdmonth.strftime('%Y%m') + '.' + FEXT
+
+            # Download if requested or needed for regrid
+            get4regrid = kwargs['regrid'] and (not path.isfile(fmon)
+                or kwargs['force'])
+            if kwargs['get'] or get4regrid:
                 print('===    ____________ Downloading')
                 download(colburn, dateburn, dirburn)
 
-            if not kwargs['regrid']: continue
+            if kwargs['regrid']:
+                # Regrid monthlies
+                print('===    ____________ Regridding')
+                if path.isfile(fmon) and not kwargs['force']:
+                    bb = Burn(xr.open_dataset(fmon))
+                else:
+#                   bb.attrs['RangeBeginningDate'] = jdnow.strftime('%Y-%m-%d')
+#                   bb.attrs['RangeBeginningTime'] = '00:00:00.000000'
+#                   bb.attrs['RangeEndingDate'] = jdnow.strftime('%Y-%m-%d')
+#                   bb.attrs['RangeEndingTime'] = '23:59:59.999999'
+#                   bb.attrs['GranuleID'] = fgran
+                    bb = bb.regrid(dirburn, headburn, headcov, headvcf)
+                    makedirs(dirout, exist_ok=True)
+                    bb.to_netcdf(fmon)
 
-            # Regrid monthlies
-            print('===    ____________ Regridding')
-            fmon = headmon + jdmonth.strftime('%Y%m') + '.' + FEXT
-            if path.isfile(fmon) and not kwargs['force']:
-                bb = Burn(xr.open_dataset(fmon))
-            else:
-                makedirs(dirout, exist_ok=True)
-                bb = bb.regrid(dirburn, headburn, headcov, headvcf)
-                bb.to_netcdf(fmon)
+                # Output dailies
+                ndays = monthrange(year, nm)[1]
+                for nd in range(1,ndays+1):
+                    jdnow = datetime(year, nm, nd)
+                    fday  = headday + jdnow.strftime('%Y%m%d') + '.' + FEXT
+                    if not path.isfile(fday) or kwargs['force']: 
+                        bbnow = bb.daysel((jdnow - jdyear).days + 1)
+                        bbnow.to_netcdf(fday)
 
-            # Output dailies
-            ndays = monthrange(year, nm)[1]
-            for nd in range(1,ndays+1):
-                jdnow = datetime(year, nm, nd)
-                fday  = headday + jdnow.strftime('%Y%m%d') + '.' + FEXT
-                if not path.isfile(fday) or kwargs['force']: 
-                    bbnow = bb.daysel((jdnow - jdyear).days + 1)
-                    bbnow.to_netcdf(fday)
-
-                # Finished?
-                if jdnow == dateF: break
+                    # Finished?
+                    if jdnow == dateF: break
 
             # Slightly terrifying
             if kwargs['tidy']:
                 try:
                     for ff in glob(headburn + '*'): remove(ff)
-                    rmdir(path.join(output, colburn, syear, jdayburn))
-                    rmdir(path.join(output, colburn, syear))
+                    rmdir(path.join(output, colburn, f'{year}', jdayburn))
+                    rmdir(path.join(output, colburn, f'{year}'))
                     rmdir(path.join(output, colburn))
                 except Exception as e:
                     print(e)
@@ -367,16 +399,16 @@ def burn(**kwargs):
         if kwargs['tidy'] and kwargs['regrid']:
             try:
                 for ff in glob(headcov + '*'): remove(ff)
-                rmdir(path.join(output, colcov, ystrcov, '001'))
-                rmdir(path.join(output, colcov, ystrcov))
+                rmdir(path.join(output, colcov, f'{yearcov}', '001'))
+                rmdir(path.join(output, colcov, f'{yearcov}'))
                 rmdir(path.join(output, colcov))
             except Exception as e:
                 print(e)
 
             try:
                 for ff in glob(headvcf + '*'): remove(ff)
-                rmdir(path.join(output, colvcf, ystrvcf, '065'))
-                rmdir(path.join(output, colvcf, ystrvcf))
+                rmdir(path.join(output, colvcf, f'{yearvcf}', '065'))
+                rmdir(path.join(output, colvcf, f'{yearvcf}'))
                 rmdir(path.join(output, colvcf))
             except Exception as e:
                 print(e)
