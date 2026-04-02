@@ -1,8 +1,22 @@
 # Más-Informada CASA (MiCASA)
 
-This is obviously still quite rough. Check out the README for the data release
+The Más-Informada Carnegie-Ames-Stanford Approach (MiCASA) is a diagnostic
+terrestrial biospheric model. It is a derivative of the Global Fire Emissions
+Dataset version 3 (GFED3) CASA variant produced and maintained at NASA's
+Goddard Space Flight Center (GSFC). CASA-GFED 3 uses reflectance data from
+NASA's Moderate Resolution Imaging Spectrometer (MODIS) aboard the Terra and
+Aqua spacecraft to determine atmosphere-biosphere carbon fluxes due to primary
+production, respiration, and biomass burning. MiCASA extends and improves upon
+CASA-GFED 3 in several ways. This includes the option to run at resolutions
+finer than 0.5 degrees, generalized and updated meteorology and soil property
+inputs, and brand new code to process native MODIS and Visible Infrared Imaging
+Radiometer Suite (VIIRS) tiles into land cover, vegetation, and burned area
+driver data (i.e., Más-Informada).
+
+MiCASA is also a data product that this code repository can generate.  Check
+out the README for the data release
 [here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
-A peer-reviewed description paper is in progress.
+A peer-reviewed description and validation paper is in progress.
 
 ## Recipe
 Most of the work involved in getting a run going revolves around building inputs and
