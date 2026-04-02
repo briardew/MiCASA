@@ -13,10 +13,11 @@ soil property inputs, and brand new code to process native MODIS and Visible
 Infrared Imaging Radiometer Suite (VIIRS) tiles into land cover, vegetation,
 and burned area driver data (i.e., más informada).
 
-MiCASA is also a data product that this code repository can generate.  Check
-out the README for the data release
-[here](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf).
-A peer-reviewed description and validation paper is in progress.
+MiCASA is also a data product that this code repository can generate. More
+information about the MiCASA code and data product can be found in the [README
+file](https://portal.nccs.nasa.gov/datashare/gmao/geos_carb/MiCASA/v1/MiCASA_README.pdf)
+for the version 1 data release. A peer-reviewed description and validation
+paper is in progress.
 
 ## Recipe
 Most of the work involved in getting a run going revolves around building inputs and
