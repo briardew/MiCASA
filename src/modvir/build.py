@@ -35,7 +35,6 @@ def cover(**kwargs):
 
     # Check and read arguments
     kwargs = check_args(**kwargs)
-
     output = kwargs['output']
     date0 = kwargs['date0']
     dateF = kwargs['dateF']
@@ -43,19 +42,19 @@ def cover(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
+    # Define restag and attrs for later
     restag = 'x' + str(nlon) + '_y' + str(nlat)
-
-    # Initialize
-    cc = Cover(nlat=nlat, nlon=nlon)
-    cc.attrs['ShortName'] = 'MICASA_COVER_Y'
-    cc.attrs['LongName'] = ('MiCASA Yearly Land Cover ' +
-        kwargs.get('Resolution', ''))
-    cc.attrs['VersionID'] = ver
-    cc.attrs['title'] = cc.attrs['LongName'] + ' v' + ver
+    longname = ('MiCASA Yearly Land Cover ' +
+        f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
+    attrs = {
+        'ShortName':'MICASA_COVER_Y',
+        'LongName':longname,
+        'title':f'{longname} v{ver}',
+        'VersionID':ver,
+    }
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
-        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
-        'SouthernmostLatitude', 'EasternmostLongitude']:
-        if key in kwargs: cc.attrs[key] = kwargs[key]
+        'contact']:
+        if key in kwargs: attrs[key] = kwargs[key]
 
     for year in range(date0.year, dateF.year+1):
         jdnow = datetime(year, 1, 1)
@@ -81,10 +80,10 @@ def cover(**kwargs):
         fgran  = f'MiCASA_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
         fout   = path.join(dirout, fgran)
 
-        # Download if requested or needed for regrid
+        # Download if needed for regrid or requested
         get4regrid = kwargs['regrid'] and (not path.isfile(fout)
             or kwargs['force'])
-        if kwargs['get'] or get4regrid:
+        if get4regrid or kwargs['get']:
             print('===    ____________ Downloading')
             download(colcov, datecov, dircov)
             download(colvcf, datevcf, dirvcf)
@@ -94,14 +93,13 @@ def cover(**kwargs):
             if path.isfile(fout) and not kwargs['force']:
                 cc = Cover(xr.open_dataset(fout))
             else:
-                cc.attrs['RangeBeginningDate'] = f'{year}-01-01'
-                cc.attrs['RangeBeginningTime'] = '00:00:00.000000'
-                cc.attrs['RangeEndingDate'] = f'{year}-12-31'
-                cc.attrs['RangeEndingTime'] = '23:59:59.999999'
-                cc.attrs['GranuleID'] = fgran
-                cc = cc.regrid(dircov, headcov, headvcf)
+                cc = Cover(time=jdnow, nlat=nlat, nlon=nlon)
+                # Weird syntax so attrs are ordered how I like
+                cc.attrs = {**attrs, **cc.attrs}
+                cc = cc.regrid(headcov, headvcf)
+
                 makedirs(dirout, exist_ok=True)
-                cc.to_netcdf(fout)
+                cc.to_netcdf(fout, unlimited_dims=['time'])
 
         # Slightly terrifying
         if kwargs['tidy']:
@@ -139,20 +137,18 @@ def vegind(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
+    # Define restag and attrs for later
     restag = 'x' + str(nlon) + '_y' + str(nlat)
-
-    # Initialize
-    vv = VegInd(nlat=nlat, nlon=nlon)
-    vv.attrs['ShortName'] = 'MICASA_VEGIND_D'
-    vv.attrs['LongName'] = ('MiCASA Daily Vegetation Indices ' +
-        kwargs.get('Resolution', ''))
-    vv.attrs['VersionID'] = ver
-    vv.attrs['title'] = vv.attrs['LongName'] + ' v' + ver
+    longname = ('MiCASA Daily Vegetation Indices ' +
+        f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
+    attrs = {'ShortName':'MICASA_VEGIND_D', 'LongName':longname,
+        'title':f'{longname} v{ver}', 'VersionID':ver}
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
-        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
-        'SouthernmostLatitude', 'EasternmostLongitude']:
-        if key in kwargs: vv.attrs[key] = kwargs[key]
+        'contact']:
+        if key in kwargs: attrs[key] = kwargs[key]
 
+    # Initialize with NaNs (for vvold)
+    vv = VegInd(time=date0, nlat=nlat, nlon=nlon)
     for year in range(date0.year, dateF.year+1):
         # Compute vegetation mask
         # ---
@@ -166,7 +162,8 @@ def vegind(**kwargs):
             cc = cover(**kwargs_cov)
             print('')
 
-            ftype = cc['ftype'].values
+            # Recall values have a singleton time dim
+            ftype = cc['ftype'].values[0,:,:,:]
             # Will need to make this a function in the class (remember
             # 0 indexing): Unclassified (17), water bodies (16), snow/ice (14),
             # wetlands (10)
@@ -180,8 +177,8 @@ def vegind(**kwargs):
         # Year-specific strings
         dirpre  = path.join(output, 'vegpre', f'{year}')
         headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{restag}_daily_')
-        dirind  = path.join(output, 'vegind', f'{year}')
-        headind = path.join(dirind, f'MiCASA_v{ver}_vegind_{restag}_daily_')
+        dirout  = path.join(output, 'vegind', f'{year}')
+        headout = path.join(dirout, f'MiCASA_v{ver}_vegind_{restag}_daily_')
 
         # Time period
         jday0 = max(datetime(year, 1, 1), date0)
@@ -203,7 +200,7 @@ def vegind(**kwargs):
 
             # Output vars
             dateout = jdnow.strftime('%Y%m%d')
-            find = headind + dateout + '.' + FEXT
+            fout = headout + dateout + '.' + FEXT
             fpre = headpre + dateout + '.' + FEXT
 
             # Download if requested or needed for regrid
@@ -221,24 +218,22 @@ def vegind(**kwargs):
                 if path.isfile(fpre) and not kwargs['force']:
                     vv = VegInd(xr.open_dataset(fpre))
                 else:
-                    vv.attrs['RangeBeginningDate'] = jdnow.strftime('%Y-%m-%d')
-                    vv.attrs['RangeBeginningTime'] = '00:00:00.000000'
-                    vv.attrs['RangeEndingDate'] = jdnow.strftime('%Y-%m-%d')
-                    vv.attrs['RangeEndingTime'] = '23:59:59.999999'
-                    # Some days have outages
                     try:
+                        vv = VegInd(time=jdnow, nlat=nlat, nlon=nlon)
+                        # Weird syntax so attrs are ordered how I like
+                        vv.attrs = {**attrs, **vv.attrs}
                         vv = vv.regrid(dirveg, mask=mask)
                     except EOFError as message:
                         sys.stderr.write('No files to process, proceeding ...\n')
                     else:
                         makedirs(dirpre, exist_ok=True)
-                        vv.to_netcdf(fpre)
+                        vv.to_netcdf(fpre, unlimited_dims=['time'])
 
             # Read or regrid filled file
             if kwargs['fill']:
                 print('===    ____________ Filling')
-                if path.isfile(find) and not kwargs['force']:
-                    vv = VegInd(xr.open_dataset(find))
+                if path.isfile(fout) and not kwargs['force']:
+                    vv = VegInd(xr.open_dataset(fout))
                 else:
                     # Fill with persistence and compute fPAR
                     inan = np.logical_and(np.isnan(vv['NDVI'].values),
@@ -246,10 +241,8 @@ def vegind(**kwargs):
                     vv['NDVI'].values[inan] = vvold['NDVI'].values[inan]
                     vv = vv.ndvi2fpar(cc['mode'].values)
 
-                    vv.attrs['GranuleID'] = find
-
-                    makedirs(dirind, exist_ok=True)
-                    vv.to_netcdf(find)
+                    makedirs(dirout, exist_ok=True)
+                    vv.to_netcdf(fout, unlimited_dims=['time'])
 
             # Slightly terrifying
             if kwargs['tidy']:
@@ -282,19 +275,15 @@ def burn(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
+    # Define restag and attrs for later
     restag = 'x' + str(nlon) + '_y' + str(nlat)
-
-    # Initialize
-    bb = Burn(nlat=nlat, nlon=nlon)
-    bb.attrs['ShortName'] = 'MICASA_BURN_D'
-    bb.attrs['LongName'] = ('MiCASA Daily Biomass Burning ' +
-        kwargs.get('Resolution', ''))
-    bb.attrs['VersionID'] = ver
-    bb.attrs['title'] = bb.attrs['LongName'] + ' v' + ver
+    longname = ('MiCASA Daily Biomass Burning ' +
+        f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
+    attrs = {'ShortName':'MICASA_BURN_D', 'LongName':longname,
+        'title':f'{longname} v{ver}', 'VersionID':ver}
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
-        'contact', 'NorthernmostLatiude', 'WesternmostLongitude',
-        'SouthernmostLatitude', 'EasternmostLongitude']:
-        if key in kwargs: bb.attrs[key] = kwargs[key]
+        'contact']:
+        if key in kwargs: attrs[key] = kwargs[key]
 
     for year in range(date0.year, dateF.year+1):
         jdyear = datetime(year, 1, 1)
@@ -361,14 +350,13 @@ def burn(**kwargs):
                 if path.isfile(fmon) and not kwargs['force']:
                     bb = Burn(xr.open_dataset(fmon))
                 else:
-#                   bb.attrs['RangeBeginningDate'] = jdnow.strftime('%Y-%m-%d')
-#                   bb.attrs['RangeBeginningTime'] = '00:00:00.000000'
-#                   bb.attrs['RangeEndingDate'] = jdnow.strftime('%Y-%m-%d')
-#                   bb.attrs['RangeEndingTime'] = '23:59:59.999999'
-#                   bb.attrs['GranuleID'] = fgran
-                    bb = bb.regrid(dirburn, headburn, headcov, headvcf)
+                    bb = Burn(time=jdmonth, nlat=nlat, nlon=nlon)
+                    # Weird syntax so attrs are ordered how I like
+                    bb.attrs = {**attrs, **bb.attrs}
+                    bb = bb.regrid(headburn, headcov, headvcf)
+
                     makedirs(dirout, exist_ok=True)
-                    bb.to_netcdf(fmon)
+                    bb.to_netcdf(fmon, unlimited_dims=['time'])
 
                 # Output dailies
                 ndays = monthrange(year, nm)[1]
@@ -377,7 +365,7 @@ def burn(**kwargs):
                     fday  = headday + jdnow.strftime('%Y%m%d') + '.' + FEXT
                     if not path.isfile(fday) or kwargs['force']: 
                         bbnow = bb.daysel((jdnow - jdyear).days + 1)
-                        bbnow.to_netcdf(fday)
+                        bbnow.to_netcdf(fday, unlimited_dims=['time'])
 
                     # Finished?
                     if jdnow == dateF: break

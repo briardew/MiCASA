@@ -4,6 +4,7 @@ Monkey patches for xarray
 
 import xarray
 from datetime import datetime
+from os import path
 
 xarray.Dataset._to_netcdf_old = xarray.Dataset.to_netcdf
 def _to_netcdf_new(self, *args, **kwargs):
@@ -22,6 +23,9 @@ def _to_netcdf_new(self, *args, **kwargs):
             encoding[var] = {**self.variables[var].encoding,
                 **encoding.get(var, {})}
         kwargs['encoding'] = encoding
+
+    # Make sure GranuleID is always right
+    self.attrs['GranuleID'] = path.basename(args[0])
 
     # Fill history with (close enough) timestamp
     self.attrs['history'] = 'Created on ' + datetime.now().isoformat()

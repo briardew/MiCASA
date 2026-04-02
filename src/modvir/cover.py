@@ -13,11 +13,11 @@ import numpy as np
 from modvir.patches import xarray as xr
 import rioxarray as rxr
 
-from modvir.config import defaults, LCVAR, NTYPE, NMISS
+from modvir.config import defaults, TIME0, TUNITS, LCVAR, NTYPE, NMISS
 from modvir.geometry import edges, centers, singrid
 from modvir.utils import swaphead
 
-def _regrid(dsout, dirin, headcov, headvcf):
+def _regrid(dsout, headcov, headvcf):
     # Set up output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
@@ -30,11 +30,12 @@ def _regrid(dsout, dirin, headcov, headvcf):
     fherb = np.zeros((nlat, nlon))
     ftree = np.zeros((nlat, nlon))
 
-    # Read and regrid files in dirin
+    # Read and regrid files
     # ---
-    flist = glob(path.join(dirin, '*.hdf'))
+    fwild = headcov + '*.hdf'
+    flist = glob(fwild)
     if len(flist) == 0:
-        raise EOFError('No files found in ' + dirin)
+        raise EOFError('No files found matching ' + fwild)
 
     fused = flist
     for ff in flist:
@@ -116,35 +117,15 @@ def _regrid(dsout, dirin, headcov, headvcf):
     fherb[iok] = fherb[iok]/num[iok]
     ftree[iok] = ftree[iok]/num[iok]
 
-    dsout['ftype'].values = ftype.astype(dsout['ftype'].dtype)
-    dsout['mode'].values = 1 + np.argmax(ftype, axis=0).astype(dsout['mode'].dtype)
+    mode = 1 + np.argmax(ftype, axis=0)
 
-    # Better way to do this?
-    dsout['ftype'].attrs = {
-        '1':'Evergreen Needleleaf Forests',
-        '2':'Evergreen Broadleaf Forests',
-        '3':'Deciduous Needleleaf Forests',
-        '4':'Deciduous Broadleaf Forests',
-        '5':'Mixed Forests',
-        '6':'Closed Shrublands',
-        '7':'Open Shrublands',
-        '8':'Woody Savannas',
-        '9':'Savannas',
-        '10':'Grasslands',
-        '11':'Permanent Wetlands',
-        '12':'Croplands',
-        '13':'Urban and Built-up Lands',
-        '14':'Cropland/Natural Vegetation Mosaics',
-        '15':'Permanent Snow and Ice',
-        '16':'Barren',
-        '17':'Water Bodies',
-        '18':'Unclassified'}
+    # Recall values have a singleton time dim
+    dsout['ftype'].values[0,:,:,:] = ftype.astype(dsout['ftype'].dtype)
+    dsout['fbare'].values[0,:,:] = fbare.astype(dsout['fbare'].dtype)
+    dsout['fherb'].values[0,:,:] = fherb.astype(dsout['fherb'].dtype)
+    dsout['ftree'].values[0,:,:] = ftree.astype(dsout['ftree'].dtype)
+    dsout['mode'].values[0,:,:] = mode.astype(dsout['mode'].dtype)
 
-    dsout['fbare'].values = fbare.astype(dsout['fbare'].dtype)
-    dsout['fherb'].values = fherb.astype(dsout['fherb'].dtype)
-    dsout['ftree'].values = ftree.astype(dsout['ftree'].dtype)
-
-    # Change flist to fused that includes VCF
     dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
     return dsout
@@ -153,59 +134,112 @@ class Cover(xr.Dataset):
     '''MiCASA land cover type class'''
     __slots__ = ()
 
-    def __init__(self, dataset=None, nlat=defaults['nlat'],
-        nlon=defaults['nlon']):
+    def __init__(self, dataset=None, time=defaults['date0'],
+        nlat=defaults['nlat'], nlon=defaults['nlon']):
         if dataset is not None:
            self = xr.Dataset.__init__(self, dataset)
            return
 
-        lat, lon = centers(nlat, nlon)
+        year = time.year
+        tval = (datetime(year, 1, 1) - TIME0).days
+        yrdays = (datetime(year+1, 1, 1) - datetime(year, 1, 1)).days
+        tbvals = np.reshape([tval, tval + yrdays], (1, 2))
+        time_bnds = xr.DataArray(
+            data=tbvals.astype(np.double), dims=['time','nv'],
+            attrs={'long_name':'time bounds', 'units':TUNITS}
+        )
+
         typedim = np.linspace(1, NTYPE, NTYPE)
 
+        lat, lon = centers(nlat, nlon)
+
         coords = {
-            'type':(['type'], typedim.astype(np.short),
-                {'long_name':'land cover type','units':'none'}),
-            'lat':(['lat'], lat.astype(np.single),
-                {'long_name':'latitude','units':'degrees_north'}),
-            'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees_east'}),
+            'time':(['time'], np.array([tval]).astype(np.double), {
+                'long_name':'time',
+                'units':TUNITS,
+                'calendar':'proleptic_gregorian',
+                'bounds':'time_bnds',
+            }),
+            'type':(['type'], typedim.astype(np.short), {
+                'long_name':'land cover type',
+                'units':'none',
+                # Better way to do this?
+                '1':'Evergreen Needleleaf Forests',
+                '2':'Evergreen Broadleaf Forests',
+                '3':'Deciduous Needleleaf Forests',
+                '4':'Deciduous Broadleaf Forests',
+                '5':'Mixed Forests',
+                '6':'Closed Shrublands',
+                '7':'Open Shrublands',
+                '8':'Woody Savannas',
+                '9':'Savannas',
+                '10':'Grasslands',
+                '11':'Permanent Wetlands',
+                '12':'Croplands',
+                '13':'Urban and Built-up Lands',
+                '14':'Cropland/Natural Vegetation Mosaics',
+                '15':'Permanent Snow and Ice',
+                '16':'Barren',
+                '17':'Water Bodies',
+                '18':'Unclassified',
+            }),
+            'lat':(['lat'], lat.astype(np.single), {
+                'long_name':'latitude',
+                'units':'degrees_north',
+            }),
+            'lon':(['lon'], lon.astype(np.single), {
+                'long_name':'longitude',
+                'units':'degrees_east',
+            }),
         }
-        coordsxy = {'lat':coords['lat'], 'lon':coords['lon']}
+        coordsxyt = {'time':coords['time'],
+            'lat':coords['lat'], 'lon':coords['lon']}
 
-        zerosxyn = np.zeros((NTYPE, nlat, nlon))
         ftype = xr.DataArray(
-            data=zerosxyn.astype(np.single),
-            dims=['type','lat','lon'], coords=coords,
-            attrs={'long_name':'Percentage of land cover type', 'units':'%'},
+            data=np.zeros((1, NTYPE, nlat, nlon)).astype(np.single),
+            dims=['time','type','lat','lon'], coords=coords,
+            attrs={'long_name':'Fraction land cover type', 'units':'%'},
         )
 
-        onesxy = np.ones((nlat, nlon))
-        mode = xr.DataArray(
-            data=onesxy.astype(np.short),
-            dims=['lat','lon'], coords=coordsxy,
-            attrs={'long_name':'Most common land cover type', 'units':'none'},
-        )
-
-        zerosxy = np.zeros((nlat, nlon))
+        zerosxyt = np.zeros((1, nlat, nlon))
         fbare = xr.DataArray(
-            data=zerosxy.astype(np.single),
-            dims=['lat','lon'], coords=coordsxy,
+            data=zerosxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coordsxyt,
             attrs={'long_name':'Fraction bare ground cover', 'units':'1'},
         )
         fherb = xr.DataArray(
-            data=zerosxy.astype(np.single),
-            dims=['lat','lon'], coords=coordsxy,
+            data=zerosxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coordsxyt,
             attrs={'long_name':'Fraction herbaceous cover', 'units':'1'},
         )
         ftree = xr.DataArray(
-            data=zerosxy.astype(np.single),
-            dims=['lat','lon'], coords=coordsxy,
+            data=zerosxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coordsxyt,
             attrs={'long_name':'Fraction tree cover', 'units':'1'},
         )
 
-        self = xr.Dataset.__init__(self,
-            data_vars={'ftype':ftype, 'mode':mode, 'fbare':fbare,
-                'fherb':fherb, 'ftree':ftree})
+        onesxyt = np.ones((1, nlat, nlon))
+        mode = xr.DataArray(
+            data=onesxyt.astype(np.short),
+            dims=['time','lat','lon'], coords=coordsxyt,
+            attrs={'long_name':'Most common land cover type', 'units':'none'},
+        )
+
+        attrs = {
+            'NorthernmostLatiude':'90.0',
+            'WesternmostLongitude':'-180.0',
+            'SouthernmostLatitude':'-90.0',
+            'EasternmostLongitude':'180.0',
+            'RangeBeginningDate':f'{year}-01-01',
+            'RangeBeginningTime':'00:00:00.000000',
+            'RangeEndingDate':f'{year}-12-31',
+            'RangeEndingTime':'23:59:59.999999',
+        }
+
+        self = xr.Dataset.__init__(self, data_vars={
+            'time_bnds':time_bnds, 'ftype':ftype, 'fbare':fbare, 'fherb':fherb,
+            'ftree':ftree, 'mode':mode,
+        }, attrs=attrs)
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)

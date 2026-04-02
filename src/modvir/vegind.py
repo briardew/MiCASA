@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 from modvir.patches import xarray as xr
 
-from modvir.config import defaults, NTYPE
+from modvir.config import defaults, TIME0, TUNITS
 from modvir.geometry import edges, centers, singrid
 
 # Simple way to exclude most water, etc.
@@ -110,8 +110,9 @@ def _regrid(dsout, dirin, mask=None):
         ndvi = (ndvi - NDVIMIN)*mask + NDVIMIN
 #       ndvi = ndvi * mask
 
-    # Fill dataset
-    dsout['NDVI'].values = ndvi.astype(dsout['NDVI'].dtype)
+    # Recall values have a singleton time dim
+    dsout['NDVI'].values[0,:,:] = ndvi.astype(dsout['NDVI'].dtype)
+
     dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
     return dsout
@@ -139,38 +140,72 @@ class VegInd(xr.Dataset):
     '''Vegetation index (NDVI/fPAR) class'''
     __slots__ = ()
 
-    def __init__(self, dataset=None, nlat=defaults['nlat'],
-        nlon=defaults['nlon']):
+    def __init__(self, dataset=None, time=defaults['date0'],
+        nlat=defaults['nlat'], nlon=defaults['nlon']):
         if dataset is not None:
            self = xr.Dataset.__init__(self, dataset)
            return
 
+        tval = (time - TIME0).days
+        tbvals = np.reshape([tval, tval + 1], (1, 2))
+        time_bnds = xr.DataArray(
+            data=tbvals.astype(np.double), dims=['time','nv'],
+            attrs={'long_name':'time bounds', 'units':TUNITS}
+        )
+
         lat, lon = centers(nlat, nlon)
 
         coords = {
-            'lat':(['lat'], lat.astype(np.single),
-                {'long_name':'latitude','units':'degrees_north'}),
-            'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees_east'}),
+            'time':(['time'], np.array([tval]).astype(np.double), {
+                'long_name':'time',
+                'units':TUNITS,
+                'calendar':'proleptic_gregorian',
+                'bounds':'time_bnds',
+            }),
+            'lat':(['lat'], lat.astype(np.single), {
+                'long_name':'latitude',
+                'units':'degrees_north',
+            }),
+            'lon':(['lon'], lon.astype(np.single), {
+                'long_name':'longitude',
+                'units':'degrees_east',
+            }),
         }
 
-        nansxy = np.nan * np.ones((nlat, nlon))
-
+        nansxyt = np.nan * np.ones((1, nlat, nlon))
         ndvi = xr.DataArray(
-            data=nansxy.astype(np.single),
-            dims=['lat','lon'], coords=coords,
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
             attrs={'long_name':'Normalized difference vegetation index (NDVI)',
                 'units':'1'},
         )
+        fpar = xr.DataArray(
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
+            attrs={'long_name':('Fraction absorbed Photosynthetically ' + 
+                'Available Radiation (fPAR)'), 'units':'1'},
+        )
 
-        self = xr.Dataset.__init__(self, data_vars={'NDVI':ndvi})
+        attrs = {
+            'NorthernmostLatiude':'90.0',
+            'WesternmostLongitude':'-180.0',
+            'SouthernmostLatitude':'-90.0',
+            'EasternmostLongitude':'180.0',
+            'RangeBeginningDate':time.strftime('%Y-%m-%d'),
+            'RangeBeginningTime':'00:00:00.000000',
+            'RangeEndingDate':time.strftime('%Y-%m-%d'),
+            'RangeEndingTime':'23:59:59.999999',
+        }
+
+        self = xr.Dataset.__init__(self, data_vars={
+            'time_bnds':time_bnds, 'NDVI':ndvi, 'fPAR':fpar,
+        }, attrs=attrs)
 
     def ndvi2fpar(self, lctype):
-        fparxy = _ndvi2fpar_jojo(self['NDVI'].values)
-
-        return self.assign(fPAR=(['lat','lon'], fparxy, {
-            'long_name':'Fraction (absorbed) Photosynthetically Available ' +
-            'Radiation (fPAR)', 'units':'1'}))
+        # Recall values have a singleton time dim
+        fparxy = _ndvi2fpar_jojo(self['NDVI'].values[0,:,:])
+        self['fPAR'].values[0,:,:] = fparxy
+        return self
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)

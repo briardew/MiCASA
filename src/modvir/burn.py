@@ -13,11 +13,11 @@ import numpy as np
 from modvir.patches import xarray as xr
 import rioxarray as rxr
 
-from modvir.config import defaults, LCVAR, NTYPE
+from modvir.config import defaults, TIME0, TUNITS, LCVAR, NTYPE
 from modvir.geometry import edges, centers, singrid, sinarea
 from modvir.utils import swaphead
 
-def _regrid(dsout, dirin, headburn, headcov, headvcf):
+def _regrid(dsout, headburn, headcov, headvcf):
     # Output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
@@ -33,9 +33,10 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
 
     # Read and regrid files in dirin
     # ---
-    flist = glob(path.join(dirin, '*.hdf'))
+    fwild = headburn + '*.hdf'
+    flist = glob(fwild)
     if len(flist) == 0:
-        raise EOFError('No files found in ' + dirin)
+        raise EOFError('No files found matching ' + fwild)
 
     fused = []
     for ff in flist:
@@ -124,16 +125,18 @@ def _regrid(dsout, dirin, headburn, headcov, headvcf):
     iok = num > 0
     date[iok] = date[iok]/num[iok]
 
-    # Fill dataset
-    dsout['batot'].values  = burn.astype(dsout['batot'].dtype)
-    dsout['baherb'].values = herb.astype(dsout['baherb'].dtype)
-    dsout['bawood'].values = wood.astype(dsout['bawood'].dtype)
-    dsout['badefo'].values = defo.astype(dsout['badefo'].dtype)
+    # Recall values have a singleton time dim
+    dsout['batot'].values[0,:,:]  = burn.astype(dsout['batot'].dtype)
+    dsout['baherb'].values[0,:,:] = herb.astype(dsout['baherb'].dtype)
+    dsout['bawood'].values[0,:,:] = wood.astype(dsout['bawood'].dtype)
+    dsout['badefo'].values[0,:,:] = defo.astype(dsout['badefo'].dtype)
     dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
     # Assign day information
-    dsout = dsout.assign(date=(['lat','lon'], date.astype(datein.dtype),
-        {'units':'day of the year', 'long_name':'Day of burning'}))
+    dsout = dsout.assign(date=(['time','lat','lon'],
+        date[np.newaxis,:,:].astype(datein.dtype),
+        {'units':'day of the year', 'long_name':'Day of burning'}
+    ))
 
     return dsout
 
@@ -141,47 +144,75 @@ class Burn(xr.Dataset):
     '''Burned area class'''
     __slots__ = ()
 
-    def __init__(self, dataset=None, nlat=defaults['nlat'],
-        nlon=defaults['nlon']):
+    def __init__(self, dataset=None, time=defaults['date0'],
+        nlat=defaults['nlat'], nlon=defaults['nlon']):
         if dataset is not None:
            self = xr.Dataset.__init__(self, dataset)
            return
 
+        tval = (time - TIME0).days
+        tbvals = np.reshape([tval, tval + 1], (1, 2))
+        time_bnds = xr.DataArray(
+            data=tbvals.astype(np.double), dims=['time','nv'],
+            attrs={'long_name':'time bounds', 'units':TUNITS}
+        )
+
         lat, lon = centers(nlat, nlon)
 
         coords = {
-            'lat':(['lat'], lat.astype(np.single),
-                {'long_name':'latitude','units':'degrees_north'}),
-            'lon':(['lon'], lon.astype(np.single),
-                {'long_name':'longitude','units':'degrees_east'}),
+            'time':(['time'], np.array([tval]).astype(np.double), {
+                'long_name':'time',
+                'units':TUNITS,
+                'calendar':'proleptic_gregorian',
+                'bounds':'time_bnds',
+            }),
+            'lat':(['lat'], lat.astype(np.single), {
+                'long_name':'latitude',
+                'units':'degrees_north',
+            }),
+            'lon':(['lon'], lon.astype(np.single), {
+                'long_name':'longitude',
+                'units':'degrees_east',
+            }),
         }
 
-        nansxy = np.nan * np.ones((nlat, nlon))
-
+        nansxyt = np.nan * np.ones((1, nlat, nlon))
         batot = xr.DataArray(
-            data=nansxy.astype(np.single),
-            dims=['lat','lon'], coords=coords,
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
             attrs={'long_name':'Total burned area', 'units':'m2'},
         )
         baherb = xr.DataArray(
-            data=nansxy.astype(np.single),
-            dims=['lat','lon'], coords=coords,
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
             attrs={'long_name':'Herbaceous burned area', 'units':'m2'},
         )
         bawood = xr.DataArray(
-            data=nansxy.astype(np.single),
-            dims=['lat','lon'], coords=coords,
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
             attrs={'long_name':'Woody burned area', 'units':'m2'},
         )
         badefo = xr.DataArray(
-            data=nansxy.astype(np.single),
-            dims=['lat','lon'], coords=coords,
+            data=nansxyt.astype(np.single),
+            dims=['time','lat','lon'], coords=coords,
             attrs={'long_name':'Deforestation burned area', 'units':'m2'},
         )
 
-        self = xr.Dataset.__init__(self,
-            data_vars={'batot':batot, 'baherb':baherb, 'bawood':bawood,
-                'badefo':badefo})
+        attrs = {
+            'NorthernmostLatiude':'90.0',
+            'WesternmostLongitude':'-180.0',
+            'SouthernmostLatitude':'-90.0',
+            'EasternmostLongitude':'180.0',
+            'RangeBeginningDate':time.strftime('%Y-%m-%d'),
+            'RangeBeginningTime':'00:00:00.000000',
+            'RangeEndingDate':time.strftime('%Y-%m-%d'),
+            'RangeEndingTime':'23:59:59.999999',
+        }
+
+        self = xr.Dataset.__init__(self, data_vars={
+            'time_bnds':time_bnds, 'batot':batot, 'baherb':baherb,
+            'bawood':bawood, 'badefo':badefo,
+        }, attrs=attrs)
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)

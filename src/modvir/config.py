@@ -7,14 +7,18 @@ from datetime import datetime
 # Land cover type variable, number of types, number of missing type
 # NB: fPAR and burned area both depend on these choices
 LCVAR = 'LC_Type1'
-NTYPE = 18					# Including unclassified as a type
-NMISS = 16					# Missing tiles assumed water
+NTYPE = 18							# Including unclassified as a type
+NMISS = 16							# Missing tiles assumed water
 
-FEXT = 'nc4'					# Output file extension; see defaults['Format'] below
-YMINCOV = 2001					# Minimum year for land cover
-YMAXCOV = 2021					# Maximum year for land cover
-YMINVCF = 2007					# Minimum year for VCF (2003-2006 are corrputed)
-YMAXVCF = 2020					# Maximum year for VCF
+FEXT = 'nc4'							# Output file extension; see defaults['Format'] below
+YMINCOV = 2001							# Minimum year for land cover
+YMAXCOV = 2021							# Maximum year for land cover
+YMINVCF = 2007							# Minimum year for VCF (2003-2006 are corrputed)
+YMAXVCF = 2020							# Maximum year for VCF
+
+YEAR0 = 1980							# Year that all timestamps are based on
+TIME0 = datetime(YEAR0, 1, 1)					# YEAR0 in datetime format
+TUNITS = 'days since ' + TIME0.strftime('%Y-%m-%d')		# Time units string
 
 defaults = {
     'output':'.',
@@ -54,16 +58,6 @@ def check_args(**kwargs):
     # Set anything missing to default
     for key in defaults:
         kwargs[key] = kwargs.get(key, defaults[key])
-
-    # Set spatial attributes (needs to be generalized)
-    nlat = kwargs['nlat']
-    nlon = kwargs['nlon']
-    kwargs['Resolution'] = (f'{round(180/nlat,3)} degree x ' +
-        f'{round(360/nlon,3)} degree')
-    kwargs['NorthernmostLatiude']  = '90.0'
-    kwargs['WesternmostLongitude'] = '-180.0'
-    kwargs['SouthernmostLatitude'] = '-90.0'
-    kwargs['EasternmostLongitude'] = '180.0'
 
     return kwargs
 
