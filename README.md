@@ -11,7 +11,7 @@ CASA-GFED 3 in several ways. This includes the ability to run at resolutions
 finer than 0.5 degrees, generalized and updated meteorology and soil property
 inputs, and brand new code to process native MODIS and Visible Infrared Imaging
 Radiometer Suite (VIIRS) tiles into land cover, vegetation, and burned area
-driver data (i.e., Más-Informada).
+driver data (i.e., más informada).
 
 MiCASA is also a data product that this code repository can generate.  Check
 out the README for the data release
