@@ -7,7 +7,7 @@ Goddard Space Flight Center (GSFC). CASA-GFED 3 uses reflectance data from
 NASA's Moderate Resolution Imaging Spectrometer (MODIS) aboard the Terra and
 Aqua spacecraft to determine atmosphere-biosphere carbon fluxes due to primary
 production, respiration, and biomass burning. MiCASA extends and improves upon
-CASA-GFED 3 in several ways. This includes the option to run at resolutions
+CASA-GFED 3 in several ways. This includes the ability to run at resolutions
 finer than 0.5 degrees, generalized and updated meteorology and soil property
 inputs, and brand new code to process native MODIS and Visible Infrared Imaging
 Radiometer Suite (VIIRS) tiles into land cover, vegetation, and burned area
