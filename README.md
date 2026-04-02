@@ -1,6 +1,6 @@
-# Más-Informada CASA (MiCASA)
+# Más informada CASA (MiCASA)
 
-The Más-Informada Carnegie-Ames-Stanford Approach (MiCASA) is a diagnostic
+The Más informada Carnegie-Ames-Stanford Approach (MiCASA) is a diagnostic
 terrestrial biospheric model. It is a derivative of the Global Fire Emissions
 Dataset version 3 (GFED3) CASA variant produced and maintained at NASA's
 Goddard Space Flight Center (GSFC). CASA-GFED 3 uses reflectance data from
