@@ -7,7 +7,7 @@ MiCASA land cover type module
 
 from os import path
 from glob import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 from modvir.patches import xarray as xr
@@ -225,15 +225,16 @@ class Cover(xr.Dataset):
             attrs={'long_name':'Most common land cover type', 'units':'none'},
         )
 
+        tend = time + timedelta(days=yrdays) - timedelta(microseconds=1)
         attrs = {
             'NorthernmostLatiude':'90.0',
             'WesternmostLongitude':'-180.0',
             'SouthernmostLatitude':'-90.0',
             'EasternmostLongitude':'180.0',
-            'RangeBeginningDate':f'{year}-01-01',
-            'RangeBeginningTime':'00:00:00.000000',
-            'RangeEndingDate':f'{year}-12-31',
-            'RangeEndingTime':'23:59:59.999999',
+            'RangeBeginningDate':time.strftime('%Y-%m-%d'),
+            'RangeBeginningTime':time.strftime('%H:%M:%S.%f'),
+            'RangeEndingDate':tend.strftime('%Y-%m-%d'),
+            'RangeEndingTime':tend.strftime('%H:%M:%S.%f'),
         }
 
         self = xr.Dataset.__init__(self, data_vars={

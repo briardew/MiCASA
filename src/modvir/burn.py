@@ -7,7 +7,7 @@ MiCASA burned area module
 
 from os import path
 from glob import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 from modvir.patches import xarray as xr
@@ -17,7 +17,7 @@ from modvir.config import defaults, TIME0, TUNITS, LCVAR, NTYPE
 from modvir.geometry import edges, centers, singrid, sinarea
 from modvir.utils import swaphead
 
-def _regrid(dsout, headburn, headcov, headvcf):
+def _regrid(dsout, headburn, headcov, headvcf, doy=None):
     # Output grid
     nlat = dsout.sizes['lat']
     nlon = dsout.sizes['lon']
@@ -96,7 +96,8 @@ def _regrid(dsout, headburn, headcov, headvcf):
         woodin = areain * ftreein * (1. - fdefoin)
         defoin = areain * ftreein * fdefoin
 
-        iok = datein > 0
+        # Hack to fix smearing the date
+        iok = datein == doy if doy is not None else datein > 0
 
         numgran  = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone))[0]
         dategran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
@@ -132,11 +133,12 @@ def _regrid(dsout, headburn, headcov, headvcf):
     dsout['badefo'].values[0,:,:] = defo.astype(dsout['badefo'].dtype)
     dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
-    # Assign day information
-    dsout = dsout.assign(date=(['time','lat','lon'],
-        date[np.newaxis,:,:].astype(datein.dtype),
-        {'units':'day of the year', 'long_name':'Day of burning'}
-    ))
+    # Assign day information if monthly output
+    if doy is None:
+        dsout = dsout.assign(date=(['time','lat','lon'],
+            date[np.newaxis,:,:].astype(datein.dtype),
+            {'units':'day of the year', 'long_name':'Day of burning'}
+        ))
 
     return dsout
 
@@ -145,13 +147,13 @@ class Burn(xr.Dataset):
     __slots__ = ()
 
     def __init__(self, dataset=None, time=defaults['date0'],
-        nlat=defaults['nlat'], nlon=defaults['nlon']):
+        nlat=defaults['nlat'], nlon=defaults['nlon'], ndays=1):
         if dataset is not None:
            self = xr.Dataset.__init__(self, dataset)
            return
 
         tval = (time - TIME0).days
-        tbvals = np.reshape([tval, tval + 1], (1, 2))
+        tbvals = np.reshape([tval, tval + ndays], (1, 2))
         time_bnds = xr.DataArray(
             data=tbvals.astype(np.double), dims=['time','nv'],
             attrs={'long_name':'time bounds', 'units':TUNITS}
@@ -198,15 +200,16 @@ class Burn(xr.Dataset):
             attrs={'long_name':'Deforestation burned area', 'units':'m2'},
         )
 
+        tend = time + timedelta(days=ndays) - timedelta(microseconds=1)
         attrs = {
             'NorthernmostLatiude':'90.0',
             'WesternmostLongitude':'-180.0',
             'SouthernmostLatitude':'-90.0',
             'EasternmostLongitude':'180.0',
             'RangeBeginningDate':time.strftime('%Y-%m-%d'),
-            'RangeBeginningTime':'00:00:00.000000',
-            'RangeEndingDate':time.strftime('%Y-%m-%d'),
-            'RangeEndingTime':'23:59:59.999999',
+            'RangeBeginningTime':time.strftime('%H:%M:%S.%f'),
+            'RangeEndingDate':tend.strftime('%Y-%m-%d'),
+            'RangeEndingTime':tend.strftime('%H:%M:%S.%f'),
         }
 
         self = xr.Dataset.__init__(self, data_vars={
@@ -216,17 +219,3 @@ class Burn(xr.Dataset):
 
     def regrid(self, *args, **kwargs):
         return _regrid(self, *args, **kwargs)
-
-    def daysel(self, nd):
-        ds = self.copy(deep=True)
-        ds = ds.drop_vars('date')
-
-        ino = self['date'].values != nd
-
-        # A little hacky to prevent xarray type cast
-        ds['batot'].values[ino]  = 0 * ds['batot'].values[ino]
-        ds['baherb'].values[ino] = 0 * ds['baherb'].values[ino]
-        ds['bawood'].values[ino] = 0 * ds['bawood'].values[ino]
-        ds['badefo'].values[ino] = 0 * ds['badefo'].values[ino]
-
-        return ds

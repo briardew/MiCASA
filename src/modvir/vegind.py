@@ -4,7 +4,7 @@ MiCASA vegetation index module
 
 from os import path
 from glob import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 from modvir.patches import xarray as xr
@@ -186,15 +186,16 @@ class VegInd(xr.Dataset):
                 'Available Radiation (fPAR)'), 'units':'1'},
         )
 
+        tend = time + timedelta(days=1) - timedelta(microseconds=1)
         attrs = {
             'NorthernmostLatiude':'90.0',
             'WesternmostLongitude':'-180.0',
             'SouthernmostLatitude':'-90.0',
             'EasternmostLongitude':'180.0',
             'RangeBeginningDate':time.strftime('%Y-%m-%d'),
-            'RangeBeginningTime':'00:00:00.000000',
-            'RangeEndingDate':time.strftime('%Y-%m-%d'),
-            'RangeEndingTime':'23:59:59.999999',
+            'RangeBeginningTime':time.strftime('%H:%M:%S.%f'),
+            'RangeEndingDate':tend.strftime('%Y-%m-%d'),
+            'RangeEndingTime':tend.strftime('%H:%M:%S.%f'),
         }
 
         self = xr.Dataset.__init__(self, data_vars={

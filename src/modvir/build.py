@@ -275,15 +275,22 @@ def burn(**kwargs):
     nlon = kwargs['nlon']
     ver = kwargs['ver']
 
-    # Define restag and attrs for later
+    # Define restag and attributes (atmon & atday) for later
     restag = 'x' + str(nlon) + '_y' + str(nlat)
-    longname = ('MiCASA Daily Biomass Burning ' +
+    longnmon = ('MiCASA Monthly Biomass Burning ' +
         f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
-    attrs = {'ShortName':'MICASA_BURN_D', 'LongName':longname,
-        'title':f'{longname} v{ver}', 'VersionID':ver}
+    atmon = {'ShortName':'MICASA_BURN_M', 'LongName':longnmon,
+        'title':f'{longnmon} v{ver}', 'VersionID':ver}
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
         'contact']:
-        if key in kwargs: attrs[key] = kwargs[key]
+        if key in kwargs: atmon[key] = kwargs[key]
+    longnday = ('MiCASA Daily Biomass Burning ' +
+        f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
+    atday = {'ShortName':'MICASA_BURN_D', 'LongName':longnday,
+        'title':f'{longnday} v{ver}', 'VersionID':ver}
+    for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
+        'contact']:
+        if key in kwargs: atday[key] = kwargs[key]
 
     for year in range(date0.year, dateF.year+1):
         jdyear = datetime(year, 1, 1)
@@ -347,25 +354,42 @@ def burn(**kwargs):
             if kwargs['regrid']:
                 # Regrid monthlies
                 print('===    ____________ Regridding')
+                ndays = monthrange(year, nm)[1]
+
                 if path.isfile(fmon) and not kwargs['force']:
-                    bb = Burn(xr.open_dataset(fmon))
+                    bbmon = Burn(xr.open_dataset(fmon))
                 else:
-                    bb = Burn(time=jdmonth, nlat=nlat, nlon=nlon)
+                    bbmon = Burn(time=jdmonth, nlat=nlat, nlon=nlon, ndays=ndays)
                     # Weird syntax so attrs are ordered how I like
-                    bb.attrs = {**attrs, **bb.attrs}
-                    bb = bb.regrid(headburn, headcov, headvcf)
+                    bbmon.attrs = {**atmon, **bbmon.attrs}
+                    bbmon = bbmon.regrid(headburn, headcov, headvcf)
 
                     makedirs(dirout, exist_ok=True)
-                    bb.to_netcdf(fmon, unlimited_dims=['time'])
+                    bbmon.to_netcdf(fmon, unlimited_dims=['time'])
 
                 # Output dailies
-                ndays = monthrange(year, nm)[1]
                 for nd in range(1,ndays+1):
                     jdnow = datetime(year, nm, nd)
                     fday  = headday + jdnow.strftime('%Y%m%d') + '.' + FEXT
                     if not path.isfile(fday) or kwargs['force']: 
-                        bbnow = bb.daysel((jdnow - jdyear).days + 1)
-                        bbnow.to_netcdf(fday, unlimited_dims=['time'])
+                        bb = Burn(time=jdnow, nlat=nlat, nlon=nlon)
+                        # Weird syntax so attrs are ordered how I like
+                        bb.attrs = {**atday, **bb.attrs}
+
+                        # Switch to preserve v1 "bug" that averaged burn dates
+                        if ver == '1':
+                            nd = (jdnow - jdyear).days + 1
+                            iok = bbmon['date'].values == nd
+                            ino = bbmon['date'].values != nd
+
+                            for var in ['batot', 'baherb', 'bawood', 'badefo']:
+                                bb[var].values[iok] = bbmon[var].values[iok]
+                                bb[var].values[ino] = bbmon[var].values[ino]*0
+                            bb.attrs['input_files'] = bbmon.attrs['input_files']
+                        else:
+                            bb = bb.regrid(headburn, headcov, headvcf, nd)
+
+                        bb.to_netcdf(fday, unlimited_dims=['time'])
 
                     # Finished?
                     if jdnow == dateF: break
@@ -401,4 +425,5 @@ def burn(**kwargs):
             except Exception as e:
                 print(e)
 
-    return bb
+    # Not sure why this is here of it's useful
+    return bbmon
