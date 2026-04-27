@@ -14,15 +14,12 @@ NCCS DataPortal for outside users. The actual MiCASA outputs are also available
 through GES DISC while the driver data is not.
 
 * Have `restart.mat` saved at the very end? No need for `do_restart_all`?
-
 * Compress, and stage on NCCS DataPortal (in a dir named `drivers`?). Don't
   concatenate into a single file (drastic time differences/applications).
-
 * Clean up `bin` directory
 * Clean up `masinfo` directory
 * Compute LAI?
 * Improve post-processing
-
 * Have everything reference a global configuration file. Right now the code
   and data have to sit in the same root directory. This is because the
   config is spread over Python, Matlab, and Bash scripts. I've done a lot
@@ -32,12 +29,10 @@ through GES DISC while the driver data is not.
 "Backlog"
 ---
 * Go through and check FIXMEs
-
 * Remove references to previous run in input maker: FUEL NEED
 * Rewrite masker
 * Pull code out of data-aux and utils directory
 * General fix-ups for GitHub (repo name)
-
 * Find other crop moisture and carbon concentration parameters (what does this
   even mean?): there is a lit review in the Wolf(e) and West paper's supplement
 * Trist West crops?
@@ -56,13 +51,11 @@ Version 2
 Dumb thoughts
 ---
 * We need to separate the trend and "baseline". Why not:
-  - Compute early modern (say 2003-2008) and late modern (say 2017-2019)
+    - Compute early modern (say 2003-2008) and late modern (say 2017-2019)
     baselines from inversions
-
-  - Kinda you want a balanced period and unbalanced. ENSO years will give you
+    - Kinda you want a balanced period and unbalanced. ENSO years will give you
     neutral sink but you don't want to tune to that.
-
-  - Tune parameters to LPJ. Then use LPJ outside the MODIS/VIIRS period, i.e.,
+    - Tune parameters to LPJ. Then use LPJ outside the MODIS/VIIRS period, i.e.,
     start-2001 and now-forecast. So CASA parameters would represent LPJ fPAR,
     soil, etc. -> flux. Ehhh ... not quite. Our "truths" are MODIS fPAR+BA and
     inversion NEE. Probably you'd want to tune LPJ and CASA parameters to the
