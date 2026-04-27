@@ -2,8 +2,8 @@ For v1A and v1B
 ---
 1. Fix `FTC`, `FHC` bugs
 2. Revisit NBAR QC:
-  - Was choppy for NRT?
-  - Notable lines in January (no sun, but points to problems below line)
+    * Was choppy for NRT?
+    * Notable lines in January (no sun, but points to problems below line)
 3. Verify `time_bnds`, `calendar`, and other metadata changes are correct
 
 This initial software release will focus on two use cases: 1. Production of
