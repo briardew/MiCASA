@@ -8,16 +8,23 @@ import numpy as np
 # (also attribute buried in files: search for number)
 RADIUS = 6371007.181
 
-def edges(nlat, nlon):
+def edges(nlat, nlon, domain=''):
     '''Short-cut for computing edge vectors'''
-    late = np.linspace( -90,  90, nlat+1)
-    lone = np.linspace(-180, 180, nlon+1)
+
+    if len(domain) == 0:
+        late = np.linspace( -90,   90, nlat+1)
+        lone = np.linspace(-180,  180, nlon+1)
+    elif domain[:5].upper() == 'CONUS':
+        late = np.linspace(  25,   50, nlat+1)
+        lone = np.linspace(-125,  -65, nlon+1)
+    else:
+        raise ValueError(f'Unsupported domain: {domain}')
 
     return late, lone
 
-def centers(nlat, nlon):
+def centers(nlat, nlon, domain=None):
     '''Short-cut for computing center vectors'''
-    late, lone = edges(nlat, nlon)
+    late, lone = edges(nlat, nlon, domain)
 
     lat = 0.5*(late[1:] + late[:-1])
     lon = 0.5*(lone[1:] + lone[:-1])

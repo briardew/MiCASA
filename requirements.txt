@@ -12,7 +12,7 @@ dask
 xarray
 rioxarray
 gdal
-libgdal-hdf5
-libgdal-netcdf
+#libgdal-hdf5
+#libgdal-netcdf
 earthaccess
 h5netcdf

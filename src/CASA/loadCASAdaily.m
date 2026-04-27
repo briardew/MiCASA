@@ -43,7 +43,54 @@ if NLAT ~= NLATMV || NLON ~= NLONMV
     BAwood = flipud((avgarea(latmv, lonmv, flipud(BAwood)'./areamv, lat, lon, RADIUS).*area)');
 end
 
-if lower(do_nrt_meteo(1)) == 'n'
+% Load meteorology
+% ---
+% Would be nice to move this to its own module that could also do an acquire.
+% This is the last bit of NCCS Discover specific stuff left.
+do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
+if strcmp(do_meteo_type, 'geosit')
+    if dnum < datenum(2008,01,01)
+        tagit = 'd5294_geosit_jan98';
+    elseif dnum < datenum(2018,01,01)
+        tagit = 'd5294_geosit_jan08';
+    else
+        tagit = 'd5294_geosit_jan18';
+    end
+
+    airtm2 = 0;
+    pptm2  = 0;
+    sradm2 = 0;
+    for nhr = 1:24
+        shr = num2str(nhr-1, '%02u');
+
+        % Air temperature
+        % ---
+        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+            '/', tagit, '.slv_tavg_1hr_glo_L576x361_slv.', ...
+            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
+        airtm2 = airtm2 + ncread(fm2, 'TS') - 273.15;
+
+        % Precipitation
+        % ---
+        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+            '/', tagit, '.flx_tavg_1hr_glo_L576x361_slv.', ...
+            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
+        pptm2 = pptm2 + ncread(fm2, 'PRECTOT') * 60*60*24;
+
+        % Short-wave radiation
+        % ---
+        % Using clear-sky (SWGDNCLR) instead of all-sky (SWGDN) values to represent
+        % growth under diffuse radiation
+        % [Joiner et al. (2018)](https://10.3390/rs10091346)
+        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+            '/', tagit, '.rad_tavg_1hr_glo_L576x361_slv.', ...
+            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
+        sradm2 = sradm2 + ncread(fm2, 'SWGDNCLR');
+    end
+    airtm2 = airtm2/24;
+    pptm2  =  pptm2/24;
+    sradm2 = sradm2/24;
+else
     % Air temperature
     % ---
     fm2 = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavg1_2d_slv_Nx.', ...
@@ -69,45 +116,12 @@ if lower(do_nrt_meteo(1)) == 'n'
 
     % Short-wave radiation
     % ---
-    fm2 = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavg1_2d_rad_Nx.', ...
-        syear, smon, sday, '.nc4'];
     % Using clear-sky (SWGDNCLR) instead of all-sky (SWGDN) values to represent
     % growth under diffuse radiation
     % [Joiner et al. (2018)](https://10.3390/rs10091346)
+    fm2 = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavg1_2d_rad_Nx.', ...
+        syear, smon, sday, '.nc4'];
     sradm2 = ncread(fm2, 'SWGDNCLR');
-else
-    if dnum < datenum(2008,01,01)
-        tagit = 'd5294_geosit_jan98';
-    elseif dnum < datenum(2018,01,01)
-        tagit = 'd5294_geosit_jan08';
-    else
-        tagit = 'd5294_geosit_jan18';
-    end
-
-    airtm2 = 0;
-    pptm2  = 0;
-    sradm2 = 0;
-    for nhr = 1:24
-        shr = num2str(nhr-1, '%02u');
-
-        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
-            '/', tagit, '.slv_tavg_1hr_glo_L576x361_slv.', ...
-            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
-        airtm2 = airtm2 + ncread(fm2, 'TS') - 273.15;
-
-        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
-            '/', tagit, '.flx_tavg_1hr_glo_L576x361_slv.', ...
-            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
-        pptm2 = pptm2 + ncread(fm2, 'PRECTOT') * 60*60*24;
-
-        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
-            '/', tagit, '.rad_tavg_1hr_glo_L576x361_slv.', ...
-            syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
-        sradm2 = sradm2 + ncread(fm2, 'SWGDNCLR');
-    end
-    airtm2 = airtm2/24;
-    pptm2  =  pptm2/24;
-    sradm2 = sradm2/24;
 end
 
 % Regrid

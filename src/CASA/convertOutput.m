@@ -69,7 +69,7 @@ datasets = [fluxes; extras];
 vaux = load([DIRCASA, '/', runname, '/spinup1.mat'], 'mask', 'latitude');
 mast = vaux.mask';
 inds = find(mast(:) == 1);
-temp = single(zeros(size(mast)));
+temp = zeros(size(mast));
 
 % For debugging
 test = zeros(size(mast));

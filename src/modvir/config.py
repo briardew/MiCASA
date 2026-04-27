@@ -2,7 +2,8 @@
 MODIS/VIIRS configuration module
 '''
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from os import path
 
 # Land cover type variable, number of types, number of missing type
 # NB: fPAR and burned area both depend on these choices
@@ -23,20 +24,20 @@ TUNITS = 'days since ' + TIME0.strftime('%Y-%m-%d')		# Time units string
 defaults = {
     'output':'.',
     # NB: NBAR data start 2000-02-16
-    'date0':datetime(2001, 1, 1),
-    'dateF':datetime.now(),
+    'dtbeg':datetime(2001, 1, 1),
+    'dtend':datetime.now(),
     # 0.1 deg regular grid
     # This should be transitioned to lats and lons
     'nlat':1800,
     'nlon':3600,
     'ver':'1',
-    # Run switches
-    'force':False,
-    'tidy':False,
     # Translated from args; fixme?
     'regrid':True,
     'get':True,
     'fill':True,
+    # Run switches
+    'force':False,
+    'tidy':False,
     # Output metadata
     'Format':'netCDF',
     'Conventions':'CF-1.9',
@@ -45,58 +46,96 @@ defaults = {
     'contact':'Brad Weir <brad.weir@nasa.gov>',
 }
 
-def check_args(**kwargs):
-    '''Argument error check and standardization'''
+def fillargs(dtval, **kwargs):
+    '''Check and fille arguments'''
 
-    # Check dates make sense
-    date0 = kwargs.get('date0', defaults['date0'])
-    dateF = kwargs.get('dateF', defaults['dateF'])
-    if dateF < date0:
-        raise ValueError('Begin date (' + date0.strftime('%Y-%m-%d') + ')' +
-            ' later than end date (' + dateF.strftime('%Y-%m-%d') + ')')
-
-    # Set anything missing to default
-    for key in defaults:
+    # Set anything unspecified to default
+    # ---
+    for key in defaults.keys() - ['dtbeg', 'dtend']:
         kwargs[key] = kwargs.get(key, defaults[key])
 
-    return kwargs
+    ver = kwargs['ver']
+    vernum, _, verdom = ver.partition('-')
 
-def check_cols(date, **kwargs):
-    '''Check and fill collection tags'''
+    # Fill domain tag
+    # ---
+    if verdom == 'CONUS1km':
+        kwargs['nlat'] = 25*120
+        kwargs['nlon'] = 60*120
 
-    ver = kwargs.get('ver', defaults['ver'])
+    if len(verdom) == 0:
+        nlat = kwargs['nlat']
+        nlon = kwargs['nlon']
+        kwargs['domtag'] = f'x{nlon}_y{nlat}'
+    else:
+        kwargs['domtag'] = verdom
 
+    # Fill collection names (if unspecified)
+    # ---
     # Should these be specified in defaults?
-    colcovdef  = 'MCD12Q1.061'
-    colvcfdef  = 'MOD44B.006'
-    colvegdef  = 'MCD43A4.061'
-    colburndef = 'MCD64A1.061'
-    if ver == '1A':
-        colvegdef  = 'MCD43A4.061'
-        colburndef = 'MCD64A1.061'
-    elif ver == '1B':
-        colvegdef  = 'VNP43IA4.002'
-        colburndef = 'VNP64A1.002'
-    elif ver == '1C':
-        colvegdef  = 'VJ143IA4.002'
-        colburndef = 'VJ164A1.002'
-    elif ver == '1D':
-        colvegdef  = 'VJ243IA4.002'
-        colburndef = 'VJ264A1.002'
-    elif ver == 'NRT':
-        if date.year < 2027:
-            colvegdef = 'MCD43A4N.061'
+    colcov  = 'MCD12Q1.061'
+    colvcf  = 'MOD44B.006'
+    colveg  = 'MCD43A4.061'
+    colburn = 'MCD64A1.061'
+    if vernum == '1A':
+        colveg  = 'MCD43A4.061'
+        colburn = 'MCD64A1.061'
+    elif vernum == '1B':
+        colveg  = 'VNP43IA4.002'
+        colburn = 'VNP64A1.002'
+    elif vernum == '1C':
+        colveg  = 'VJ143IA4.002'
+        colburn = 'VJ164A1.002'
+    elif vernum == '1D':
+        colveg  = 'VJ243IA4.002'
+        colburn = 'VJ264A1.002'
+    elif vernum == 'NRT':
+        if dtval.year < 2027:
+            colveg = 'MCD43A4N.061'
         else:
-            colvegdef = 'VJ143IA4N.002'
+            colveg = 'VJ143IA4N.002'
 
-    kwargs['colcov']  = kwargs.get('colcov',  colcovdef)
-    kwargs['colvcf']  = kwargs.get('colvcf',  colvcfdef)
-    kwargs['colveg']  = kwargs.get('colveg',  colvegdef) 
-    kwargs['colburn'] = kwargs.get('colburn', colburndef)
+    kwargs['colcov']  = kwargs.get('colcov',  colcov)
+    kwargs['colvcf']  = kwargs.get('colvcf',  colvcf)
+    kwargs['colveg']  = kwargs.get('colveg',  colveg) 
+    kwargs['colburn'] = kwargs.get('colburn', colburn)
 
     # MOD44B.061 excludes data above 60N, unusable
     if kwargs['colvcf'] == 'MOD44B.061':
         raise ValueError('Cannot use MOD44B.061 for VCF since it ' +
             'is missing Arctic data')
+
+    # Fill collection dates (if unspecified)
+    # ---
+    output = kwargs['output']
+    year = dtval.year
+
+    # Land cover type
+    colcov  = kwargs['colcov']
+    yearcov = min(max(year, YMINCOV), YMAXCOV)
+    dircov  = path.join(output, colcov, f'{yearcov}', '001')
+    headcov = path.join(dircov, colcov[:-4] + f'.A{yearcov}001.')
+    kwargs['headcov'] = kwargs.get('headcov', headcov)
+
+    # Vegetation continuous fields
+    colvcf  = kwargs['colvcf']
+    yearvcf = min(max(year, YMINVCF), YMAXVCF)
+    dirvcf  = path.join(output, colvcf, f'{yearvcf}', '065')
+    headvcf = path.join(dirvcf, colvcf[:-4] + f'.A{yearvcf}065.')
+    kwargs['headvcf'] = kwargs.get('headvcf', headvcf)
+
+    # Vegetation indices
+    colveg  = kwargs['colveg']
+    jdayveg = dtval.strftime('%j')
+    dirveg  = path.join(output, colveg, f'{year}', jdayveg)
+    headveg = path.join(dirveg, colveg[:-4] + f'.A{year}{jdayveg}.')
+    kwargs['headveg'] = kwargs.get('headveg', headveg)
+
+    # Burned area input vars
+    colburn  = kwargs['colburn']
+    jdayburn = dtval.replace(day=1).strftime('%j')
+    dirburn  = path.join(output, colburn, f'{year}', jdayburn)
+    headburn = path.join(dirburn, colburn[:-4] + f'.A{year}{jdayburn}.')
+    kwargs['headburn'] = kwargs.get('headburn', headburn)
 
     return kwargs

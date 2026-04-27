@@ -1,24 +1,17 @@
-function [maskedfile] = maskfile(filetomask,mask)
-
-% maskfile makes from a lat - lon worldmap a one column data file
-% with only landpixels.
+%MASKFILE  Masks a lat-lon array
 %
-% in: maskfile(the file to mask, mask);
-% out: the maskedfile (one column)
+%   Y = MASKFILE(X, M) reads a lat-lon array X, applies a lat-lon mask M, and
+%   returns a masked array Y.
 
-% maskedfile = filetomask(mask==1);
+% Author(s):	Brad Weir <brad.weir@nasa.gov>
+%
+% Changelog:
+% 2026-03-03	Rewrote for simplicity
+%===============================================================================
+function yy = maskfile(xx, mask)
 
-% old
-[x,y]=size(mask);
-maskedfile=zeros(sum(mask(:)),1);
-
-i=1;
-
-for lat=1:x,
-   for lon=1:y,
-      if mask(lat,lon)==1,
-         maskedfile(i,1)=filetomask(lat,lon);
-         i=i+1;
-      end
-   end
-end
+% Life would be much easier without these transposes, but it breaks backward
+% compatibility and is a big effort to fix. Maybe another day :(
+mast = mask';
+xt = xx';
+yy = xt(mast(:) == 1);

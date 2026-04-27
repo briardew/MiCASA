@@ -8,7 +8,7 @@ import argparse
 from datetime import datetime
 
 from modvir.config import defaults
-from modvir import build
+from modvir import cover, vegind, burn
 
 # Parse command-line options
 NAMELIST = ['cover', 'vegind', 'burn', 'all']
@@ -23,9 +23,9 @@ parser.add_argument('-m', '--mode', metavar='MODE', type=str, choices=MODELIST,
     default='all', help='operation mode: ' + ', '.join(MODELIST))
 parser.add_argument('-v', '--ver', default=defaults['ver'], help='version')
 parser.add_argument('--beg', metavar='YYYY-MM-DD',
-    default=defaults['date0'].strftime('%Y-%m-%d'), help='begin date')
+    default=defaults['dtbeg'].strftime('%Y-%m-%d'), help='begin date')
 parser.add_argument('--end', metavar='YYYY-MM-DD',
-    default=defaults['dateF'].strftime('%Y-%m-%d'), help='end date')
+    default=defaults['dtend'].strftime('%Y-%m-%d'), help='end date')
 parser.add_argument('--nlat', type=int, default=defaults['nlat'],
     help='latitude dimension')
 parser.add_argument('--nlon', type=int, default=defaults['nlon'],
@@ -44,8 +44,9 @@ def main():
     kwargs = vars(parser.parse_args())
 
     # Convert command-line args to function args
-    kwargs['date0'] = datetime.strptime(kwargs.pop('beg'), '%Y-%m-%d')
-    kwargs['dateF'] = datetime.strptime(kwargs.pop('end'), '%Y-%m-%d')
+    # ---
+    dtbeg = datetime.strptime(kwargs.pop('beg'), '%Y-%m-%d')
+    dtend = datetime.strptime(kwargs.pop('end'), '%Y-%m-%d')
 
     # Execution mode
     mode = kwargs.pop('mode')
@@ -69,26 +70,28 @@ def main():
         raise ValueError('Unsupported mode: ' + mode)
 
     # Some helpful? output
-    print('============================================')
-    print('===    MODIS/VIIRS processing utility    ===')
-    print('============================================')
+    print('====================================================')
+    print('===        MODIS/VIIRS processing utility        ===')
+    print('====================================================')
     print('')
-    print('kwargs = {')
+    print('Arguments:')
+    print(f'    beg = {dtbeg:%Y-%m-%d}')
+    print(f'    end = {dtend:%Y-%m-%d}')
     for key in kwargs:
-        print("    '" + key + "': " + str(kwargs[key]) + ",")
-    print('}')
+        print(f'    {key} = {kwargs[key]}')
+    print('')
 
     name = kwargs.pop('name')
     if name == 'cover':
-        build.cover(**kwargs)
+        cover.build(dtbeg, dtend, **kwargs)
     elif name == 'vegind':
-        build.vegind(**kwargs)
+        vegind.build(dtbeg, dtend, **kwargs)
     elif name == 'burn':
-        build.burn(**kwargs)
+        burn.build(dtbeg, dtend, **kwargs)
     elif name == 'all':
         # vegind will build cover
-        build.vegind(**kwargs)
-        build.burn(**kwargs)
+        vegind.build(dtbeg, dtend, **kwargs)
+        burn.build(dtbeg, dtend, **kwargs)
     else:
         raise ValueError('Unsupported name: ' + name)
 

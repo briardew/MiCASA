@@ -5,10 +5,6 @@ DIRHEAD = '../..';
 DIRCASA = [DIRHEAD, '/data'];
 DIRAUX  = [DIRHEAD, '/data-aux'];
 
-% NB: This will only work on systems that already have MERRA-2 or GEOS IT
-DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
-DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
-
 % Define constants
 % ---
 RADIUS = 6371000.000;						% Radius of the Earth
@@ -18,12 +14,17 @@ R10    = single(1.00);						% Effect of temperature on soil fluxes (unused for n
 aboveWoodFraction = single(0.80);				% Fraction of wood that is above ground
 herbivoreEff      = single(0.50);				% Efficiency of herbivory (part autotrophic respiration, part to surface litter pools)
 
-VERSION  = '1';							% Version number
+VERSION  = runname(2:end);					% Version number
 do_daily = 'y';							% Run at a daily timestep (alternative is monthly)
 do_reprocess  = 'n';						% Reprocess/overwrite results
 do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
-do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
-do_nrt_meteo  = 'n';						% Use NRT meteorology?
+if strcmp(VERSION,'1')
+    do_soilm_bug  = 'y';					% Reproduce bug that allowed soil moisture to go negative
+    do_meteo_type = 'merra2';					% Meteorology type (merra2, geosit)
+else
+    do_soilm_bug  = 'n';					% Reproduce bug that allowed soil moisture to go negative
+    do_meteo_type = 'geosit';					% Meteorology type (merra2, geosit)
+end
 
 do_spinup_stage1 = 'n';						% Do first  stage spin-up (as opposed to loading it)
 do_spinup_stage2 = 'n';						% Do second stage spin-up (as opposed to loading it)

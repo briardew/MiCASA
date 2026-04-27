@@ -256,13 +256,13 @@ for id = 1:numel(DNOUT)
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time', 'long_name','time');
     ncwriteatt(fout, 'time', 'units',TSTAMP);
+    ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
     ncwriteatt(fout, 'time', 'bounds','time_bnds');
     ncwrite(fout,    'time', time);
 
     nccreate(fout,   'time_bnds', ...
         'dimensions', {'nv',2, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'time_bnds', 'units',TSTAMP);
     ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
     ncwrite(fout,    'time_bnds', [time; time+1]);
 

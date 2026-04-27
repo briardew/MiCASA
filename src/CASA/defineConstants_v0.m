@@ -5,10 +5,6 @@ DIRHEAD = '../..';
 DIRCASA = [DIRHEAD, '/data'];
 DIRAUX  = [DIRHEAD, '/data-aux'];
 
-% NB: This will only work on systems that already have MERRA-2 or GEOS IT
-DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
-DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
-
 % Define constants
 % ---
 RADIUS = 6371000.000;						% Radius of the Earth
@@ -23,7 +19,7 @@ do_daily = 'n';							% Run at a daily timestep (alternative is monthly)
 do_reprocess  = 'n';						% Reprocess/overwrite results
 do_deprecated = 'y';						% Use deprecated functionality (for debugging, etc.)
 do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
-do_nrt_meteo  = 'n';						% Use NRT meteorology?
+do_meteo_type = 'merra2';					% Meteorology type (merra2, geosit)
 
 do_spinup_stage1 = 'y';						% Do first  stage spin-up (as opposed to loading it)
 do_spinup_stage2 = 'y';						% Do second stage spin-up (as opposed to loading it)

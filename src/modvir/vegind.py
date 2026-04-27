@@ -1,44 +1,170 @@
 '''
-MiCASA vegetation index module
+MODIS/VIIRS vegetation index module
 '''
 
-from os import path
+import sys
+from os import path, makedirs, remove, rmdir
 from glob import glob
 from datetime import datetime, timedelta
 
 import numpy as np
 from modvir.patches import xarray as xr
 
-from modvir.config import defaults, TIME0, TUNITS
+from modvir import cover
+from modvir.config import FEXT, TIME0, TUNITS, fillargs
 from modvir.geometry import edges, centers, singrid
+from modvir.utils import download, tidy
 
 # Simple way to exclude most water, etc.
 NDVIMIN = -0.3
 
-def _regrid(dsout, dirin, mask=None):
-    # Output grid
-    nlat = dsout.sizes['lat']
-    nlon = dsout.sizes['lon']
-    late, lone = edges(nlat, nlon)
+def ndvi2fpar(ndvi):
+    '''Convert NDVI to fPAR using Joiner et al. (2018) formulation'''
 
-    # Output arrays
+    fpar = np.zeros_like(ndvi)
+
+#   Joiner et al. (2018) used N0 = 0.25, but I picked N0 = 0.15, not sure why
+    N0 = 0.15
+    N1 = 0.75
+
+    iramp = np.logical_and(N0 < ndvi, ndvi <= N1)
+    ifree = N1 < ndvi
+
+    fpar[iramp] = (ndvi[iramp] - N0)/(N1 - N0)*N1
+    fpar[ifree] =  ndvi[ifree]
+
+    fpar[np.isnan(fpar)] = 0.
+
+    return fpar
+
+def get(dtval, **kwargs):
+    '''Acquire MODIS/VIIRS vegetation index tiles'''
+
+    kwargs = fillargs(dtval, **kwargs)
+    colveg = kwargs['colveg']
+    headveg = kwargs['headveg']
+
+    files = download(dtval, colveg, path.dirname(headveg), kwargs['force'])
+
+    if len(files) == 0:
+        raise EOFError(f'No granules found for {colveg} on {dtval:%Y-%m-%d}')
+
+    return files
+
+def regrid(dtval, mask=None, **kwargs):
+    '''Regrid MODIS/VIIRS vegetation indicies'''
+
+    # Process arguments
+    # ---
+    kwargs = fillargs(dtval, **kwargs)
+
+    nlat = kwargs['nlat']
+    nlon = kwargs['nlon']
+    ver = kwargs['ver']
+    vernum, _, verdom = ver.partition('-')
+
+    # Define coordinates
+    # ---
+    tval = (dtval - TIME0).days
+    tbvals = np.reshape([tval, tval + 1], (1, 2))
+    time_bnds = xr.DataArray(
+        data=tbvals.astype(np.double), dims=['time','nv'],
+        attrs={'long_name':'time bounds'}
+    )
+
+    lat, lon = centers(nlat, nlon, verdom)
+    late, lone = edges(nlat, nlon, verdom)
+
+    coords = {
+        'time':(['time'], np.array([tval]).astype(np.double), {
+            'long_name':'time',
+            'units':TUNITS,
+            'calendar':'proleptic_gregorian',
+            'bounds':'time_bnds',
+        }),
+        'lat':(['lat'], lat.astype(np.double), {
+            'long_name':'latitude',
+            'units':'degrees_north',
+        }),
+        'lon':(['lon'], lon.astype(np.double), {
+            'long_name':'longitude',
+            'units':'degrees_east',
+        }),
+    }
+
+    # Define data arrays
+    # ---
+    nansxyt = np.nan * np.ones((1, nlat, nlon))
+    ndvi = xr.DataArray(
+        data=nansxyt.astype(np.single),
+        dims=['time','lat','lon'], coords=coords,
+        attrs={'long_name':'Normalized difference vegetation index (NDVI)',
+            'units':'1'},
+    )
+    fpar = xr.DataArray(
+        data=nansxyt.astype(np.single),
+        dims=['time','lat','lon'], coords=coords,
+        attrs={'long_name':('Fraction absorbed Photosynthetically ' + 
+            'Available Radiation (fPAR)'), 'units':'1'},
+    )
+
+    # Define attributes
+    # ---
+    shortname = 'MICASA_VEGIND_D'
+    longname = ('MiCASA Daily Vegetation Indices ' +
+        f'{round(180/nlat,3)} degree x {round(360/nlon,3)} degree')
+    dtend = dtval + timedelta(days=1) - timedelta(microseconds=1)
+
+    # Strange syntax so attributes are in desired order
+    attrs = {
+        'ShortName':shortname,
+        'LongName':longname,
+        'title':f'{longname} v{ver}',
+        'VersionID':ver,
+    }
+    for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution',
+        'contact']:
+        if key in kwargs: attrs[key] = kwargs[key]
+    attrs = {
+        **attrs, 
+        'NorthernmostLatiude':'90.0',
+        'WesternmostLongitude':'-180.0',
+        'SouthernmostLatitude':'-90.0',
+        'EasternmostLongitude':'180.0',
+        'RangeBeginningDate':dtval.strftime('%Y-%m-%d'),
+        'RangeBeginningTime':dtval.strftime('%H:%M:%S.%f'),
+        'RangeEndingDate':dtend.strftime('%Y-%m-%d'),
+        'RangeEndingTime':dtend.strftime('%H:%M:%S.%f'),
+    }
+
+    ds = xr.Dataset(data_vars={
+        'time_bnds':time_bnds, 'NDVI':ndvi, 'fPAR':fpar,
+    }, attrs=attrs)
+
+    # Just give the empty structure if not regridding
+    if not kwargs['regrid']: return ds
+
+    # Read and regrid files
+    # ---
+    files = get(dtval, **kwargs)
+
     num = np.zeros((nlat, nlon)) # Keeping in case we want Red and NIR outputs
     red = np.zeros((nlat, nlon))
     nir = np.zeros((nlat, nlon))
 
-    # Read and regrid files in dirin
-    # ---
-    # MODIS
-    XVAR = 'x'
-    YVAR = 'y'
-    VARPRE = 'Nadir_Reflectance_Band'
-    QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_Band'
-    # Need mask_and_scale=False for zero-diff with rioxarray
-    kwargs = {'engine':'rasterio', 'mask_and_scale':False}
-    xyargs = {'engine':'rasterio', 'mask_and_scale':False}
-    flist  = glob(path.join(dirin, '*.hdf'))
-    if len(flist) == 0:
+    if files[0][-3:] == 'hdf':
+        # MODIS
+        # ---
+        XVAR = 'x'
+        YVAR = 'y'
+        VARPRE = 'Nadir_Reflectance_Band'
+        QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_Band'
+        # Need mask_and_scale=False for zero-diff with rioxarray
+        kwargs = {'engine':'rasterio', 'mask_and_scale':False}
+        xyargs = {'engine':'rasterio', 'mask_and_scale':False}
+    elif files[0][-2:] == 'h5':
         # VIIRS
+        # ---
         XVAR = 'XDim'
         YVAR = 'YDim'
         VARPRE = 'Nadir_Reflectance_I'
@@ -51,19 +177,18 @@ def _regrid(dsout, dirin, mask=None):
         xyargs = {'engine':'h5netcdf', 'phony_dims':'sort',
             'group':'/HDFEOS/GRIDS/VIIRS_Grid_BRDF',
             'mask_and_scale':False}
-        flist  = glob(path.join(dirin, '*.h5'))
-        if len(flist) == 0:
-            raise EOFError('No files found in ' + dirin)
+    else:
+        raise ValueError('Unsupported file format ' + files[0])
 
     fused = []
-    for ff in flist:
+    for ff in files:
         # Skip corrupted files in NRT mode, fail otherwise
         try:
             dsin = xr.open_dataset(ff, **kwargs).squeeze(drop=True)
             dsxy = xr.open_dataset(ff, **xyargs).squeeze(drop=True)
         except Exception as e:
             if ver == 'NRT':
-                print(e)
+                print(f'{type(e).__name__}: {e}', file=sys.stderr)
                 continue
             else:
                 raise(e)
@@ -105,108 +230,130 @@ def _regrid(dsout, dirin, mask=None):
         ndvi = (nir - red)/(nir + red)
 
     # Apply mask if provided
-    # Should this mask to NDVIMIN or 0? Looks like GIMMS masks to NDVIMIN
     if mask is not None:
         ndvi = (ndvi - NDVIMIN)*mask + NDVIMIN
-#       ndvi = ndvi * mask
+    fpar = ndvi2fpar(ndvi)
 
     # Recall values have a singleton time dim
-    dsout['NDVI'].values[0,:,:] = ndvi.astype(dsout['NDVI'].dtype)
+    # Type cast is to prevent xarray from casting :(
+    ds['NDVI'].values[0,:,:] = ndvi.astype(ds['NDVI'].dtype)
+    ds['fPAR'].values[0,:,:] = fpar.astype(ds['fPAR'].dtype)
 
-    dsout.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
+    ds.attrs['input_files'] = ', '.join([path.basename(ff) for ff in fused])
 
-    return dsout
+    return ds
 
-def _ndvi2fpar_jojo(ndvi):
-    '''Convert NDVI to fPAR using Joiner et al. (2018) formulation'''
+def build(dtbeg, dtend, **kwargs):
+    '''Build MODIS/VIIRS vegetation indices'''
 
-    fpar = np.zeros_like(ndvi)
+    print('===    ____ Vegetation Indicies')
 
-#   Joiner et al. (2018) used N0 = 0.25, but I picked N0 = 0.15, not sure why
-    N0 = 0.15
-    N1 = 0.75
+    dsold = None
+    for year in range(dtbeg.year, dtend.year+1):
+        print(f'===    ________ {year}')
 
-    iramp = np.logical_and(N0 < ndvi, ndvi <= N1)
-    ifree = N1 < ndvi
+        # Process arguments
+        # ---
+        dtyear = datetime(year, 1, 1)
+        kwyear = fillargs(dtyear, **kwargs)
 
-    fpar[iramp] = (ndvi[iramp] - N0)/(N1 - N0)*N1
-    fpar[ifree] =  ndvi[ifree]
+        ver = kwyear['ver']
+        domtag = kwyear['domtag']
+        output = kwyear['output']
 
-    fpar[np.isnan(fpar)] = 0.
+        # Output vars
+        dirpre  = path.join(output, 'vegpre', f'{year}')
+        headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{domtag}_daily_')
+        dirout  = path.join(output, 'vegind', f'{year}')
+        headout = path.join(dirout, f'MiCASA_v{ver}_vegind_{domtag}_daily_')
 
-    return fpar
+        # Compute vegetation mask
+        # ---
+        if kwyear['regrid'] or kwyear['fill']:
+            # Build/read land cover
+            kwcov = kwyear
+            kwcov['regrid'] = True
+            dscov = cover.build(dtyear, dtyear, **kwcov)
+            print('')
 
-class VegInd(xr.Dataset):
-    '''Vegetation index (NDVI/fPAR) class'''
-    __slots__ = ()
+            # Recall values have a singleton time dim
+            ftype = dscov['ftype'].values[0,:,:,:]
+            # Will need to make this a function in the class (remember
+            # 0 indexing): Unclassified (17), water bodies (16), snow/ice (14),
+            # wetlands (10)
+#           mask = 1. - (ftype[17,:,:] + ftype[16,:,:] + ftype[14,:,:] +
+#               0.5*ftype[10,:,:])
+            # Not using wetlands even though it makes sense (closer to GIMMS)
+            mask = 1. - (ftype[17,:,:] + ftype[16,:,:] + ftype[14,:,:])
 
-    def __init__(self, dataset=None, time=defaults['date0'],
-        nlat=defaults['nlat'], nlon=defaults['nlon']):
-        if dataset is not None:
-           self = xr.Dataset.__init__(self, dataset)
-           return
+            dscov.close()
 
-        tval = (time - TIME0).days
-        tbvals = np.reshape([tval, tval + 1], (1, 2))
-        time_bnds = xr.DataArray(
-            data=tbvals.astype(np.double), dims=['time','nv'],
-            attrs={'long_name':'time bounds', 'units':TUNITS}
-        )
+        # Build daily vegetation indices
+        # ---
+        dtbeg = max(datetime(year, 1, 1), dtbeg)
+        dtend = min(datetime(year,12,31), dtend)
+        ndays = (dtend - dtbeg).days + 1
+        for nd in range(ndays):
+            dtnow = dtbeg + timedelta(nd)
 
-        lat, lon = centers(nlat, nlon)
+            print('===    ________ ' + dtnow.strftime('%Y-%m-%d'))
 
-        coords = {
-            'time':(['time'], np.array([tval]).astype(np.double), {
-                'long_name':'time',
-                'units':TUNITS,
-                'calendar':'proleptic_gregorian',
-                'bounds':'time_bnds',
-            }),
-            'lat':(['lat'], lat.astype(np.single), {
-                'long_name':'latitude',
-                'units':'degrees_north',
-            }),
-            'lon':(['lon'], lon.astype(np.single), {
-                'long_name':'longitude',
-                'units':'degrees_east',
-            }),
-        }
+            # Process arguments
+            # ---
+            kwnow = fillargs(dtnow, **kwargs)
+            headveg = kwnow['headveg']
 
-        nansxyt = np.nan * np.ones((1, nlat, nlon))
-        ndvi = xr.DataArray(
-            data=nansxyt.astype(np.single),
-            dims=['time','lat','lon'], coords=coords,
-            attrs={'long_name':'Normalized difference vegetation index (NDVI)',
-                'units':'1'},
-        )
-        fpar = xr.DataArray(
-            data=nansxyt.astype(np.single),
-            dims=['time','lat','lon'], coords=coords,
-            attrs={'long_name':('Fraction absorbed Photosynthetically ' + 
-                'Available Radiation (fPAR)'), 'units':'1'},
-        )
+            doget = kwnow['get']
+            doregrid = kwnow['regrid']
+            dofill = kwnow['fill']
+            doforce = kwnow['force']
+            dotidy = kwnow['tidy']
 
-        tend = time + timedelta(days=1) - timedelta(microseconds=1)
-        attrs = {
-            'NorthernmostLatiude':'90.0',
-            'WesternmostLongitude':'-180.0',
-            'SouthernmostLatitude':'-90.0',
-            'EasternmostLongitude':'180.0',
-            'RangeBeginningDate':time.strftime('%Y-%m-%d'),
-            'RangeBeginningTime':time.strftime('%H:%M:%S.%f'),
-            'RangeEndingDate':tend.strftime('%Y-%m-%d'),
-            'RangeEndingTime':tend.strftime('%H:%M:%S.%f'),
-        }
+            dateout = dtnow.strftime('%Y%m%d')
+            fout = headout + dateout + '.' + FEXT
+            fpre = headpre + dateout + '.' + FEXT
 
-        self = xr.Dataset.__init__(self, data_vars={
-            'time_bnds':time_bnds, 'NDVI':ndvi, 'fPAR':fpar,
-        }, attrs=attrs)
+            # Download if requested or needed for regrid
+            get4regrid = doregrid and (not path.isfile(fpre) or doforce)
+            if get4regrid or doget:
+                print('===    ____________ Downloading')
+                get(dtnow, **kwnow)
 
-    def ndvi2fpar(self, lctype):
-        # Recall values have a singleton time dim
-        fparxy = _ndvi2fpar_jojo(self['NDVI'].values[0,:,:])
-        self['fPAR'].values[0,:,:] = fparxy
-        return self
+            # Read or regrid preliminary file
+            if doregrid:
+                print('===    ____________ Regridding')
+                if path.isfile(fpre) and not doforce:
+                    ds = xr.open_dataset(fpre)
+                else:
+                    try:
+                        ds = regrid(dtnow, mask=mask, **kwnow)
+                    except EOFError as message:
+                        print('No files to process, proceeding ...',
+                            file=sys.stderr)
+                    else:
+                        makedirs(dirpre, exist_ok=True)
+                        ds.to_netcdf(fpre, unlimited_dims=['time'])
 
-    def regrid(self, *args, **kwargs):
-        return _regrid(self, *args, **kwargs)
+            # Read or regrid filled file
+            if dofill:
+                print('===    ____________ Filling')
+                if path.isfile(fout) and not doforce:
+                    ds = xr.open_dataset(fout)
+                else:
+                    # Fill with persistence and compute fPAR
+                    if dsold is not None:
+                        inan = np.logical_and(np.isnan(ds['NDVI'].values),
+                            ~np.isnan(dsold['NDVI'].values))
+                        ds['NDVI'].values[inan] = dsold['NDVI'].values[inan]
+                        ds['fPAR'].values = ndvi2fpar(ds['NDVI'].values)
+
+                    makedirs(dirout, exist_ok=True)
+                    ds.to_netcdf(fout, unlimited_dims=['time'])
+                dsold = ds.copy(deep=True)
+
+            # Slightly terrifying
+            if dotidy: tidy(headveg)
+
+    if dsold is not None: dsold.close()
+
+    return ds

@@ -53,16 +53,16 @@ ncwrite(fout,    'lon', lon);
 
 nccreate(fout,   'time', 'dimensions',{'time',NREC}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-ncwriteatt(fout, 'time', 'units','month');
 ncwriteatt(fout, 'time', 'long_name','time');
+ncwriteatt(fout, 'time', 'units','month');
 ncwriteatt(fout, 'time', 'bounds','time_bnds');
 ncwrite(fout,    'time', time);
 
 nccreate(fout,   'time_bnds', ...
     'dimensions', {'nv',2, 'time',NREC}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-ncwriteatt(fout, 'time_bnds', 'units','month');
 ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
+ncwriteatt(fout, 'time_bnds', 'units','month');
 ncwrite(fout,    'time_bnds', [time, mod(time,NREC)+1]');
 
 for ii = 1:length(datasets)

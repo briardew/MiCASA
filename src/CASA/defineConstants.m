@@ -1,6 +1,11 @@
 % Pretty hacky for now
 % Considering writing a Python entry point
 
+% NB: This will only work on systems that already have MERRA-2 or GEOS IT
+% AFAIK this is the only Discover-specific bit left
+DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
+DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
+
 if ~exist('runname', 'var')
     error('Must specify the variable runname ...');
 end
