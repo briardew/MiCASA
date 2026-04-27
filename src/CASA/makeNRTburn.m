@@ -240,18 +240,6 @@ for id = 1:numel(DNOUT)
     % Write it
     time = datenum(year, nm, nd) - datenum(YSTART, 1, 1);
 
-    nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
-        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'lat', 'units','degrees_north');
-    ncwriteatt(fout, 'lat', 'long_name','latitude');
-    ncwrite(fout,    'lat', lat);
-
-    nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
-        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'lon', 'units','degrees_east');
-    ncwriteatt(fout, 'lon', 'long_name','longitude');
-    ncwrite(fout,    'lon', lon);
-
     nccreate(fout,   'time', 'dimensions',{'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time', 'long_name','time');
@@ -265,6 +253,18 @@ for id = 1:numel(DNOUT)
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
     ncwrite(fout,    'time_bnds', [time; time+1]);
+
+    nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
+        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+    ncwriteatt(fout, 'lat', 'long_name','latitude');
+    ncwriteatt(fout, 'lat', 'units','degrees_north');
+    ncwrite(fout,    'lat', lat);
+
+    nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
+        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+    ncwriteatt(fout, 'lon', 'long_name','longitude');
+    ncwriteatt(fout, 'lon', 'units','degrees_east');
+    ncwrite(fout,    'lon', lon);
 
     nccreate(fout,   'batot', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...

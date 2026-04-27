@@ -1,14 +1,10 @@
 For v1A and v1B
 ---
-1. Fix `RangeBeginningTime` and `RangeEndingTime` in 3hrly collection
-2. Add `calendar` attribute to `time` variable. Suggest `proleptic_gregorian`
-although `tai` is more right (no leap seconds). It looks like pandas, etc.
-support for the latter is not great.
-3. Fix driver metadata
-4. Fire daily variability bug
-5. Fix `FTC`, `FHC` bugs
-6. Always use GEOS IT met?
-7. Revisit NBAR QC, esp. for NRT (was choppy?)
+1. Fix `FTC`, `FHC` bugs
+2. Revisit NBAR QC:
+  * Was choppy for NRT?
+  * Notable lines in January (no sun, but points to problems below line)
+3. Verify `time_bnds`, `calendar`, and other metadata changes are correct
 
 This initial software release will focus on two use cases: 1. Production of
 public MiCASA data, and 2. Derivative experiments by users with different

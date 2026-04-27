@@ -126,32 +126,31 @@ for year = startYear:endYear
 
                 time = datenum(year, mon, 1) - datenum(startYearTime, 1, 1) + nd - 1;
 
-                nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
-                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'lat', 'units','degrees_north');
-                ncwriteatt(fout, 'lat', 'long_name','latitude');
-                ncwrite(fout,    'lat', lat);
-
-                nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
-                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'lon', 'units','degrees_east');
-                ncwriteatt(fout, 'lon', 'long_name','longitude');
-                ncwrite(fout,    'lon', lon);
-
                 nccreate(fout,   'time', 'dimensions',{'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'time', 'units',TSTAMP);
                 ncwriteatt(fout, 'time', 'long_name','time');
+                ncwriteatt(fout, 'time', 'units',TSTAMP);
+                ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
                 ncwriteatt(fout, 'time', 'bounds','time_bnds');
-                ncwriteatt(fout, 'time', 'calendar','standard');
                 ncwrite(fout,    'time', time);
 
                 nccreate(fout,   'time_bnds', ...
                     'dimensions', {'nv',2, 'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'time_bnds', 'units',TSTAMP);
                 ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
                 ncwrite(fout,    'time_bnds', [time; time+1]);
+
+                nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
+                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+                ncwriteatt(fout, 'lat', 'long_name','latitude');
+                ncwriteatt(fout, 'lat', 'units','degrees_north');
+                ncwrite(fout,    'lat', lat);
+
+                nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
+                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+                ncwriteatt(fout, 'lon', 'long_name','longitude');
+                ncwriteatt(fout, 'lon', 'units','degrees_east');
+                ncwrite(fout,    'lon', lon);
 
                 for nn = 1:numel(fluxes)
                     vin   = fluxes(nn).orig;
@@ -235,31 +234,31 @@ for year = startYear:endYear
 
                 time = datenum(year, mon, 1) - datenum(startYearTime, 1, 1) + nd - 1;
 
-                nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
-                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'lat', 'units','degrees_north');
-                ncwriteatt(fout, 'lat', 'long_name','latitude');
-                ncwrite(fout,    'lat', lat);
-
-                nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
-                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'lon', 'units','degrees_east');
-                ncwriteatt(fout, 'lon', 'long_name','longitude');
-                ncwrite(fout,    'lon', lon);
-
                 nccreate(fout,   'time', 'dimensions',{'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
                 ncwriteatt(fout, 'time', 'long_name','time');
                 ncwriteatt(fout, 'time', 'units',TSTAMP);
+                ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
                 ncwriteatt(fout, 'time', 'bounds','time_bnds');
                 ncwrite(fout,    'time', time);
 
                 nccreate(fout,   'time_bnds', ...
                     'dimensions', {'nv',2, 'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                ncwriteatt(fout, 'time_bnds', 'units',TSTAMP);
                 ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
                 ncwrite(fout,    'time_bnds', [time; time+1]);
+
+                nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
+                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+                ncwriteatt(fout, 'lat', 'long_name','latitude');
+                ncwriteatt(fout, 'lat', 'units','degrees_north');
+                ncwrite(fout,    'lat', lat);
+
+                nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
+                    'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+                ncwriteatt(fout, 'lon', 'long_name','longitude');
+                ncwriteatt(fout, 'lon', 'units','degrees_east');
+                ncwrite(fout,    'lon', lon);
 
                 for nn = 1:numel(extras)
                     vin   = extras(nn).orig;
