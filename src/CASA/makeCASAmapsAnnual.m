@@ -37,7 +37,7 @@ for year = double(startYear):double(endYear)
             eval([dd, ' = ', dd, '/ntot;']);
         end
 
-        disp([int2str(year), '/', num2str(month,'%02u'), ', time used = ', ...
+        disp([int2str(year), '-', num2str(month,'%02u'), ', time used = ', ...
             int2str(toc), ' seconds']);
     end
 
@@ -45,7 +45,7 @@ for year = double(startYear):double(endYear)
         dd = datasets{ii};
 
         % Check if file exists; skip if not reprocessing
-        dout = [DIRCASA, '/', runname, '/maps/annual/', int2str(year)];
+        dout = [DIRMAPS, '/annual/', int2str(year)];
         fout = [dout, '/', dd, '.mat'];
         if isfile(fout) && ~REPRO, continue; end
 

@@ -12,12 +12,11 @@ datasets = {'FTC', 'FHC', 'FBC', 'VEG', 'POPDENS', 'FUELNEED', ...
 if lower(do_deprecated(1)) == 'y'
     datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
     for ii = 1:length(datasets)
-        load([DIRCASA, '/', runname, '/maps/climate/', datasets{ii}, '.mat']);
+        load([DIRMAPS, '/climate/', datasets{ii}, '.mat']);
     end
 else
     datasets = {datasets{:}, 'FP', 'PF', 'MORT'};
-    fmaps = [DIRCASA, '/', runname, '/drivers/MiCASA_v', VERSION, ...
-        '_maps_', CASARES, '.nc4'];
+    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
     for ii = 1:length(datasets)
         eval([datasets{ii} ' = flipud(ncread(' fmaps, ', ' datasets{ii} ''');']);
     end
@@ -47,8 +46,7 @@ end
 for ii = 1:length(datasets)
     average = zeros(NLAT, NLON, 12);
     for year = startYearClim:endYearClim
-        load([DIRCASA, '/', runname, '/maps/annual/', int2str(year), '/', ...
-            datasets{ii}, '.mat']);
+        load([DIRMAPS, '/annual/', int2str(year), '/', datasets{ii}, '.mat']);
         eval(['average = average + ' datasets{ii} ';']);
     end
     eval([datasets{ii} ' = single(average./(endYearClim - startYearClim + 1));']);

@@ -51,7 +51,7 @@ NLATMV = numel(latmv);
 NLONMV = numel(lonmv);
 MODVRES = ['x', num2str(NLONMV), '_y', num2str(NLATMV)];	% Resolution tag for MODIS/VIIRS inputs
 % There are no v0 MODIS/VIIRS files; use v1 for testing
-DIRMODV = [DIRCASA, '/v1/drivers'];				% Driver data dir
+DIRMODV = [DIRDATA, '/v1/drivers'];				% Driver data dir
 
 % Output grid
 % ---

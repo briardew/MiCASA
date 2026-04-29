@@ -12,8 +12,7 @@ if NSTEPS == 12
         if year < startYear
             eval([dname ' = ' dname 'mo(:,month_);'])
         else
-            load([DIRCASA, '/', runname, '/maps/annual/', int2str(year), ...
-                '/', dname, '.mat'])
+            load([DIRMAPS, '/annual/', int2str(year), '/', dname, '.mat'])
             eval([dname ' = ' dname '(:,:,month_);'])
             eval([dname ' = maskfile(single(' dname '),mask);'])
         end
@@ -47,7 +46,7 @@ else
         if year < startYear
             eval([dname ' = ' dname 'mo(:,month_);'])
         else
-            load([DIRCASA, '/', runname, '/maps/climate/', dname, '.mat'])
+            load([DIRMAPS, '/climate/', dname, '.mat'])
             eval([dname ' = ' dname '(:,:,month_);'])
             eval([dname ' = maskfile(single(' dname '),mask);'])
         end

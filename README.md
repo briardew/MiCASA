@@ -29,17 +29,17 @@ subsection.
 1. Install the MiCASA Python package in editable mode following the instructions in
 `requirements.txt`.
 2. Run `modvir --help` to get an example of how to generate the MODIS/VIIRS files.
-3. Look at the utilities in `bin/modvir` to get an idea of how to generate and update
-MODIS/VIIRS inputs.
+3. Look at the utilities in `src/CASA/prep` to get an idea of how to generate
+and update MODIS/VIIRS inputs.
 
 *NOTE*: MiCASA was originally designed to run on NASA high-performance
 computing assets. Mirroring the entire `MCD12Q1`, `MOD44B`, `MCD43A4`, and
 `MCD64A1` collections takes a lot of time and space, especially the `MCD43A4`
-collection. The next version of MiCASA will support running on individual
-MODIS/VIIRS tiles and using services like OPeNDAP to make this process easier.
-We also plan to archive the inputs we use so that the user need not reproduce
-this step. Nevertheless, these files will be about 4GB per year, so about 100GB
-total for the entire 24+ year record.
+collection. The next version of MiCASA will support running on limited domains
+and using services like OPeNDAP and the Earthdata Cloud to make this process
+easier.  We also plan to archive the inputs we use so that the user need not
+reproduce this step.  Nevertheless, these files will be about 4GB per year, so
+about 100GB total for the entire 24+ year record.
 
 ### Spinning up
 1. Build the climatological and annual inputs needed for spin-up. Change into

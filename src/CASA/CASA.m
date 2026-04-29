@@ -11,7 +11,6 @@ clearvars -except runname
 KEEPVARS = '^(?!runname$|frestart$|DIRRUN$).';				% Regex to protect vars on load
 defineConstants
 
-DIRRUN = [DIRCASA, '/', runname];					% Root run dir
 if ~isfolder(DIRRUN)
     [status, result] = system(['mkdir -p ', DIRRUN]);
 end

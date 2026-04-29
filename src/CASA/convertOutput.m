@@ -7,8 +7,8 @@ defineConstants;
 TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 
 % Directories and versioning
-DIRIN   = [DIRCASA, '/', runname, '/native'];
-DIROUT  = [DIRCASA, '/', runname, '/holding'];
+DIRIN   = [DIRRUN, '/native'];
+DIROUT  = [DIRRUN, '/holding'];
 
 % Herbivory settings
 ADDHER  = 1;					% Add herbivory to respiration?
@@ -66,7 +66,7 @@ if ADDHER, disp('Adding herbivory to respiration ...'); end
 datasets = [fluxes; extras];
 
 % For extracting variables
-vaux = load([DIRCASA, '/', runname, '/spinup1.mat'], 'mask', 'latitude');
+vaux = load([DIRRUN, '/spinup1.mat'], 'mask', 'latitude');
 mast = vaux.mask';
 inds = find(mast(:) == 1);
 temp = zeros(size(mast));

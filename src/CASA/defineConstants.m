@@ -12,13 +12,6 @@ if ~exist('runname', 'var')
     error('The variable `runname` is undefined.');
 end
 
-% Default directories (can be overwritten)
-% ---
-DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
-DIRCASA = [DIRHEAD, '/data'];					% Directory under which all output goes
-DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
-DIRMODV = [DIRCASA, '/', runname, '/drivers'];			% Directory holding MODIS/VIIRS driver data
-
 % Parse version info from runname
 % ---
 iver = find(runname == '-' | runname == '/', 1) - 1;
@@ -29,12 +22,23 @@ if isempty(icut) || icut == 1, icut = numel(runname); end
 VERSION = runname(2:iver);					% Version number
 VERCUT  = runname(2:icut);					% Version number w/o subletters
 
+% Default directories (can be overwritten)
+% ---
+DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
+DIRDATA = [DIRHEAD, '/data'];					% Directory under which all output goes
+DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
+DIRMODV = [DIRDATA, '/v', VERSION, '/drivers'];			% Directory holding MODIS/VIIRS driver data
+DIRMAPS = [DIRDATA, '/v', VERSION, '/maps'];
+DIRRUN  = [DIRDATA, '/', runname];
+
 if strcmp(VERCUT, 'NRT')
     defineConstants_vNRT;
 elseif strcmp(VERCUT, '1')
     defineConstants_v1;
 elseif strcmp(VERCUT, '0')
     defineConstants_v0;
+else
+    error(['Was unable to parse a valid version from the runname: ', runname]);
 end
 
 REPRO = lower(do_reprocess(1)) == 'y';				% Reprocess/overwrite results

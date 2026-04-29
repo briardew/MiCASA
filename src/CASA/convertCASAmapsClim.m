@@ -1,11 +1,7 @@
 defineConstants;
 
-DIRCLIM = [DIRCASA, '/', runname, '/maps/climate'];
-DIROUT  = [DIRCASA, '/', runname, '/drivers'];
-if ~isfolder(DIROUT)
-    [status, result] = system(['mkdir -p ', DIROUT]);
-end
-fout = [DIROUT, '/MiCASA_v', VERSION, '_maps_', CASARES, '.nc4'];
+% DIRMAPS is also the read directory, so it needs to exist
+fout = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
 
 % Datasets to convert
 % Could be fancy here and also create a data structure of attributes
@@ -68,7 +64,7 @@ ncwrite(fout,    'time_bnds', [time, mod(time,NREC)+1]');
 for ii = 1:length(datasets)
     dname = datasets{ii};
 
-    fin = [DIRCLIM, '/', dname, '.mat'];
+    fin = [DIRMAPS, '/climate/', dname, '.mat'];
     vin = load(fin).(dname);
 
     % Support lon-lat and lon-lat-month

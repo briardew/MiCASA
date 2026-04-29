@@ -1,7 +1,7 @@
 defineConstants;
 
 % Make sure directories exist
-DIRCLIM = [DIRCASA, '/', runname, '/maps/climate'];
+DIRCLIM = [DIRMAPS, '/climate'];
 if ~isfolder(DIRCLIM)
     [status, result] = system(['mkdir -p ', DIRCLIM]);
 end
@@ -26,8 +26,7 @@ if lower(do_deprecated(1)) == 'y'
     interpms = {interpms{:}, 'nearest',  'linear',       'nearest'};
 else
     % Eventually want to have an OPeNDAP URL option
-    fmaps = [DIRCASA, '/', runname, '/drivers/MiCASA_v', VERSION, '_maps_', ...
-        CASARES, '.nc4'];
+    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
 end
 
 for ii = 1:length(datasets)
@@ -37,7 +36,7 @@ for ii = 1:length(datasets)
     if isfile(fout) && ~REPRO, continue; end
 
     if ~isfile(fmaps) || REPRO
-        fin = [DIRCASA, '/v0/original/maps/climate/', dname, '.mat'];
+        fin = [DIRDATA, '/v0/original/maps/climate/', dname, '.mat'];
         AA = load(fin).(dname);
     else
         AA = flipud(ncread(fmaps, dname)');
@@ -79,7 +78,7 @@ for ii = 1:length(datasets)
     if ~isfile(fmaps) || REPRO
         AAmo = 0;
         for year = startYearClim:endYearClim
-            fin  = [DIRCASA, '/v0/original/maps/annual/', num2str(year), ...
+            fin  = [DIRDATA, '/v0/original/maps/annual/', num2str(year), ...
                 '/', dname, '.mat'];
             AAmo = AAmo + load(fin).(dname);
         end
