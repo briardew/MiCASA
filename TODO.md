@@ -5,6 +5,7 @@ For v1A and v1B
     * Was choppy for NRT?
     * Notable lines in January (no sun, but points to problems below line)
 3. Verify `time_bnds`, `calendar`, and other metadata changes are correct
+4. Get `RADIUS` right in `makeGridArea` and `avgarea`
 
 This initial software release will focus on two use cases: 1. Production of
 public MiCASA data, and 2. Derivative experiments by users with different

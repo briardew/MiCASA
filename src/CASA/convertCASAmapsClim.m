@@ -68,14 +68,14 @@ for ii = 1:length(datasets)
     vin = load(fin).(dname);
 
     % Support lon-lat and lon-lat-month
-    if length(size(vin)) == 2
+    if size(vin, 3) == 1
         nccreate(fout,   dname, 'datatype','double', ...
             'dimensions',{'lon',NLON, 'lat',NLAT}, ...
             'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         ncwriteatt(fout, dname, 'long_name',dname);
         ncwrite(fout,    dname, flipud(vin'));
     else
-        if length(vin(1,1,:)) ~= NREC
+        if size(vin, 3) ~= NREC
             disp(['Output file has a time dimension of ' NREC, ', but']);
             disp(['size(', dname, ') = ', size(vin)]);
             error('Incompatible input/output files ...');

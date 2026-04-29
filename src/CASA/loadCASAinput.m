@@ -9,29 +9,36 @@
 
 datasets = {'FTC', 'FHC', 'FBC', 'VEG', 'POPDENS', 'FUELNEED', ...
     'ORGC_top', 'ORGC_sub', 'basisregions', 'EMAX', 'SINK'};
+
 if lower(do_deprecated(1)) == 'y'
+    % Additional datasets only used in deprecated versions
     datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
     for ii = 1:length(datasets)
         load([DIRMAPS, '/climate/', datasets{ii}, '.mat']);
     end
-else
-    datasets = {datasets{:}, 'FP', 'PF', 'MORT'};
-    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
-    for ii = 1:length(datasets)
-        eval([datasets{ii} ' = flipud(ncread(' fmaps, ', ' datasets{ii} ''');']);
-    end
-end
 
-% In older versions, these were zero
-if lower(do_deprecated(1)) == 'y'
+    % In deprecated versions, these were zero
     sand = zeros(NLAT, NLON, 'single');
     silt = zeros(NLAT, NLON, 'single');
     clay = zeros(NLAT, NLON, 'single');
 else
-    datasets = {'sand', 'silt', 'clay'};
+    datasets = {datasets{:}, 'sand', 'silt', 'clay'};
+    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
     for ii = 1:length(datasets)
-        eval([datasets{ii} ' = flipud(ncread(' fmaps, ', ' datasets{ii} ''');']);
+        xout = flipud(ncread(fmaps, datasets{ii})');
+        eval([datasets{ii} ' = xout;']);
     end
+
+    datasets = {'FP', 'PF', 'MORT'};
+    xout = zeros(NLAT, NLON, 12);
+    for ii = 1:length(datasets)
+        xin = ncread(fmaps, datasets{ii});
+        for nn = 1:12
+            xout(:,:,nn) = flipud(xin(:,:,nn)');
+        end
+        eval([datasets{ii} ' = xout;']);
+    end
+    clear xin xout;
 end
 
 % Fraction deforested and regrowing cover are zero when started

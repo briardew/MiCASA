@@ -283,6 +283,8 @@ total = totre .* weight;
 % If everything needs to be per m2 of tree/herb/defo, then this would need
 % should be?: SINK = SINK./FHC;
 SINK = flipud(total');
+% bweir: this is the FTC/FHC BUG TEST
+SINK = SINK./FHC;
 
 EMAX = 0.40 * ones(size(SINK));
 EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
@@ -357,8 +359,9 @@ end
 
 % *** MAY HAVE A BUG ***
 % I think we may have wanted to do:
-% should be?: ORGC_top = ORGC_top./(FHC + FTC + FDC);
-% should be?: ORGC_sub = ORGC_sub./(FHC + FTC + FDC);
+% bweir: this is the FTC/FHC BUG TEST
+ORGC_top = ORGC_top./(FTC + FHC);
+ORGC_sub = ORGC_sub./(FTC + FHC);
 
 %%% Soil texture class
 % Percentages of sand-silt-clay from Potter et al. (1993)

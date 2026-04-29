@@ -16,8 +16,8 @@ end
 % ---
 iver = find(runname == '-' | runname == '/', 1) - 1;
 if isempty(iver), iver = numel(runname); end
-icut = find(isletter([' ',runname(2:end)]), 1) - 1;
-if isempty(icut) || icut == 1, icut = numel(runname); end
+icut = find(isletter([' ',runname(2:iver)]), 1) - 1;
+if isempty(icut) || icut == 1, icut = iver; end
 
 VERSION = runname(2:iver);					% Version number
 VERCUT  = runname(2:icut);					% Version number w/o subletters
