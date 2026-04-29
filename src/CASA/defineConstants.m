@@ -3,15 +3,6 @@
 DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
 DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
 
-% Default directories (can be overwritten)
-% ---
-DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
-DIRCASA = [DIRHEAD, '/data'];					% Directory under which all output goes
-DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
-DIRMODV = [DIRCASA, '/', runname, '/drivers'];			% Directory holding MODIS/VIIRS driver data
-
-% Parse version info from runname
-% ---
 if ~exist('runname', 'var')
     fprintf('You must specify the `runname` variable. Suggested options are:\n');
     fprintf('    * vNRT\n');
@@ -21,6 +12,15 @@ if ~exist('runname', 'var')
     error('The variable `runname` is undefined.');
 end
 
+% Default directories (can be overwritten)
+% ---
+DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
+DIRCASA = [DIRHEAD, '/data'];					% Directory under which all output goes
+DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
+DIRMODV = [DIRCASA, '/', runname, '/drivers'];			% Directory holding MODIS/VIIRS driver data
+
+% Parse version info from runname
+% ---
 iver = find(runname == '-' | runname == '/', 1) - 1;
 if isempty(iver), iver = numel(runname); end
 icut = find(isletter([' ',runname(2:end)]), 1) - 1;

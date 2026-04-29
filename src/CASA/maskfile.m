@@ -14,4 +14,7 @@ function yy = maskfile(xx, mask)
 % compatibility and is a big effort to fix. Maybe another day :(
 mast = mask';
 xt = xx';
-yy = xt(mast(:) == 1);
+
+% Needed for zero-diff, returns a double instead of type of xx
+yy = zeros(sum(mask(:)), 1);
+yy(:) = xt(mast(:) == 1);
