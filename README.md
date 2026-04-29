@@ -45,20 +45,20 @@ total for the entire 24+ year record.
 1. Build the climatological and annual inputs needed for spin-up. Change into
 the `src/CASA` directory and run the following in Matlab/Octave:
     ```
-    runname = 'monthly-0.1deg';
+    runname = 'v1/spinup';
     makeCASAinputClim;
     makeCASAinputAnnual;
     ```
 2. Run monthly CASA to spin up. Run the following in Matlab/Octave:
     ```
-    runname = 'monthly-0.1deg';
+    runname = 'v1/spinup';
     CASA;
     ```
 3. Copy the monthly spin-up and restart data to the daily run. For example,
     ```
     cd ../..
-    cp data-casa/monthly-0.1deg/native/spinUp_stage?.mat data-casa/daily-0.1deg/native
-    cp data-casa/monthly-0.1deg/native/restart.mat data-casa/daily-0.1deg/native
+    cp data/v1/spinup/spinup?.mat data/v1/
+    cp data/v1/spinup/restart.mat data/v1/
     cd src/CASA
     ```
 
@@ -66,7 +66,7 @@ the `src/CASA` directory and run the following in Matlab/Octave:
 Once inputs are built and the monthly spin-up is done, you can run daily CASA in
 Matlab/Octave by doing the following:
 ```
-runname = 'daily-0.1deg';
+runname = 'v1';
 CASA;
 convertOutput;
 lofi.make_sink;

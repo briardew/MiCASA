@@ -87,7 +87,7 @@ NBINS = 3;					% Wood, defo, and herb
 % ---
 % Assumes input version at same resolution (for now)
 syear = num2str(YEAR0);
-fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', CASARES, ...
+fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', MODVRES, ...
     '_monthly_', syear, '01.nc4'];
 fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M01', ...
     '/qfed2.emis_co2.061.x3600_y1800.', syear, '01mm.nc4'];
@@ -134,7 +134,7 @@ else
             smon = num2str(nm, '%02u');
 
             fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', ...
-                CASARES, '_monthly_', syear, smon, '.nc4'];
+                MODVRES, '_monthly_', syear, smon, '.nc4'];
             fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M', smon, ...
                 '/qfed2.emis_co2.061.x3600_y1800.', syear, smon, 'mm.nc4'];
 
@@ -176,7 +176,7 @@ end
 disp('Computing dailies ...');
 tic;
 % Bit of a hack ***FIXME***
-fvcf = [DIRIN, '/cover/MiCASA_v', VERIN, '_cover_', CASARES, ...
+fvcf = [DIRIN, '/cover/MiCASA_v', VERIN, '_cover_', MODVRES, ...
     '_yearly_2024.nc4'];
 maxba(:,:,1) = area .* ncread(fvcf, 'ftree');
 maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
@@ -198,7 +198,7 @@ for id = 1:numel(DNOUT)
         '/qfed2.emis_co2.061.', syear, smon, sday, '.nc4'];
     % Brutal hack? ***FIXME***
     fout = [DIROUT, '/burn/', syear, '/MiCASA_v', VERSION, '_burn_', ...
-        CASARES, '_daily_', syear, smon, sday, '.nc4'];
+        MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 
     % Skip if file exists and not reprocessing
     if isfile(fout)
@@ -314,9 +314,9 @@ for year = YRAV0:YRAVF
         monlen = datenum(year, nm+1, 01) - datenum(year, nm, 01);
         smon = num2str(nm, '%02u');
 
-        fout = [dnowout, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
+        fout = [dnowout, '/MiCASA_v', VERSION, '_burn_', MODVRES, ...
             '_monthly_', syear, smon, '.nc4'];
-        fins = [dnowout, '/MiCASA_v', VERSION, '_burn_', CASARES, ...
+        fins = [dnowout, '/MiCASA_v', VERSION, '_burn_', MODVRES, ...
             '_daily_', syear, smon, '??.nc4'];
 
         % Skip if file exists and not reprocessing

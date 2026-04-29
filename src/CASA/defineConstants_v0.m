@@ -1,11 +1,4 @@
-% Data directories
-% ---
-% Need to make more robust; for now, happy not referencing my own nobackup
-DIRHEAD = '../..';
-DIRCASA = [DIRHEAD, '/data'];
-DIRAUX  = [DIRHEAD, '/data-aux'];
-
-% Define constants
+% Numerical constants
 % ---
 RADIUS = 6371000.000;						% Radius of the Earth
 Q10    = single(1.50);						% Effect of temperature on soil fluxes
@@ -14,18 +7,8 @@ R10    = single(1.00);						% Effect of temperature on soil fluxes (unused for n
 aboveWoodFraction = single(0.80);				% Fraction of wood that is above ground
 herbivoreEff      = single(0.50);				% Efficiency of herbivory (part autotrophic respiration, part to surface litter pools)
 
-VERSION  = '0';							% Version number
-do_daily = 'n';							% Run at a daily timestep (alternative is monthly)
-do_reprocess  = 'n';						% Reprocess/overwrite results
-do_deprecated = 'y';						% Use deprecated functionality (for debugging, etc.)
-do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
-do_meteo_type = 'merra2';					% Meteorology type (merra2, geosit)
-
-do_spinup_stage1 = 'y';						% Do first  stage spin-up (as opposed to loading it)
-do_spinup_stage2 = 'y';						% Do second stage spin-up (as opposed to loading it)
-do_restart_all   = 'n';						% Save workspace at every non-spinup step (slow, for NRT)
-do_restart_load  = 'y';						% Load workspace to start
-
+% Time configuration
+% ---
 spinUpYear1 = 250;
 spinUpYear2 = 1750;
 SOCadjustYear = 50;						% Number of years before startYear to adjust SOC
@@ -37,21 +20,21 @@ startYearClim = 2003;						% First year to use in climatology
 endYearClim   = 2012;						% Last  year to use in climatology
 startYearTime = 1980;						% First year to use in time stamp
 
-% Grid variables for MODIS/VIIRS inputs
-dxmv   = 0.1;
-latmv  = [ -90+dxmv/2:dxmv: 90-dxmv/2]';
-lonmv  = [-180+dxmv/2:dxmv:180-dxmv/2]';
-NLATMV = numel(latmv);
-NLONMV = numel(lonmv);
+% Run switches
+% ---
+do_daily = 'n';							% Run at a daily timestep (alternative is monthly)
+do_spinup_stage1 = 'y';						% Do first  stage spin-up (as opposed to loading it)
+do_spinup_stage2 = 'y';						% Do second stage spin-up (as opposed to loading it)
+do_restart_load  = 'y';						% Load workspace to start
 
-% Grid variables for outputs
-dx   = 0.5;
-lat  = [ -90+dx/2:dx: 90-dx/2]';
-lon  = [-180+dx/2:dx:180-dx/2]';
-NLAT = numel(lat);
-NLON = numel(lon);
+do_reprocess  = 'n';						% Reprocess/overwrite results
+do_deprecated = 'y';						% Use deprecated functionality (for debugging, etc.)
+do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
+do_meteo_type = 'merra2';					% Meteorology type (merra2, geosit)
 
-if strcmp(runname,'v0/original')
+% Special cases
+% ---
+if 8 < numel(runname) && strcmp(runname(end-8:end),'original')
     do_daily = 'n';						% Run at a daily timestep (alternative is monthly)
     startYear = 2003;						% First year with interannual data
     endYear   = 2013;						% Last  year with interannual data
@@ -59,6 +42,22 @@ if strcmp(runname,'v0/original')
     endYearClim   = 2013;					% Last  year to use in climatology
 end
 
-% Auto-generate some folders
+% MODIS/VIIRS input grid
+% ---
+dxmv = 0.1;
+latmv = [ -90+dxmv/2:dxmv: 90-dxmv/2]';
+lonmv = [-180+dxmv/2:dxmv:180-dxmv/2]';
+NLATMV = numel(latmv);
+NLONMV = numel(lonmv);
+MODVRES = ['x', num2str(NLONMV), '_y', num2str(NLATMV)];	% Resolution tag for MODIS/VIIRS inputs
 % There are no v0 MODIS/VIIRS files; use v1 for testing
 DIRMODV = [DIRCASA, '/v1/drivers'];				% Driver data dir
+
+% Output grid
+% ---
+dx = 0.5;
+lat = [ -90+dx/2:dx: 90-dx/2]';
+lon = [-180+dx/2:dx:180-dx/2]';
+NLAT = numel(lat);
+NLON = numel(lon);
+CASARES = ['x', num2str(NLON),   '_y', num2str(NLAT)];		% Resolution tag for CASA outputs

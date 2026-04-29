@@ -197,9 +197,7 @@ for year = startYear:endYear
     end
 
     % Save annual restart if we made a change
-    if saveRestart
-        save(frestart, '-v7');
-    end
+    if saveRestart, save(frestart, '-v7'); end
     saveRestart = 0;
 
     disp(['Year ', int2str(year), ', time used = ', ...

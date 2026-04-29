@@ -22,22 +22,21 @@ TIME0 = datetime(YEAR0, 1, 1)					# YEAR0 in datetime format
 TUNITS = 'days since ' + TIME0.strftime('%Y-%m-%d')		# Time units string
 
 defaults = {
-    'output':'.',
     # NB: NBAR data start 2000-02-16
     'dtbeg':datetime(2001, 1, 1),
     'dtend':datetime.now(),
+    'ver':'NRT',
     # 0.1 deg regular grid
-    # This should be transitioned to lats and lons
     'nlat':1800,
     'nlon':3600,
-    'ver':'1',
+    'output':'.',
+    # Run switches
+    'force':False,
+    'tidy':False,
     # Translated from args; fixme?
     'regrid':True,
     'get':True,
     'fill':True,
-    # Run switches
-    'force':False,
-    'tidy':False,
     # Output metadata
     'Format':'netCDF',
     'Conventions':'CF-1.9',
@@ -55,20 +54,19 @@ def fillargs(dtval, **kwargs):
         kwargs[key] = kwargs.get(key, defaults[key])
 
     ver = kwargs['ver']
-    vernum, _, verdom = ver.partition('-')
+    vernum, _, domain = ver.partition('-')
 
-    # Fill domain tag
+    # Overwrite nlat & nlon for special domains (see geometry)
     # ---
-    if verdom == 'CONUS1km':
+    if domain[:5].upper() == 'CONUS':
         kwargs['nlat'] = 25*120
         kwargs['nlon'] = 60*120
 
-    if len(verdom) == 0:
-        nlat = kwargs['nlat']
-        nlon = kwargs['nlon']
-        kwargs['domtag'] = f'x{nlon}_y{nlat}'
-    else:
-        kwargs['domtag'] = verdom
+    # Fill domain tag
+    # ---
+    nlat = kwargs['nlat']
+    nlon = kwargs['nlon']
+    kwargs['domtag'] = f'x{nlon}_y{nlat}'
 
     # Fill collection names (if unspecified)
     # ---

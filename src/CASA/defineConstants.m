@@ -1,26 +1,40 @@
-% Pretty hacky for now
-% Considering writing a Python entry point
-
 % NB: This will only work on systems that already have MERRA-2 or GEOS IT
-% AFAIK this is the only Discover-specific bit left
+% ***This and makeNRTburn are the only Discover-specific bits left***
 DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
 DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
 
+% Default directories (can be overwritten)
+% ---
+DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
+DIRCASA = [DIRHEAD, '/data'];					% Directory under which all output goes
+DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
+DIRMODV = [DIRCASA, '/', runname, '/drivers'];			% Directory holding MODIS/VIIRS driver data
+
+% Parse version info from runname
+% ---
 if ~exist('runname', 'var')
-    error('Must specify the variable runname ...');
+    fprintf('You must specify the `runname` variable. Suggested options are:\n');
+    fprintf('    * vNRT\n');
+    fprintf('    * v1A/spinup\n');
+    fprintf('    * v1A\n');
+    fprintf('    * v1A-CONUS\n');
+    error('The variable `runname` is undefined.');
 end
 
-% NB: If we get to v10, have that conditional BEFORE v1
-if min(strfind(runname, 'vNRT')) == 1
-    runname = 'vNRT';
+iver = find(runname == '-' | runname == '/', 1) - 1;
+if isempty(iver), iver = numel(runname); end
+icut = find(isletter([' ',runname(2:end)]), 1) - 1;
+if isempty(icut) || icut == 1, icut = numel(runname); end
+
+VERSION = runname(2:iver);					% Version number
+VERCUT  = runname(2:icut);					% Version number w/o subletters
+
+if strcmp(VERCUT, 'NRT')
     defineConstants_vNRT;
-elseif min(strfind(runname, 'v1')) == 1
+elseif strcmp(VERCUT, '1')
     defineConstants_v1;
-elseif min(strfind(runname, 'v0')) == 1
+elseif strcmp(VERCUT, '0')
     defineConstants_v0;
 end
 
 REPRO = lower(do_reprocess(1)) == 'y';				% Reprocess/overwrite results
-
-CASARES = ['x', num2str(NLON),   '_y', num2str(NLAT)];
-MODVRES = ['x', num2str(NLONMV), '_y', num2str(NLATMV)];

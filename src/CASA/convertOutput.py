@@ -15,20 +15,20 @@ YEARF = 2023
 
 #defineConstants;
 # Variables needed from above
-DIRCASA = '/discover/nobackup/bweir/MiCASA/data-casa'
-runname = 'daily-0.1deg'
+DIRCASA = '/discover/nobackup/bweir/MiCASA/data'
+runname = 'v1'
 NLON = 3600
 NLAT = 1800
 DODAILY = True
 
-HEADIN  = path.join(DIRCASA, runname, 'native')
-HEADOUT = path.join(DIRCASA, runname, 'output')
-VERSTR  = 'v1'
+	HEADIN  = path.join(DIRCASA, runname, 'native')
+	HEADOUT = path.join(DIRCASA, runname, 'output')
+	VERSTR  = 'v1'
 
-# Add herbivory to respiration? and variable name
-ADDHER = True
-VARHER = 'HER'
-if ADDHER: print('Adding herbivory to respiration ...')
+	# Add herbivory to respiration? and variable name
+	ADDHER = True
+	VARHER = 'HER'
+	if ADDHER: print('Adding herbivory to respiration ...')
 
 # Structure defining what to process (monthly replaced by daily below)
 # EET defined in Field et al. (1995; https://doi.org/10.1016/0034-4257(94)00066-V)
@@ -49,15 +49,15 @@ datasets = fluxes + extras
 
 # Initialize
 # ===
-restag = 'x' + str(NLON) + '_y' + str(NLAT)
+restag = f'x{NLON}_y{NLAT}'
 
 # For extracting variables
-mask = loadmat(path.join(HEADIN, 'spinUp_stage1.mat'),
+mask = loadmat(path.join(DIRCASA, runname, 'spinup1.mat'),
     variable_names=('mask'))['mask']
 
 # For debugging: test should vary as latitude in 2D
 test = np.nan + np.zeros_like(mask)
-latin = loadmat(path.join(HEADIN, 'spinUp_stage1.mat'), 
+latin = loadmat(path.join(DIRCASA, runname, 'spinup1.mat'), 
     variable_names=('latitude'))['latitude']
 test.flat[mask.flat == 1] = latin
 # Above should give correct shape, now flip to start from South
