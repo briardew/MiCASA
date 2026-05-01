@@ -9,9 +9,6 @@ fout = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
 datasets = {'basisregions', 'FUELNEED', 'FP', 'MORT', 'PF', ...
     'POPDENS', 'VEG', 'FTC', 'FHC', 'FBC', 'EMAX', 'SINK', ...
     'ORGC_top', 'ORGC_sub', 'sand', 'silt', 'clay'};
-if lower(do_deprecated(1)) == 'y'
-    datasets = {datasets{:}, 'SOILTEXT', 'land_percent', 'crop_states'};
-end
 
 % Output file settings
 % ---
@@ -67,13 +64,14 @@ for ii = 1:length(datasets)
     fin = [DIRMAPS, '/climate/', dname, '.mat'];
     vin = load(fin).(dname);
 
-    % Support lon-lat and lon-lat-month
+    % Supports lon-lat and lon-lat-month
     if size(vin, 3) == 1
         nccreate(fout,   dname, 'datatype','double', ...
             'dimensions',{'lon',NLON, 'lat',NLAT}, ...
             'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         ncwriteatt(fout, dname, 'long_name',dname);
-        ncwrite(fout,    dname, flipud(vin'));
+        % Recall flipud(A)' goes from CASA to output
+        ncwrite(fout,    dname, flipud(vin)');
     else
         if size(vin, 3) ~= NREC
             disp(['Output file has a time dimension of ' NREC, ', but']);
@@ -84,7 +82,8 @@ for ii = 1:length(datasets)
         vout = zeros(NLON, NLAT, NREC);
 
         for nn = 1:NREC
-            vout(:,:,nn) = flipud(vin(:,:,nn)');
+            % Recall flipud(A)' goes from CASA to output
+            vout(:,:,nn) = flipud(vin(:,:,nn))';
         end
 
         nccreate(fout,   dname, 'datatype','double', ...

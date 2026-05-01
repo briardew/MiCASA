@@ -108,9 +108,8 @@ dname = 'PF';
 fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || REPRO
     PF = zeros(NLAT, NLON, 12);
-    % Notice transposition of CASA resolution ***FIXME?***
     [AA, RR] = readgeoraster([DIRAUX, '/soil/CIFOR/TROP-SUBTROP_PeatV21_', ...
-        '2016_CIFOR.x', num2str(NLAT), '_y', num2str(NLON), '.tif']);
+        '2016_CIFOR.', CASARES, '.tif']);
 
     for nn = 1:12
         PF(:,:,nn) = AA;

@@ -16,8 +16,8 @@
 # }
 
 fin='TROP-SUBTROP_PeatV21_2016_CIFOR.tif'
-fout1='TROP-SUBTROP_PeatV21_2016_CIFOR.x1800_y3600.tif'
-fout5='TROP-SUBTROP_PeatV21_2016_CIFOR.x360_y720.tif'
+fout1='TROP-SUBTROP_PeatV21_2016_CIFOR.x3600_y1800.tif'
+fout5='TROP-SUBTROP_PeatV21_2016_CIFOR.x720_y360.tif'
 
 gdalwarp -t_srs EPSG:4326 -te -180 -90 180 90 -tr 0.1 0.1 -ot float32 -r average -dstnodata 0 $fin $fout1
 gdalwarp -t_srs EPSG:4326 -te -180 -90 180 90 -tr 0.5 0.5 -ot float32 -r average -dstnodata 0 $fin $fout5
