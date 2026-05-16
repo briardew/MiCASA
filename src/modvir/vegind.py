@@ -40,14 +40,15 @@ def ndvi2fpar(ndvi):
 def get(dtval, **kwargs):
     '''Acquire MODIS/VIIRS vegetation index tiles'''
 
-    kwargs = fillargs(dtval, **kwargs)
-    colveg = kwargs['colveg']
+    kwargs  = fillargs(dtval, **kwargs)
     headveg = kwargs['headveg']
+    dirveg  = path.dirname(headveg)
+    granveg = path.basename(headveg)
 
-    files = download(dtval, colveg, path.dirname(headveg), kwargs['force'])
+    files = download(granveg, dirveg, kwargs['force'])
 
     if len(files) == 0:
-        raise EOFError(f'No granules found for {colveg} on {dtval:%Y-%m-%d}')
+        raise EOFError('No granules found matching ' + granveg)
 
     return files
 
@@ -95,6 +96,12 @@ def regrid(dtval, mask=None, **kwargs):
     # Define data arrays
     # ---
     nansxyt = np.nan * np.ones((1, nlat, nlon))
+    qc = xr.DataArray(
+        data=nansxyt.astype(np.single),
+        dims=['time','lat','lon'], coords=coords,
+        attrs={'long_name':'Quality control variable (greater = better)',
+            'units':'1'},
+    )
     ndvi = xr.DataArray(
         data=nansxyt.astype(np.single),
         dims=['time','lat','lon'], coords=coords,
@@ -138,7 +145,7 @@ def regrid(dtval, mask=None, **kwargs):
     }
 
     ds = xr.Dataset(data_vars={
-        'time_bnds':time_bnds, 'NDVI':ndvi, 'fPAR':fpar,
+        'time_bnds':time_bnds, 'QC':qc, 'NDVI':ndvi, 'fPAR':fpar,
     }, attrs=attrs)
 
     # Just give the empty structure if not regridding
@@ -148,7 +155,8 @@ def regrid(dtval, mask=None, **kwargs):
     # ---
     files = get(dtval, **kwargs)
 
-    num = np.zeros((nlat, nlon)) # Keeping in case we want Red and NIR outputs
+    num = np.zeros((nlat, nlon))
+    qcw = np.zeros((nlat, nlon))
     red = np.zeros((nlat, nlon))
     nir = np.zeros((nlat, nlon))
 
@@ -195,11 +203,13 @@ def regrid(dtval, mask=None, **kwargs):
 
         fused = fused + [ff]
 
-        # Read Red, NIR and QCs
-        redin = dsin[VARPRE+'1'].values.T
+        # Read Red & NIR QC and values
         redqc = dsin[QCFPRE+'1'].values.T
-        nirin = dsin[VARPRE+'2'].values.T
         nirqc = dsin[QCFPRE+'2'].values.T
+        redin = dsin[VARPRE+'1'].values.T
+        nirin = dsin[VARPRE+'2'].values.T
+        # qc = 0 => qcw = 2; qc = 1 => qcw = 1
+        qcwin = 2 - 0.5*(redqc + nirqc)
 
         # Red and NIR can have different QC
         # QC = 255 and val = 32767 are equiv, but sometimes val = -32767
@@ -213,17 +223,26 @@ def regrid(dtval, mask=None, **kwargs):
         LAin, LOin = singrid(dsxy[YVAR].values, dsxy[XVAR].values)
 
         numgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone))[0]
+        qcwgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
+            weights=qcwin[iok])[0]
         redgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
-            weights=redin[iok])[0]
+            weights=redin[iok]*qcwin[iok])[0]
         nirgran = np.histogram2d(LAin[iok], LOin[iok], bins=(late,lone),
-            weights=nirin[iok])[0]
+            weights=nirin[iok]*qcwin[iok])[0]
 
+        # NB: red and nir are unnormalized since we only use them in NDVI
+        # If you want to use them, divide by qcw
         num = num + numgran
+        qcw = qcw + qcwgran
         red = red + redgran
         nir = nir + nirgran
 
         dsin.close()
         dsxy.close()
+
+    # 1deg = 120km => 500m = 1/240deg; recall range of qcw is [0, 2]
+    area = (np.max(late) - np.min(late))*(np.max(lone) - np.min(lone))
+    qc = 1 - 0.5*qcw*nlat*nlon/(240*240*area)
 
     # Divide without complaining about NaNs
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -236,6 +255,7 @@ def regrid(dtval, mask=None, **kwargs):
 
     # Recall values have a singleton time dim
     # Type cast is to prevent xarray from casting :(
+    ds['QC'].values[0,:,:] = qc.astype(ds['QC'].dtype)
     ds['NDVI'].values[0,:,:] = ndvi.astype(ds['NDVI'].dtype)
     ds['fPAR'].values[0,:,:] = fpar.astype(ds['fPAR'].dtype)
 
@@ -258,14 +278,14 @@ def build(dtbeg, dtend, **kwargs):
         kwyear = fillargs(dtyear, **kwargs)
 
         ver = kwyear['ver']
-        domtag = kwyear['domtag']
+        restag = kwyear['restag']
         output = kwyear['output']
 
         # Output vars
         dirpre  = path.join(output, 'vegpre', f'{year}')
-        headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{domtag}_daily_')
+        headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{restag}_daily_')
         dirout  = path.join(output, 'vegind', f'{year}')
-        headout = path.join(dirout, f'MiCASA_v{ver}_vegind_{domtag}_daily_')
+        headout = path.join(dirout, f'MiCASA_v{ver}_vegind_{restag}_daily_')
 
         # Compute vegetation mask
         # ---
@@ -334,25 +354,30 @@ def build(dtbeg, dtend, **kwargs):
                         makedirs(dirpre, exist_ok=True)
                         ds.to_netcdf(fpre, unlimited_dims=['time'])
 
-            # Read or regrid filled file
+            # Fill and compute fPAR
             if dofill:
                 print('===    ____________ Filling')
                 if path.isfile(fout) and not doforce:
                     ds = xr.open_dataset(fout)
                 else:
-                    # Fill with persistence and compute fPAR
                     if dsold is not None:
-                        inan = np.logical_and(np.isnan(ds['NDVI'].values),
-                            ~np.isnan(dsold['NDVI'].values))
-                        ds['NDVI'].values[inan] = dsold['NDVI'].values[inan]
-                        ds['fPAR'].values = ndvi2fpar(ds['NDVI'].values)
+                        ndvi = ds['NDVI'].values
+                        ndvi0 = dsold['NDVI'].values
+                        iold =  np.isnan(ndvi) & ~np.isnan(ndvi0)
+                        inew = ~np.isnan(ndvi) & ~np.isnan(ndvi0)
+                        wold = ds['QC'].values if ver != '1' else 0 # Hack to preserve v1 approach
+                        ndvi[iold] = ndvi0[iold]
+                        ndvi[inew] = ((1 - wold[inew])*ndvi[inew] +
+                            wold[inew]*ndvi0[inew])
+                        ds['NDVI'].values = ndvi
+                        ds['fPAR'].values = ndvi2fpar(ndvi)
 
                     makedirs(dirout, exist_ok=True)
                     ds.to_netcdf(fout, unlimited_dims=['time'])
                 dsold = ds.copy(deep=True)
 
             # Slightly terrifying
-            if dotidy: tidy(headveg)
+            if dotidy: tidy(headveg, 3)
 
     if dsold is not None: dsold.close()
 

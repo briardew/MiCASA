@@ -7,22 +7,23 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2018-06-07	Adding support for equal-area grids
 %===============================================================================
+function gridArea = makeGridArea(lats, lons, radius)
 
-function gridArea = makeGridArea(lats, lons);
-
-%radius = 6378140;		% Original (m at equator)
-%radius = 6371007.181;		% MODIS/VIIRS
-radius = 6371000.000;		% GEOS
+if ~exist('radius', 'var')
+    % MODIS/VIIRS uses 6371007.181, GEOS uses 6371000.000
+    radius = 6371007.181;
+end
 
 gridArea = zeros(lats, lons);
 
 for lat = 1:lats
 %   Original formula (wrong?)
 %   ---
+%   radius = 6378140;		% Original (m at equator)
 %   gridArea(lat,1) = (2*pi*radius./lons) * ((cos((-0.5 - 1/(2*lats) + lat/lats)*pi) * 2*pi*radius)/lons);
 
+%   Above is equivalent to ...
 %   gridArea(lat,1) = radius^2 * 2*pi/lons * cos(0.5*pi - ((lat - 0.5)/lats)*pi) * 2*pi/lons;
 %   gridArea(lat,1) = radius^2 * 2*pi/lons * sin((lat - 0.5)/lats*pi) * 2*pi/lons;
 %   Assuming lons = 2*lats

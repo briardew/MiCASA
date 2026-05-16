@@ -2,8 +2,8 @@
 %YEARF = 2024;
 YEAR0 = 2023;
 YEARF = 2023;
-TESTDIR = '/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-final/holding/daily';
 
+TESTDIR = '/discover/nobackup/bweir/MiCASA/data-casa/daily-0.1deg-final/holding/daily';
 addpath('/discover/nobackup/bweir/matlab/globutils');
 
 syear = num2str(YEAR0);

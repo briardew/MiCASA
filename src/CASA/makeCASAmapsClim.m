@@ -282,8 +282,6 @@ total = totre .* weight;
 % If everything needs to be per m2 of tree/herb/defo, then this would need
 % should be?: SINK = SINK./FHC;
 SINK = flipud(total');
-% bweir: this is the FTC/FHC BUG TEST
-SINK = SINK./FHC;
 
 EMAX = 0.40 * ones(size(SINK));
 EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
@@ -291,6 +289,9 @@ inds = find(SINK > 0);
 EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
 % Adjustment to better match past CASAs
 EMAX = EMAX * 1.07;
+
+% bweir: this is the FTC/FHC BUG TEST
+SINK = SINK./FHC;
 
 datasets = {'SINK', 'EMAX'};
 for ii = 1:length(datasets)

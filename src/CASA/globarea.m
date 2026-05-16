@@ -11,14 +11,12 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2018-06-07	Adding support for equal-area grids
 %===============================================================================
 function area = globarea(lat, lon, radius)
 
-% Note: this is supported, but as wasn't used in v1
 if ~exist('radius', 'var')
-    % Default value from GEOS in meters; NB: MODIS uses 6371007.181
-    radius = 6371000.0;
+    % MODIS/VIIRS uses 6371007.181, GEOS uses 6371000.000
+    radius = 6371007.181;
 end
 
 % Old approach for constant dlat

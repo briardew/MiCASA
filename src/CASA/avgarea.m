@@ -11,17 +11,16 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2018-06-07	Adding support for equal-area grids
 %===============================================================================
 function [aq, smx, smy, wq] = avgarea(xx, yy, aa, xq, yq, radius)
 
 if ~exist('radius', 'var')
-    % Default value from GEOS in meters; NB: MODIS uses 6371007.181
-    radius = 6371000.0;
+    % MODIS/VIIRS uses 6371007.181, GEOS uses 6371000.000
+    radius = 6371007.181;
 end
 
 % 1. Determine the fine and coarse scale coordinates
-% --------------------------------------------------
+% ---
 xxv = unique(xx(:), 'sorted');
 xqv = unique(xq(:), 'sorted');
 yyv = unique(yy(:), 'sorted');
@@ -44,7 +43,7 @@ else
 end
 
 % 2. Define (f) fine and (c) coarse grids
-% ---------------------------------------
+% ---
 nxf = numel(xf);
 nyf = numel(yf);
 
@@ -61,7 +60,7 @@ yfi = [yf - dyf/2; yf(end) + dyf/2];
 yci = [yc - dyc/2; yc(end) + dyc/2];
 
 % 3. Create transformation matrix smx for x direction
-% ---------------------------------------------------
+% ---
 smx = zeros(nxf, nxc);
 
 i0 = 1;
@@ -80,7 +79,7 @@ for jj = 1:nxc
 end
 
 % 4. Create transformation matrix smy for y direction
-% ---------------------------------------------------
+% ---
 % Preserve periodicty by adding copies to both longitudinal edges
 yf   = [yf - 360; yf; yf + 360];
 yfi  = [yf - dyf/2; yf(end) + dyf/2];
@@ -111,7 +110,7 @@ smy  = smy(1:nyf0,:) + smy(nyf0+1:2*nyf0,:) + smy(2*nyf0+1:end,:);
 nyf  = nyf0;
 
 % 5. Apply transformation matrices and rescale
-% --------------------------------------------
+% ---
 if numel(xxv) < numel(xqv)
   smx = smx';
 end

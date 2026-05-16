@@ -54,13 +54,6 @@ the `src/CASA` directory and run the following in Matlab/Octave:
     runname = 'v1/spinup';
     CASA;
     ```
-3. Copy the monthly spin-up and restart data to the daily run. For example,
-    ```
-    cd ../..
-    cp data/v1/spinup/spinup?.mat data/v1/
-    cp data/v1/spinup/restart.mat data/v1/
-    cd src/CASA
-    ```
 
 ### Daily runs (with LoFI)
 Once inputs are built and the monthly spin-up is done, you can run daily CASA in
@@ -103,3 +96,8 @@ git pull
 git stash pop
 ```
 If you don't wish to keep changes to files, simply delete them and then pull.
+
+## Changes from version 1 to 1A
+* Half-weighted magnitude inversion (QC = 1) NBAR values
+* Fixed daily burned area disaggregation
+* Fixed fractional tree/herb cover for crop sink and SOC

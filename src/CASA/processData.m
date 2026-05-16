@@ -7,6 +7,14 @@ if spinUpYear2 <= year
     HER = FTC.*wherb + FHC.*hherb + FDC.*dherb;
     FUE = FTC.*wfuel;
 
+    NPPwood = FTC.*NPP;
+    NPPherb = FHC.*NPP;
+    NPPdefo = FDC.*NPP;
+
+    Rhwood = FTC.*(wresp + wherb);
+    Rhherb = FHC.*(hresp + hherb);
+    Rhdefo = FDC.*(dresp + dherb);
+
     COMwood = FTC.*wcomb;
     COMherb = FHC.*hcomb + 0.5.*FDC.*dcomb;
     COMdefo = FTC.*wdefo + 0.5.*FDC.*dcomb;

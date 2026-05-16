@@ -19,14 +19,15 @@ from modvir.utils import download, swaphead, tidy
 def get(dtval, **kwargs):
     '''Acquire MODIS/VIIRS burned area tiles'''
 
-    kwargs = fillargs(dtval, **kwargs)
-    colburn = kwargs['colburn']
+    kwargs   = fillargs(dtval, **kwargs)
     headburn = kwargs['headburn']
+    dirburn  = path.dirname(headburn)
+    granburn = path.basename(headburn)
 
-    files = download(dtval, colburn, path.dirname(headburn), kwargs['force'])
+    files = download(granburn, dirburn, kwargs['force'])
 
     if len(files) == 0:
-        raise EOFError(f'No granules found for {colburn} on {dtval:%Y-%m-%d}')
+        raise EOFError('No granules found matching ' + granburn)
 
     return files
 
@@ -271,13 +272,13 @@ def build(dtbeg, dtend, **kwargs):
         kwyear = fillargs(dtyear, **kwargs)
 
         ver = kwyear['ver']
-        domtag = kwyear['domtag']
+        restag = kwyear['restag']
         output = kwyear['output']
 
         # Output vars
         dirout  = path.join(output, 'burn', f'{year}')
-        headmon = path.join(dirout, f'MiCASA_v{ver}_burn_{domtag}_monthly_')
-        headday = path.join(dirout, f'MiCASA_v{ver}_burn_{domtag}_daily_')
+        headmon = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_monthly_')
+        headday = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_daily_')
 
         # Build burned area
         # ---
@@ -330,8 +331,8 @@ def build(dtbeg, dtend, **kwargs):
                     doy = (dtnow - datetime(year, 1, 1)).days + 1
                     fday = headday + dtnow.strftime('%Y%m%d') + '.' + FEXT
                     if not path.isfile(fday) or doforce: 
+                        # Hack to preserve v1 "bug" that averaged burn dates
                         if ver == '1':
-                            # Hack to preserve v1 "bug" that averaged burn dates
                             ds = regrid(dtnow, doy, **{**kwnow, 'regrid':False})
 
                             nd = (dtnow - dtyear).days + 1
@@ -351,15 +352,15 @@ def build(dtbeg, dtend, **kwargs):
                     if dtnow == dtend: break
 
             # Slightly terrifying
-            if dotidy: tidy(headburn)
+            if dotidy: tidy(headburn, 3)
 
             # Finished?
             if dtnow == dtend: break
 
         # Slightly terrifying
         if dotidy and doregrid:
-            tidy(headcov)
-            tidy(headvcf)
+            tidy(headcov, 3)
+            tidy(headvcf, 3)
 
     # Not sure why this is here of it's useful
     return ds

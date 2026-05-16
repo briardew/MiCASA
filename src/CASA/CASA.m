@@ -8,7 +8,8 @@
 % the 1990s to simulate terrestrial carbon exchange. Further developed and
 % accounted for fires; Global Fire Emissions Database (GFED)
 clearvars -except runname
-KEEPVARS = '^(?!runname$|frestart$|DIRRUN$).';				% Regex to protect vars on load
+%KEEPVARS = '^(?!runname$|frestart$|DIRRUN$).';				% Regex to protect vars on load
+KEEPVARS = '^(?!runname$).';						% Regex to protect vars on load
 defineConstants
 
 if ~isfolder(DIRRUN)
@@ -85,8 +86,14 @@ if lower(do_spinup_stage1(1)) == 'y'
 else
     % The stage1 data only needs to be loaded if it is going to be used by stage2
     if lower(do_spinup_stage2(1)) == 'y'
+        % Use spinup in spinup directory if none present
+        fspinup = [DIRRUN, '/spinup1.mat'];
+        if ~isfile(fspinup)
+            fspinup = [DIRRUN, '/spinup/spinup1.mat'];
+        end
+
         % Allows sharing of spinup/restart across runs
-        load([DIRRUN, '/spinup1.mat'], '-regexp', KEEPVARS);
+        load(fspinup, '-regexp', KEEPVARS);
         defineConstants
     end
 end
@@ -118,8 +125,14 @@ if lower(do_spinup_stage2(1)) == 'y'
     end
     save([DIRRUN, '/spinup2.mat'], '-v7');
 else
+    % Use spinup in spinup directory if none present
+    fspinup = [DIRRUN, '/spinup2.mat'];
+    if ~isfile(fspinup)
+        fspinup = [DIRRUN, '/spinup/spinup2.mat'];
+    end
+
     % Allows sharing of spinup/restart across runs
-    load([DIRRUN, '/spinup2.mat'], '-regexp', KEEPVARS);
+    load(fspinup, '-regexp', KEEPVARS);
     defineConstants
 end
 

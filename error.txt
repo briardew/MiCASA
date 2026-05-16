@@ -1,0 +1,68 @@
+Traceback (most recent call last):
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 1093, in _validate_conn
+    conn.connect()
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connection.py", line 790, in connect
+    sock_and_verified = _ssl_wrap_socket_and_match_hostname(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connection.py", line 969, in _ssl_wrap_socket_and_match_hostname
+    ssl_sock = ssl_wrap_socket(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/util/ssl_.py", line 480, in ssl_wrap_socket
+    ssl_sock = _ssl_wrap_socket_impl(sock, context, tls_in_tls, server_hostname)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/util/ssl_.py", line 524, in _ssl_wrap_socket_impl
+    return ssl_context.wrap_socket(sock, server_hostname=server_hostname)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/ssl.py", line 513, in wrap_socket
+    return self.sslsocket_class._create(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/ssl.py", line 1104, in _create
+    self.do_handshake()
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/ssl.py", line 1375, in do_handshake
+    self._sslobj.do_handshake()
+TimeoutError: [Errno 110] Connection timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/requests/adapters.py", line 644, in send
+    resp = conn.urlopen(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/util/retry.py", line 474, in increment
+    raise reraise(type(error), error, _stacktrace)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/util/util.py", line 39, in reraise
+    raise value
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=conn.timeout)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/urllib3/connectionpool.py", line 367, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='cmr.earthdata.nasa.gov', port=443): Read timed out. (read timeout=None)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/gpfsm/dhome/bweir/miniforge3/bin/modvir", line 8, in <module>
+    sys.exit(main())
+  File "/gpfsm/dnb34/bweir/MiCASA/src/modvir/__main__.py", line 88, in main
+    vegind.build(dtbeg, dtend, **kwargs)
+  File "/gpfsm/dnb34/bweir/MiCASA/src/modvir/vegind.py", line 340, in build
+    get(dtnow, **kwnow)
+  File "/gpfsm/dnb34/bweir/MiCASA/src/modvir/vegind.py", line 48, in get
+    files = download(granveg, dirveg, kwargs['force'])
+  File "/gpfsm/dnb34/bweir/MiCASA/src/modvir/utils.py", line 24, in download
+    results = earthaccess.search_data(short_name=shorty,
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/earthaccess/api.py", line 138, in search_data
+    granules_found = query.hits()
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/earthaccess/search.py", line 460, in hits
+    response = self.session.get(url, headers=self.headers, params={"page_size": 0})
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/requests/sessions.py", line 602, in get
+    return self.request("GET", url, **kwargs)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "/gpfsm/dhome/bweir/miniforge3/lib/python3.10/site-packages/requests/adapters.py", line 690, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='cmr.earthdata.nasa.gov', port=443): Read timed out. (read timeout=None)

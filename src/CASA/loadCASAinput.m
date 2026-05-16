@@ -95,7 +95,7 @@ end
 % mask(sum(BAdefo,3)==0)=0;
 
 numberOfGridCells = sum(mask(:));
-gridArea = makeGridArea(NLAT, NLON);
+gridArea = makeGridArea(NLAT, NLON, RADIUS);
 
 % Mask and reshape datasets
 datasets = {'AIRT', 'FPAR', 'PPT', 'BAherb', 'BAwood', 'BAdefo', 'FP', 'PF', ...

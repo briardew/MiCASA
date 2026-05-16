@@ -66,7 +66,7 @@ def fillargs(dtval, **kwargs):
     # ---
     nlat = kwargs['nlat']
     nlon = kwargs['nlon']
-    kwargs['domtag'] = f'x{nlon}_y{nlat}'
+    kwargs['restag'] = f'x{nlon}_y{nlat}'
 
     # Fill collection names (if unspecified)
     # ---
@@ -111,29 +111,35 @@ def fillargs(dtval, **kwargs):
     # Land cover type
     colcov  = kwargs['colcov']
     yearcov = min(max(year, YMINCOV), YMAXCOV)
+    # Reproduce v1 bug
+    if ver == '1' and year in [2022, 2023, 2024]: yearcov = 2022
     dircov  = path.join(output, colcov, f'{yearcov}', '001')
-    headcov = path.join(dircov, colcov[:-4] + f'.A{yearcov}001.')
+    headcov = path.join(dircov, colcov[:-4] + f'.A{yearcov}001.*.' +
+        colcov[-3:] + '.*')
     kwargs['headcov'] = kwargs.get('headcov', headcov)
 
     # Vegetation continuous fields
     colvcf  = kwargs['colvcf']
     yearvcf = min(max(year, YMINVCF), YMAXVCF)
     dirvcf  = path.join(output, colvcf, f'{yearvcf}', '065')
-    headvcf = path.join(dirvcf, colvcf[:-4] + f'.A{yearvcf}065.')
+    headvcf = path.join(dirvcf, colvcf[:-4] + f'.A{yearvcf}065.*.' +
+        colvcf[-3:] + '.*')
     kwargs['headvcf'] = kwargs.get('headvcf', headvcf)
 
     # Vegetation indices
     colveg  = kwargs['colveg']
     jdayveg = dtval.strftime('%j')
     dirveg  = path.join(output, colveg, f'{year}', jdayveg)
-    headveg = path.join(dirveg, colveg[:-4] + f'.A{year}{jdayveg}.')
+    headveg = path.join(dirveg, colveg[:-4] + f'.A{year}{jdayveg}.*.' +
+        colveg[-3:] + '.*')
     kwargs['headveg'] = kwargs.get('headveg', headveg)
 
     # Burned area input vars
     colburn  = kwargs['colburn']
     jdayburn = dtval.replace(day=1).strftime('%j')
     dirburn  = path.join(output, colburn, f'{year}', jdayburn)
-    headburn = path.join(dirburn, colburn[:-4] + f'.A{year}{jdayburn}.')
+    headburn = path.join(dirburn, colburn[:-4] + f'.A{year}{jdayburn}.*.' +
+        colburn[-3:] + '.*')
     kwargs['headburn'] = kwargs.get('headburn', headburn)
 
     return kwargs

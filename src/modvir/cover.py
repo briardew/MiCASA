@@ -18,25 +18,26 @@ from modvir.utils import download, swaphead, tidy
 def get(dtval, **kwargs):
     '''Acquire MODIS/VIIRS land cover tiles'''
 
-    kwargs = fillargs(dtval, **kwargs)
-    colcov = kwargs['colcov']
-    colvcf = kwargs['colvcf']
+    kwargs  = fillargs(dtval, **kwargs)
+
     headcov = kwargs['headcov']
+    dircov  = path.dirname(headcov)
+    grancov = path.basename(headcov)
+
     headvcf = kwargs['headvcf']
+    dirvcf  = path.dirname(headvcf)
+    granvcf = path.basename(headvcf)
 
-    # Bit of a hack, wish we could keep this in one place
-    dtvcf = datetime(dtval.year, 1, 1) + timedelta(days=64)
-
-    filescov = download(dtval, colcov, path.dirname(headcov), kwargs['force'])
-    filesvcf = download(dtvcf, colvcf, path.dirname(headvcf), kwargs['force'])
-
+    filescov = download(grancov, dircov, kwargs['force'])
     if len(filescov) == 0:
-        raise EOFError(f'No granules found for {colcov} on {dtval:%Y-%m-%d}')
-    elif len(filesvcf) == 0:
-        # MOD44B is missing/broken on CMR, need to manually copy for now
-#       raise EOFError(f'No granules found for {colvcf} on {dtvcf:%Y-%m-%d}')
-        print(f'No files found for {colvcf} on {dtvcf:%Y-%m-%d}',
-            file=sys.stderr)
+        raise EOFError('No granules found matching ' + grancov)
+
+    # MOD44B.006 is not on Earthdata, need to manually copy for now
+#   filesvcf = download(granvcf, dirvcf, kwargs['force'])
+    filesvcf = glob(headvcf)
+
+    if len(filesvcf) == 0:
+        raise EOFError('No granules found matching ' + granvcf)
 
     return filescov, filesvcf
 
@@ -212,7 +213,7 @@ def regrid(dtval, **kwargs):
 
         # Read VCF (percent tree, herbaceous, and barren)
         # ---
-        fvcf = swaphead(ff, kwargs['headcov'], kwargs['headvcf'])
+        fvcf = swaphead(ff, filesvcf)
         if fvcf is None:
             print('Missing VCF data for ' + ff)
             continue
@@ -297,7 +298,7 @@ def build(dtbeg, dtend, **kwargs):
         kwnow = fillargs(dtnow, **kwargs)
 
         ver = kwnow['ver']
-        domtag = kwnow['domtag']
+        restag = kwnow['restag']
         output = kwnow['output']
         headcov = kwnow['headcov']
         headvcf = kwnow['headvcf']
@@ -309,7 +310,7 @@ def build(dtbeg, dtend, **kwargs):
 
         # Output vars
         dirout = path.join(output, 'cover')
-        fgran  = f'MiCASA_v{ver}_cover_{domtag}_yearly_{year}.{FEXT}'
+        fgran  = f'MiCASA_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
         fout   = path.join(dirout, fgran)
 
         # Download if needed for regrid or requested
@@ -329,7 +330,7 @@ def build(dtbeg, dtend, **kwargs):
 
         # Slightly terrifying
         if dotidy:
-            tidy(headcov)
-            tidy(headvcf)
+            tidy(headcov, 3)
+            tidy(headvcf, 3)
 
     return ds

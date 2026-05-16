@@ -32,7 +32,7 @@ darmoredpool(io) = darmoredpool(io)./total(io);
 % Now treat deforested pools as herbaceous including cwd
 
 % NPP: calculate inputs from NPP to living pools following Hui and Jackson
-% (http://www.blackwell-synergy.com/doi/pdf/10.1111/j.1469-8137.2005.01569.x)
+% https://doi.org/10.1111/j.1469-8137.2005.01569.x
 io = max(0.20, min(0.80, 0.85 - MAP));
 frootinput = NPP .* io;
 leafinput  = NPP .* (1-io);

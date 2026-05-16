@@ -18,7 +18,7 @@ def edges(nlat, nlon, domain=''):
         late = np.linspace(  25,   50, nlat+1)
         lone = np.linspace(-125,  -65, nlon+1)
     else:
-        raise ValueError(f'Unsupported domain: {domain}')
+        raise ValueError('Unsupported domain: ' + domain)
 
     return late, lone
 

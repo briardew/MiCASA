@@ -30,7 +30,7 @@ FEXT="nc4"
 
 # The rest should auto-generate
 # ---
-DIRIN="$MIROOT/data/v$VERSION/holding"
+DIRIN="$MIROOT/data/v$VERSION/netcdf"
 VEGIN="$MIROOT/data/v$VERSION/drivers"
 
 # Output (fluxes)

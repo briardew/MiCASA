@@ -1,13 +1,14 @@
 *.py[co]
 *.egg-info
+*.mp4
 backup
 scratch
 deprecated
 archive
 /data*
 /logs
+/tests/figs
 /build
 /dist
 /env
 /src/masinfo/crops
-/src/CASA/convertOutput.py

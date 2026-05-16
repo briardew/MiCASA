@@ -40,6 +40,16 @@ if strcmp(VERSION,'1')
     do_meteo_type = 'merra2';					% Meteorology type (merra2, geosit)
 end
 
+if strcmp(VERSION,'1B')
+    startYear = 2012;						% First year with interannual data
+    startYearClim = 2013;					% First year to use in climatology
+    endYearClim   = 2022;					% Last  year to use in climatology
+elseif strcmp(VERSION,'1C')
+    startYear = 2018;						% First year with interannual data
+    startYearClim = 2023;					% First year to use in climatology
+    endYearClim   = 2032;					% Last  year to use in climatology
+end
+
 if 5 < numel(runname) && strcmp(runname(end-5:end),'spinup')
     do_daily = 'n';						% Run at a daily timestep (alternative is monthly)
     do_spinup_stage1 = 'y';					% Do first  stage spin-up (as opposed to loading it)
