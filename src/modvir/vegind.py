@@ -45,8 +45,10 @@ def get(dtval, **kwargs):
     dirveg  = path.dirname(headveg)
     granveg = path.basename(headveg)
 
-    files = download(granveg, dirveg, kwargs['force'])
-
+    # Check for local copies first (earthaccess is flaky)
+    files = glob(headveg)
+    if len(files) == 0 or kwargs['force']:
+        files = download(granveg, dirveg, kwargs['force'])
     if len(files) == 0:
         raise EOFError('No granules found matching ' + granveg)
 
@@ -208,8 +210,12 @@ def regrid(dtval, mask=None, **kwargs):
         nirqc = dsin[QCFPRE+'2'].values.T
         redin = dsin[VARPRE+'1'].values.T
         nirin = dsin[VARPRE+'2'].values.T
-        # qc = 0 => qcw = 2; qc = 1 => qcw = 1
-        qcwin = 2 - 0.5*(redqc + nirqc)
+        if ver != '1':
+            # qc = 0 => qcw = 2; qc = 1 => qcw = 1
+            qcwin = 2 - 0.5*(redqc + nirqc)
+        else:
+            # Hack to preserve v1 approach
+            qcwin = np.ones_like(redqc + nirqc)
 
         # Red and NIR can have different QC
         # QC = 255 and val = 32767 are equiv, but sometimes val = -32767
@@ -363,9 +369,13 @@ def build(dtbeg, dtend, **kwargs):
                     if dsold is not None:
                         ndvi = ds['NDVI'].values
                         ndvi0 = dsold['NDVI'].values
-                        iold =  np.isnan(ndvi) & ~np.isnan(ndvi0)
-                        inew = ~np.isnan(ndvi) & ~np.isnan(ndvi0)
-                        wold = ds['QC'].values if ver != '1' else 0 # Hack to preserve v1 approach
+                        iold = ~np.isnan(ndvi0) &  np.isnan(ndvi)
+                        inew = ~np.isnan(ndvi0) & ~np.isnan(ndvi)
+                        if ver != '1':
+                            wold = ds['QC'].values
+                        else:
+                            # Hack to preserve v1 approach
+                            wold = np.zeros_like(ds['QC'].values)
                         ndvi[iold] = ndvi0[iold]
                         ndvi[inew] = ((1 - wold[inew])*ndvi[inew] +
                             wold[inew]*ndvi0[inew])

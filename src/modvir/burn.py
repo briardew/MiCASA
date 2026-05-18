@@ -24,8 +24,10 @@ def get(dtval, **kwargs):
     dirburn  = path.dirname(headburn)
     granburn = path.basename(headburn)
 
-    files = download(granburn, dirburn, kwargs['force'])
-
+    # Check for local copies first (earthaccess is flaky)
+    files = glob(headburn)
+    if len(files) == 0 or kwargs['force']:
+        files = download(granburn, dirburn, kwargs['force'])
     if len(files) == 0:
         raise EOFError('No granules found matching ' + granburn)
 

@@ -28,14 +28,18 @@ def get(dtval, **kwargs):
     dirvcf  = path.dirname(headvcf)
     granvcf = path.basename(headvcf)
 
-    filescov = download(grancov, dircov, kwargs['force'])
+    # Check for local copies first (earthaccess is flaky)
+    filescov = glob(headcov)
+    if len(filescov) == 0 or kwargs['force']:
+        filescov = download(grancov, dircov, kwargs['force'])
     if len(filescov) == 0:
         raise EOFError('No granules found matching ' + grancov)
 
-    # MOD44B.006 is not on Earthdata, need to manually copy for now
-#   filesvcf = download(granvcf, dirvcf, kwargs['force'])
+    # Check for local copies first (earthaccess is flaky)
     filesvcf = glob(headvcf)
-
+    # MOD44B.006 is not on Earthdata, this will not work
+    if len(filesvcf) == 0 or kwargs['force']:
+        filesvcf = download(granvcf, dirvcf, kwargs['force'])
     if len(filesvcf) == 0:
         raise EOFError('No granules found matching ' + granvcf)
 

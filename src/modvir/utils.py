@@ -13,6 +13,11 @@ import requests
 def download(granny, dirget, force=False):
     '''Download MODIS/VIIRS collections'''
 
+    passexs = (
+        requests.exceptions.HTTPError,
+        requests.exceptions.ReadTimeout,
+    )
+
     shorty = granny.split('.')[0]
 
     # Wrap download in a few tries in case of connection issues
@@ -34,7 +39,7 @@ def download(granny, dirget, force=False):
             # This croaks (because of parallelism?)
 #           files = earthaccess.download(urls, dirget)
             break
-        except requests.exceptions.HTTPError as e:
+        except passexs as e:
             print(f'{type(e).__name__}: {e}', file=sys.stderr)
         except Exception as e:
             raise
@@ -54,7 +59,7 @@ def download(granny, dirget, force=False):
                         with open(file, 'wb') as fid:
                             fid.write(response.content)
                     break
-                except requests.exceptions.HTTPError as e:
+                except passexs as e:
                     print(f'{type(e).__name__}: {e}', file=sys.stderr)
                 except Exception as e:
                     raise
