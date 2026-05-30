@@ -1,8 +1,5 @@
-% NB: This will only work on systems that already have MERRA-2 or GEOS IT
-% ***This and makeNRTburn are the only Discover-specific bits left***
-DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
-DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
-
+% Error checking
+% ---
 if ~exist('runname', 'var')
     fprintf('You must specify the `runname` variable. Suggested options are:\n');
     fprintf('    * vNRT\n');
@@ -11,6 +8,21 @@ if ~exist('runname', 'var')
     fprintf('    * v1A-CONUS\n');
     error('The variable `runname` is undefined.');
 end
+
+% NB: This will only work on systems that already have MERRA-2 or GEOS IT
+% *** This and makeNRTburn are the only Discover-specific bits left ***
+DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
+DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
+
+% Need these defined in `defineConstants` for `lofi.make_3hrly_meteo`
+% Using clear-sky (SWGDNCLR) instead of all-sky (SWGDN) values to represent growth under
+% diffuse radiation: [Joiner et al. (2018)](https://10.3390/rs10091346)
+VARSW = 'SWGDNCLR';
+% Using surface skin temperature (TS). Other options include lowest model level (TLML),
+% 2-meter (T2M), effective surface skin (TSH) temperature, surface temperature of
+% saturated zone (TSAT), soil temperatures layer 1 (TSOIl1), etc. These choices have not
+% been extensively tested. Likely it's more important to use matching soil textures.
+VARTS = 'TS';
 
 % Parse version info from runname
 % ---

@@ -1,6 +1,6 @@
-'''
+"""
 MODIS/VIIRS geometry module
-'''
+"""
 
 import numpy as np
 
@@ -8,55 +8,59 @@ import numpy as np
 # (also attribute buried in files: search for number)
 RADIUS = 6371007.181
 
+
 def edges(nlat, nlon, domain=''):
-    '''Short-cut for computing edge vectors'''
+    """Short-cut for computing edge vectors"""
 
     if len(domain) == 0:
-        late = np.linspace( -90,   90, nlat+1)
-        lone = np.linspace(-180,  180, nlon+1)
+        late = np.linspace(-90, 90, nlat + 1)
+        lone = np.linspace(-180, 180, nlon + 1)
     elif domain[:5].upper() == 'CONUS':
-        late = np.linspace(  25,   50, nlat+1)
-        lone = np.linspace(-125,  -65, nlon+1)
+        late = np.linspace(25, 50, nlat + 1)
+        lone = np.linspace(-125, -65, nlon + 1)
     else:
         raise ValueError('Unsupported domain: ' + domain)
 
     return late, lone
 
+
 def centers(nlat, nlon, domain=None):
-    '''Short-cut for computing center vectors'''
+    """Short-cut for computing center vectors"""
     late, lone = edges(nlat, nlon, domain)
 
-    lat = 0.5*(late[1:] + late[:-1])
-    lon = 0.5*(lone[1:] + lone[:-1])
+    lat = 0.5 * (late[1:] + late[:-1])
+    lon = 0.5 * (lone[1:] + lone[:-1])
 
     return lat, lon
 
+
 def singrid(latm, lonm):
-    '''Compute lat/lon mesh for MODIS sin grid'''
-    latin = latm/RADIUS
-    lonin = lonm/RADIUS
+    """Compute lat/lon mesh for MODIS sin grid"""
+    latin = latm / RADIUS
+    lonin = lonm / RADIUS
 
     LA, LO = np.meshgrid(latin, lonin)
-    LO = LO/np.cos(LA)
+    LO = LO / np.cos(LA)
     LA = np.rad2deg(LA)
     LO = np.rad2deg(LO)
 
     return LA, LO
 
+
 def sinarea(latm, lonm):
-    '''Compute area for MODIS sin grid'''
-    latin = latm/RADIUS
-    lonin = lonm/RADIUS
+    """Compute area for MODIS sin grid"""
+    latin = latm / RADIUS
+    lonin = lonm / RADIUS
 
     LA, LO = np.meshgrid(latin, lonin)
 
     dlat = latin[1] - latin[0]
     dlon = lonin[1] - lonin[0]
 
-    vlat0 = np.maximum(LA - 0.5*dlat, -0.5*np.pi)
-    vlat1 = np.minimum(LA + 0.5*dlat,  0.5*np.pi)
-    vlon0 = np.maximum((LO - 0.5*dlon)/np.cos(LA), -np.pi)
-    vlon1 = np.minimum((LO + 0.5*dlon)/np.cos(LA),  np.pi)
+    vlat0 = np.maximum(LA - 0.5 * dlat, -0.5 * np.pi)
+    vlat1 = np.minimum(LA + 0.5 * dlat, 0.5 * np.pi)
+    vlon0 = np.maximum((LO - 0.5 * dlon) / np.cos(LA), -np.pi)
+    vlon1 = np.minimum((LO + 0.5 * dlon) / np.cos(LA), np.pi)
 
     area = RADIUS**2 * abs(vlon0 - vlon1) * abs(np.sin(vlat0) - np.sin(vlat1))
 

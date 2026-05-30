@@ -16,14 +16,14 @@
 %===============================================================================
 lofi.setup;
 
-DNUM0 = datenum(1980, 01, 01);
-DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
+TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
+DNUM0  = datenum(startYearTime, 01, 01);
+TOTYRS = endYear - startYear + 1;
 
 % Get met data
 M2HEAD = ['MiCASA_v', VERSION, '_meteo_x', num2str(NLON), '_y', ...
     num2str(NLAT)];
 
-TOTYRS = endYear - startYear + 1;
 for nyr = 1:TOTYRS
     nyear = startYear + nyr - 1;
     syear = num2str(nyear);
@@ -38,7 +38,7 @@ for nyr = 1:TOTYRS
             sdate = [syear, '-', smon, '-', sday];
 
             fbit = [FHEAD, '_3hrly_', syear, smon, sday, '.', FEXT];
-            dout = [MIROOT, '/3hrly/', syear, '/', smon];
+            dout = [DIROUT, '/3hrly/', syear, '/', smon];
             fout = [dout, '/', fbit];
 
             % Skip if file exists and not reprocessing
@@ -54,7 +54,7 @@ for nyr = 1:TOTYRS
 %===============================================================================
             fbit = ['daily/', syear, '/', smon, '/', ...
                 FHEAD, '_daily_', syear, smon, sday, '.', FEXT];
-            fin  = [MIROOT, '/', fbit];
+            fin  = [DIROUT, '/', fbit];
 
             if ~isfile(fin), continue; end
 
@@ -77,15 +77,16 @@ for nyr = 1:TOTYRS
             else
                 sdm2 = sday;
             end
-            fbit = [M2HEAD, '_3hrly_', 'CLIM', smon, sdm2, '.', FEXT];
+            fbit = [M2HEAD, '_3hrly-climate_', num2str(midYearClim), smon, ...
+                sdm2, '.', FEXT];
             fm2  = [DIRMET, '/', fbit];
 
             fprintf(repmat('\b', 1, lenmsg));
-            message = ['Reading MERRA-2 data from ', fbit, ' ...'];
+            message = ['Reading meteo data from ', fbit, ' ...'];
             fprintf(message);
             lenmsg = length(message);
 
-            m2rad = ncread(fm2, 'SWGDNCLR');
+            m2rad = ncread(fm2, VARSW);
             m2q10 = ncread(fm2, 'Q10');
 
             % Prevent NaNs
@@ -111,7 +112,7 @@ for nyr = 1:TOTYRS
 %===============================================================================
             % Redefine fbit since it gets overwritten
             fbit = [FHEAD, '_3hrly_', syear, smon, sday, '.', FEXT];
-            dout = [MIROOT, '/3hrly/', syear, '/', smon];
+            dout = [DIROUT, '/3hrly/', syear, '/', smon];
             fout = [dout, '/', fbit];
 
             fprintf(repmat('\b', 1, lenmsg));
@@ -128,44 +129,43 @@ for nyr = 1:TOTYRS
 
             nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-            ncwrite(   fout, 'lat', lat);
-            ncwriteatt(fout, 'lat', 'units','degrees_north');
             ncwriteatt(fout, 'lat', 'long_name','latitude');
+            ncwriteatt(fout, 'lat', 'units','degrees_north');
+            ncwrite(   fout, 'lat', lat);
 
             nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-            ncwrite(   fout, 'lon', lon);
-            ncwriteatt(fout, 'lon', 'units','degrees_east');
             ncwriteatt(fout, 'lon', 'long_name','longitude');
+            ncwriteatt(fout, 'lon', 'units','degrees_east');
+            ncwrite(   fout, 'lon', lon);
 
             nccreate(  fout, 'time', 'dimensions',{'time',inf}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-            ncwrite(   fout, 'time', times);
-            ncwriteatt(fout, 'time', 'units',DSTR0);
             ncwriteatt(fout, 'time', 'long_name','time');
+            ncwriteatt(fout, 'time', 'units',TSTAMP);
             ncwriteatt(fout, 'time', 'bounds','time_bnds');
+            ncwrite(   fout, 'time', times);
 
             nccreate(  fout, 'time_bnds', ...
                 'dimensions',{'nv',2, 'time',inf}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-            ncwriteatt(fout, 'time_bnds', 'units',DSTR0);
             ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
-            ncwrite(fout,    'time_bnds', [times'; times' + times(2)-times(1)]);
+            ncwrite(   fout, 'time_bnds', [times'; times' + times(2)-times(1)]);
 
             nccreate(  fout, 'NEE', 'datatype','single', ...
                 'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+            ncwriteatt(fout, 'NEE', 'long_name','Net ecosystem exchange');
             ncwriteatt(fout, 'NEE', 'units','kg m-2 s-1');
             ncwriteatt(fout, 'NEE', 'expressed_as','carbon');
-            ncwriteatt(fout, 'NEE', 'long_name','Net ecosystem exchange');
             ncwrite(   fout, 'NEE', single(nee3hr));
 
             nccreate(  fout, 'NPP', 'datatype','single', ...
                 'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
                 'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+            ncwriteatt(fout, 'NPP', 'long_name','Net primary productivity');
             ncwriteatt(fout, 'NPP', 'units','kg m-2 s-1');
             ncwriteatt(fout, 'NPP', 'expressed_as','carbon');
-            ncwriteatt(fout, 'NPP', 'long_name','Net primary productivity');
             ncwrite(   fout, 'NPP', single(0.5*gpp3hr));
         end
     end

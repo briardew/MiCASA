@@ -19,14 +19,17 @@ QBASE  = 1.5;					% Base of Q10 function
 % INITIALIZE
 %===============================================================================
 lofi.setup;					% Just needed for lat/lon
+
+TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
+DNUM0  = datenum(startYearTime, 01, 01);
+TOTYRS = endYearClim - startYearClim + 1;
+
+% Simplify do_meteo_type for comparisons
+do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
+
 % Need to turn this off to reproduce v1 2001-2024
 %DEFLATE = 9;
 %SHUFFLE = true;
-
-DNUM0 = datenum(startYearTime, 01, 01);
-DSTR0 = ['days since ', datestr(DNUM0, 'yyyy-mm-dd HH:MM:SS')];
-
-TOTYRS = endYearClim - startYearClim + 1;
 
 % Climatology variabiles
 % Note 1: Although variables have trends, disaggregation only uses
@@ -63,23 +66,49 @@ for nyr = 1:TOTYRS
             nclim = nyday;
         end
 
-        % Read MERRA-2 data
-        % ---
-        fswgdn = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2', ...
-            '.tavg1_2d_rad_Nx.', syear, smon, sday, '.nc4'];
-        ftem   = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2', ...
-            '.tavg1_2d_slv_Nx.', syear, smon, sday, '.nc4'];
-
         fprintf(repmat('\b', 1, lenmsg));
-        message = ['Reading MERRA-2 radiation and temperature for ', ...
-            syear, '/', smon, '/', sday, ' ...'];
+        message = ['Reading radiation and temperature for ', ...
+            syear, '-', smon, '-', sday, ' ...'];
         fprintf(message);
         lenmsg = length(message);
 
-        m2radin = double(ncread(fswgdn, 'SWGDNCLR'));
-        m2temin = double(ncread(ftem,   'TS'));
-        m2q10in = QBASE.^((m2temin - TEMP0)/TSCALE);
+        % Read met data
+        % ---
+        if strcmp(do_meteo_type, 'geosit')
+            if dnum < datenum(2008,01,01)
+                tagit = 'd5294_geosit_jan98';
+            elseif dnum < datenum(2018,01,01)
+                tagit = 'd5294_geosit_jan08';
+            else
+                tagit = 'd5294_geosit_jan18';
+            end
 
+            m2radin = zeros(NLONM2, NLATM2, 24);
+            m2temin = zeros(NLONM2, NLATM2, 24);
+            for nhr = 1:24
+                shr = num2str(nhr-1, '%02u');
+
+                frad = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+                    '/', tagit, '.rad_tavg_1hr_glo_L576x361_slv.', ...
+                    syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
+                ftem = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+                    '/', tagit, '.slv_tavg_1hr_glo_L576x361_slv.', ...
+                    syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
+
+                m2radin(:,:,nhr) = ncread(frad, VARSW);
+                m2temin(:,:,nhr) = ncread(ftem, VARTS);
+            end
+        else
+            frad = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2', ...
+                '.tavg1_2d_rad_Nx.', syear, smon, sday, '.nc4'];
+            ftem = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2', ...
+                '.tavg1_2d_slv_Nx.', syear, smon, sday, '.nc4'];
+
+            m2radin = double(ncread(frad, VARSW));
+            m2temin = double(ncread(ftem, VARTS));
+        end
+
+        m2q10in = QBASE.^((m2temin - TEMP0)/TSCALE);
         for n3hr = 1:8
             nhrs = [(n3hr-1)*3+1:n3hr*3];
 
@@ -99,6 +128,7 @@ for nyr = 1:TOTYRS
     fprintf('\n');
 end
 
+swlong = ncreadatt(frad, VARSW, 'long_name');
 
 % 2. REGRID & WRITE
 %===============================================================================
@@ -120,9 +150,9 @@ for nyday = 1:365
     end
 
     % Output variables (DIRMET defined in setup)
-    dstr = ['CLIM', datestr(datenum(midYearClim,01,01)+nyday-1, 'mmdd')];
+    dstr = datestr(datenum(midYearClim,01,01)+nyday-1, 'yyyymmdd');
     fbit = ['MiCASA_v', VERSION, '_meteo_x', num2str(NLON), '_y', ...
-        num2str(NLAT), '_3hrly_', dstr, '.', FEXT];
+        num2str(NLAT), '_3hrly-climate_', dstr, '.', FEXT];
     fout = [DIRMET, '/', fbit];
 
     disp(['Writing ', fbit, ' ...']);
@@ -142,44 +172,43 @@ for nyday = 1:365
 
     nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(   fout, 'lat', lat);
-    ncwriteatt(fout, 'lat', 'units','degrees_north');
     ncwriteatt(fout, 'lat', 'long_name','latitude');
+    ncwriteatt(fout, 'lat', 'units','degrees_north');
+    ncwrite(   fout, 'lat', lat);
 
     nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(   fout, 'lon', lon);
-    ncwriteatt(fout, 'lon', 'units','degrees_east');
     ncwriteatt(fout, 'lon', 'long_name','longitude');
+    ncwriteatt(fout, 'lon', 'units','degrees_east');
+    ncwrite(   fout, 'lon', lon);
 
     nccreate(  fout, 'time', 'dimensions',{'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(   fout, 'time', times);
-    ncwriteatt(fout, 'time', 'units',DSTR0);
     ncwriteatt(fout, 'time', 'long_name','time');
+    ncwriteatt(fout, 'time', 'units',TSTAMP);
+    ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
     ncwriteatt(fout, 'time', 'bounds','time_bnds');
+    ncwrite(   fout, 'time', times);
 
     nccreate(  fout, 'time_bnds', ...
         'dimensions',{'nv',2, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'time_bnds', 'units',DSTR0);
     ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
     ncwrite(fout,    'time_bnds', [times'; times' + times(2)-times(1)]);
 
-    nccreate(  fout, 'SWGDNCLR', 'datatype','single', ...
+    nccreate(  fout, VARSW, 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(   fout, 'SWGDNCLR', single(radout));
-    ncwriteatt(fout, 'SWGDNCLR', 'units', 'W m-2');
-    ncwriteatt(fout, 'SWGDNCLR', 'long_name', ...
-        'surface_incoming_shortwave_flux_assuming_clear_sky');
+    ncwriteatt(fout, VARSW, 'long_name', swlong);
+    ncwriteatt(fout, VARSW, 'units', 'W m-2');
+    ncwrite(   fout, VARSW, single(radout));
 
     nccreate(  fout, 'Q10', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(   fout, 'Q10', single(q10out));
+    ncwriteatt(fout, 'Q10', 'long_name','Q10 function');
     ncwriteatt(fout, 'Q10', 'units', 'none');
-    ncwriteatt(fout, 'Q10', 'long_name','q10_function');
+    ncwrite(   fout, 'Q10', single(q10out));
 
     ncwriteatt(fout, '/', 'Conventions', 'CF-1.9');
     ncwriteatt(fout, '/', 'title',       '3-hourly meteorological fields');

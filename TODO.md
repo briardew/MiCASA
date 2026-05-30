@@ -1,10 +1,11 @@
 For v1A and v1B
 ---
-1. Revisit NBAR QC:
+1. Fully move to GEOS IT (need to redo meteo climatology for sink)
+2. Revisit NBAR QC:
     * Was choppy for NRT?
     * Notable lines in January (no sun, but points to problems below line)
-2. Herb, wood, and defo outputs (copy what's done for COM?)
-3. Verify `time_bnds`, `calendar`, and other metadata changes are correct
+3. Herb, wood, and defo outputs (copy what's done for COM?)
+4. Verify `time_bnds`, `calendar`, and other metadata changes are correct
 
 This initial software release will focus on two use cases: 1. Production of
 public MiCASA data, and 2. Derivative experiments by users with different

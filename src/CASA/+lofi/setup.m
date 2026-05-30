@@ -32,8 +32,8 @@ CONTACT = 'Brad Weir <brad.weir@nasa.gov>';
 
 % Environment settings
 % ---
-MIROOT = [DIRCASA, '/', runname, '/netcdf'];
-DIRMET = [DIRMODV, '/meteo'];				% Where to put climatological diurnal cycle
+DIROUT = [DIRRUN, '/netcdf'];
+DIRMET = [DIRRUN, '/drivers/meteo/climate'];		% Where to put climatological diurnal cycle
 
 % Reanalysis files & grid data
 % ---

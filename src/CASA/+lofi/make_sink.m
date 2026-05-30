@@ -55,7 +55,7 @@ for nyear = startYear:endYear
         % Daily
         % ---
         for nd = 1:monlen
-            fout = [MIROOT, '/daily/', syear, '/', smon, ...
+            fout = [DIROUT, '/daily/', syear, '/', smon, ...
                 '/MiCASA_v', VERSION, '_flux_', restag, '_daily_', ...
                 syear, smon, num2str(nd,'%02u'), '.', FEXT];
 
@@ -92,10 +92,10 @@ for nyear = startYear:endYear
                     'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
             end
+            ncwriteatt(fout, SINKVAR, 'long_name','Atmospheric correction');
             ncwriteatt(fout, SINKVAR, 'units','kg m-2 s-1');
             ncwriteatt(fout, SINKVAR, 'expressed_as','carbon');
-            ncwriteatt(fout, SINKVAR, 'long_name','Atmospheric correction');
-            ncwrite(fout,    SINKVAR, single(sink));
+            ncwrite(   fout, SINKVAR, single(sink));
 
             % Write NEE too for clarity
             try
@@ -103,16 +103,16 @@ for nyear = startYear:endYear
                     'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
                     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
             end
+            ncwriteatt(fout, 'NEE', 'long_name','Net ecosystem exchange');
             ncwriteatt(fout, 'NEE', 'units','kg m-2 s-1');
             ncwriteatt(fout, 'NEE', 'expressed_as','carbon');
-            ncwriteatt(fout, 'NEE', 'long_name','Net ecosystem exchange');
-            ncwrite(fout,    'NEE', single(hetr-sink-npp));
+            ncwrite(   fout, 'NEE', single(hetr-sink-npp));
         end
 
         % Monthly
         % ---
-        dnowout = [MIROOT, '/monthly/', syear];
-        dnowin  = [MIROOT, '/daily/',   syear, '/', smon];
+        dnowout = [DIROUT, '/monthly/', syear];
+        dnowin  = [DIROUT, '/daily/',   syear, '/', smon];
         fout = [dnowout, '/MiCASA_v', VERSION, '_flux_', restag, ...
             '_monthly_', syear, smon, '.', FEXT];
         fins = [dnowin,  '/MiCASA_v', VERSION, '_flux_', restag, ...
@@ -144,9 +144,9 @@ for nyear = startYear:endYear
 
         % Fix time and time_bnds
         ncwriteatt(fout, 'time',      'cell_methods','time: minimum');
-        ncwrite(fout,    'time', ...
+        ncwrite(   fout, 'time', ...
              datenum(nyear, nmon, 1) - datenum(startYearTime, 1, 1));
         ncwriteatt(fout, 'time_bnds', 'cell_methods','time: minimum');
-        ncwrite(fout,    'time_bnds', [time; time+monlen]);
+        ncwrite(   fout, 'time_bnds', [time; time+monlen]);
     end
 end

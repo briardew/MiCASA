@@ -240,59 +240,59 @@ for id = 1:numel(DNOUT)
     % Write it
     time = datenum(year, nm, nd) - datenum(YSTART, 1, 1);
 
-    nccreate(fout,   'time', 'dimensions',{'time',inf}, ...
+    nccreate(  fout, 'time', 'dimensions',{'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time', 'long_name','time');
     ncwriteatt(fout, 'time', 'units',TSTAMP);
     ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
     ncwriteatt(fout, 'time', 'bounds','time_bnds');
-    ncwrite(fout,    'time', time);
+    ncwrite(   fout, 'time', time);
 
-    nccreate(fout,   'time_bnds', ...
+    nccreate(  fout, 'time_bnds', ...
         'dimensions', {'nv',2, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
-    ncwrite(fout,    'time_bnds', [time; time+1]);
+    ncwrite(   fout, 'time_bnds', [time; time+1]);
 
-    nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
+    nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'lat', 'long_name','latitude');
     ncwriteatt(fout, 'lat', 'units','degrees_north');
-    ncwrite(fout,    'lat', lat);
+    ncwrite(   fout, 'lat', lat);
 
-    nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
+    nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'lon', 'long_name','longitude');
     ncwriteatt(fout, 'lon', 'units','degrees_east');
-    ncwrite(fout,    'lon', lon);
+    ncwrite(   fout, 'lon', lon);
 
-    nccreate(fout,   'batot', 'datatype','single', ...
+    nccreate(  fout, 'batot', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(fout,    'batot', single(sum(newba,3)));
-    ncwriteatt(fout, 'batot', 'units','m2');
     ncwriteatt(fout, 'batot', 'long_name','Total burned area');
+    ncwriteatt(fout, 'batot', 'units','m2');
+    ncwrite(   fout, 'batot', single(sum(newba,3)));
 
-    nccreate(fout,   'bawood', 'datatype','single', ...
+    nccreate(  fout, 'bawood', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(fout,    'bawood', single(newba(:,:,1)));
-    ncwriteatt(fout, 'bawood', 'units','m2');
     ncwriteatt(fout, 'bawood', 'long_name','Woody burned area');
+    ncwriteatt(fout, 'bawood', 'units','m2');
+    ncwrite(   fout, 'bawood', single(newba(:,:,1)));
 
-    nccreate(fout,   'badefo', 'datatype','single', ...
+    nccreate(  fout, 'badefo', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(fout,    'badefo', single(newba(:,:,2)));
-    ncwriteatt(fout, 'badefo', 'units','m2');
     ncwriteatt(fout, 'badefo', 'long_name','Deforestation burned area');
+    ncwriteatt(fout, 'badefo', 'units','m2');
+    ncwrite(   fout, 'badefo', single(newba(:,:,2)));
 
-    nccreate(fout,   'baherb', 'datatype','single', ...
+    nccreate(  fout, 'baherb', 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwrite(fout,    'baherb', single(newba(:,:,3)));
-    ncwriteatt(fout, 'baherb', 'units','m2');
     ncwriteatt(fout, 'baherb', 'long_name','Herbaceous burned area');
+    ncwriteatt(fout, 'baherb', 'units','m2');
+    ncwrite(   fout, 'baherb', single(newba(:,:,3)));
 end
 disp(['Elapsed time is ', int2str(toc), ' seconds.']);
 
@@ -341,9 +341,9 @@ for year = YRAV0:YRAVF
 
         % Fix time and time_bnds
         ncwriteatt(fout, 'time', 'cell_methods','time: minimum');
-        ncwrite(fout,    'time', time);
+        ncwrite(   fout, 'time', time);
         ncwriteatt(fout, 'time_bnds', 'cell_methods','time: minimum');
-        ncwrite(fout,    'time_bnds', [time; time+monlen]);
+        ncwrite(   fout, 'time_bnds', [time; time+monlen]);
     end
 end
 disp(['Elapsed time is ', int2str(toc), ' seconds.']);

@@ -38,9 +38,12 @@ if NLAT ~= NLATMV || NLON ~= NLONMV
     areamv = globarea(latmv, lonmv, RADIUS);
 
     % Recall these are areas
-    BAdefo = flipud((avgarea(latmv, lonmv, flipud(BAdefo)'./areamv, lat, lon, RADIUS).*area)');
-    BAherb = flipud((avgarea(latmv, lonmv, flipud(BAherb)'./areamv, lat, lon, RADIUS).*area)');
-    BAwood = flipud((avgarea(latmv, lonmv, flipud(BAwood)'./areamv, lat, lon, RADIUS).*area)');
+    BAdefo = flipud((avgarea(latmv, lonmv, flipud(BAdefo)'./areamv, ...
+        lat, lon, RADIUS).*area)');
+    BAherb = flipud((avgarea(latmv, lonmv, flipud(BAherb)'./areamv, ...
+        lat, lon, RADIUS).*area)');
+    BAwood = flipud((avgarea(latmv, lonmv, flipud(BAwood)'./areamv, ...
+        lat, lon, RADIUS).*area)');
 end
 
 % Load meteorology
@@ -68,7 +71,7 @@ if strcmp(do_meteo_type, 'geosit')
         fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
             '/', tagit, '.slv_tavg_1hr_glo_L576x361_slv.', ...
             syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
-        airtm2 = airtm2 + ncread(fm2, 'TS') - 273.15;
+        airtm2 = airtm2 + ncread(fm2, VARTS) - 273.15;
 
         % Precipitation
         % ---
@@ -79,13 +82,10 @@ if strcmp(do_meteo_type, 'geosit')
 
         % Short-wave radiation
         % ---
-        % Using clear-sky (SWGDNCLR) instead of all-sky (SWGDN) values to represent
-        % growth under diffuse radiation
-        % [Joiner et al. (2018)](https://10.3390/rs10091346)
         fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
             '/', tagit, '.rad_tavg_1hr_glo_L576x361_slv.', ...
             syear, '-', smon, '-', sday, 'T' shr, '30Z.nc4'];
-        sradm2 = sradm2 + ncread(fm2, 'SWGDNCLR');
+        sradm2 = sradm2 + ncread(fm2, VARSW);
     end
     airtm2 = airtm2/24;
     pptm2  =  pptm2/24;
@@ -95,10 +95,7 @@ else
     % ---
     fm2 = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavg1_2d_slv_Nx.', ...
         syear, smon, sday, '.nc4'];
-    % Using temperature of lowest model level (TLML); other options include
-    % 2-meter (T2M) and effective surface skin (TSH) temperature; these choices
-    % have not been tested
-    airtm2 = ncread(fm2, 'TS') - 273.15;
+    airtm2 = ncread(fm2, VARTS) - 273.15;
 
     % Precipitation
     % ---
@@ -116,12 +113,13 @@ else
 
     % Short-wave radiation
     % ---
-    % Using clear-sky (SWGDNCLR) instead of all-sky (SWGDN) values to represent
-    % growth under diffuse radiation
-    % [Joiner et al. (2018)](https://10.3390/rs10091346)
     fm2 = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavg1_2d_rad_Nx.', ...
         syear, smon, sday, '.nc4'];
-    sradm2 = ncread(fm2, 'SWGDNCLR');
+    sradm2 = ncread(fm2, VARSW);
+
+    airtm2 = mean(airtm2, 3);
+    pptm2  = mean(pptm2,  3);
+    sradm2 = mean(sradm2, 3);
 end
 
 % Regrid
@@ -137,12 +135,9 @@ lonm2 = ncread(fm2, 'lon');
 lonmx = [lonm2; 180];
 [LAMX, LOMX] = meshgrid(latm2, lonmx);
 
-airtmx = mean(airtm2, 3);
-pptmx  = mean(pptm2,  3);
-sradmx = mean(sradm2, 3);
-airtmx = [airtmx; airtmx(1,:)];
-pptmx  = [pptmx;   pptmx(1,:)];
-sradmx = [sradmx; sradmx(1,:)];
+airtmx = [airtm2; airtm2(1,:)];
+pptmx  = [pptm2;   pptm2(1,:)];
+sradmx = [sradm2; sradm2(1,:)];
 
 % Suggest linear interpolation for speed and consistency
 AIRT   = flipud(interp2(LAMX, LOMX, airtmx, LA, LO, 'linear')');

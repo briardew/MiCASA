@@ -101,3 +101,4 @@ If you don't wish to keep changes to files, simply delete them and then pull.
 * Half-weighted magnitude inversion (QC = 1) NBAR values
 * Fixed daily burned area disaggregation
 * Fixed fractional tree/herb cover for crop sink and SOC
+* Moved to GEOS IT meteorology

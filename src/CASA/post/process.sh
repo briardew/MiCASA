@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # NB: Keeping this named "process.sh", but may mv to "fluxes.sh"
-# But honestly, just transition this to a single Python executable already
 
 COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
 BLURB="MiCASA flux post-processor"
 
+# Process settings & arguments
+# ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
@@ -39,14 +40,13 @@ if [[ "$BATCH" != true ]]; then
     echo ""
 fi
 
+# COMPRESS & ADD METADATA
+# ===
 for mon in $(seq -f %02g "$MON0" "$MONF"); do
-#   3HRLY
-#==============================================================================
+    # 3-Hourly
+    # ---
     # BEWARE: Filenames have underscores that are valid in variable names
     # Being extra cautious about protecting variables with braces in file name
-    fchk="$DIROUT/3hrly/$year/$mon/${FLXTAG}_3hrly_${year}${mon}_sha256.txt"
-    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if overwriting
-
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
@@ -80,7 +80,6 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
         ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/AS9U6AWVTY69' "$fout"
 #       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$ff" "$fout"
-#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$(basename "$fchk")" "$fout"
         ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
         ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
         ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
@@ -92,28 +91,13 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         ncatted -O -h -a EasternmostLongitude,global,o,c,'180.0' "$fout"
         ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
         ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
-
-        # Update checksum
-        (
-        cd "$DIROUT/3hrly/$year/$mon" || exit
-        shasum -a 256 "$ff" >> "$fchk"
-        cd - > /dev/null || exit
-        )
-
-        # Publish
-        mkdir -p "$ROOTPUB/$HEADOUT/3hrly/$year/$mon"
-        cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
-        cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
 
     echo ""
     echo "$year/$mon: Processed $nproc out of $ndays 3hrly flux file(s)"
 
-#   DAILY
-#==============================================================================
-    fchk="$DIROUT/daily/$year/$mon/${FLXTAG}_daily_${year}${mon}_sha256.txt"
-    [[ "$FORCE" == true && -f "$fchk" ]] && rm "$fchk"		# Delete old checksum if overwriting
-
+    # Daily
+    # ---
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
@@ -147,7 +131,6 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
         ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/ZBXSA1LEN453' "$fout"
 #       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$ff" "$fout"
-#       ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$(basename "$fchk")" "$fout"
         ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
         ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
         ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
@@ -159,28 +142,15 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
         ncatted -O -h -a EasternmostLongitude,global,o,c,'180.0' "$fout"
         ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
         ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
-
-        # Update checksum
-        (
-        cd "$DIROUT/daily/$year/$mon" || exit
-        shasum -a 256 "$ff" >> "$fchk"
-        cd - > /dev/null || exit
-        )
-
-        # Publish
-        mkdir -p "$ROOTPUB/$HEADOUT/daily/$year/$mon"
-        cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
-        cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
     done
 
     echo "$year/$mon: Processed $nproc out of $ndays daily flux file(s)"
 
-#   MONTHLY
-#==============================================================================
+    # Monthly
+    # ---
     ff="${FLXTAG}_monthly_${year}${mon}.${FEXT}"
     fin="$DIRIN/monthly/$year/$ff"
     fout="$DIROUT/monthly/$year/$ff"
-    fchk="$DIROUT/monthly/$year/${FLXTAG}_monthly_${year}${mon}_sha256.txt"
 
     [[ -f "$fout" && "$FORCE" != true ]] && continue		# Skip if file exists and not overwriting
     [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available
@@ -205,7 +175,6 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
     ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/UCFEAAIDIUEQ' "$fout"
 #   ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$ff" "$fout"
-#   ncatted -O -h -a CheckSumURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$(basename "$fchk")" "$fout"
     ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
     ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-01" "$fout"
     ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
@@ -218,17 +187,19 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
     ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
 
-    # Overwrite checksum
-    (
-    cd "$DIROUT/monthly/$year" || exit
-    shasum -a 256 "$ff" > "$fchk"
-    cd - > /dev/null || exit
-    )
-
-    # Publish
-    mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
-    cp "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
-    cp "$fchk" "$(echo $fchk | sed -e "s?$ROOTOUT?$ROOTPUB?")"
-
     echo "$year/$mon: Processed monthly flux file"
 done
+
+# CREATE CHECKSUMS
+# ===
+
+# PUBLISH
+# ===
+        mkdir -p "$ROOTPUB/$HEADOUT/3hrly/$year/$mon"
+        rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+
+        mkdir -p "$ROOTPUB/$HEADOUT/daily/$year/$mon"
+        rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+    # Publish
+    mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
+    rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"

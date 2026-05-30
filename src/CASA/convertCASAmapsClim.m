@@ -1,7 +1,8 @@
 defineConstants;
 
 % DIRMAPS is also the read directory, so it needs to exist
-fout = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
+fout = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, ...
+    '_monthly-climate.nc4'];
 
 % Datasets to convert
 % Could be fancy here and also create a data structure of attributes
@@ -32,31 +33,31 @@ NREC = 12;
 time = [1:NREC]';
 
 % Create file and dimensions
-nccreate(fout,   'lat', 'dimensions',{'lat',NLAT}, ...
+nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-ncwriteatt(fout, 'lat', 'units','degrees_north');
 ncwriteatt(fout, 'lat', 'long_name','latitude');
-ncwrite(fout,    'lat', lat);
+ncwriteatt(fout, 'lat', 'units','degrees_north');
+ncwrite(   fout, 'lat', lat);
 
-nccreate(fout,   'lon', 'dimensions',{'lon',NLON}, ...
+nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-ncwriteatt(fout, 'lon', 'units','degrees_east');
 ncwriteatt(fout, 'lon', 'long_name','longitude');
-ncwrite(fout,    'lon', lon);
+ncwriteatt(fout, 'lon', 'units','degrees_east');
+ncwrite(   fout, 'lon', lon);
 
-nccreate(fout,   'time', 'dimensions',{'time',NREC}, ...
+nccreate(  fout, 'time', 'dimensions',{'time',NREC}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
 ncwriteatt(fout, 'time', 'long_name','time');
 ncwriteatt(fout, 'time', 'units','month');
 ncwriteatt(fout, 'time', 'bounds','time_bnds');
-ncwrite(fout,    'time', time);
+ncwrite(   fout, 'time', time);
 
-nccreate(fout,   'time_bnds', ...
+nccreate(  fout, 'time_bnds', ...
     'dimensions', {'nv',2, 'time',NREC}, ...
     'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
 ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
 ncwriteatt(fout, 'time_bnds', 'units','month');
-ncwrite(fout,    'time_bnds', [time, mod(time,NREC)+1]');
+ncwrite(   fout, 'time_bnds', [time, mod(time,NREC)+1]');
 
 for ii = 1:length(datasets)
     dname = datasets{ii};
@@ -66,12 +67,12 @@ for ii = 1:length(datasets)
 
     % Supports lon-lat and lon-lat-month
     if size(vin, 3) == 1
-        nccreate(fout,   dname, 'datatype','double', ...
+        nccreate(  fout, dname, 'datatype','double', ...
             'dimensions',{'lon',NLON, 'lat',NLAT}, ...
             'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         ncwriteatt(fout, dname, 'long_name',dname);
         % Recall flipud(A)' goes from CASA to output
-        ncwrite(fout,    dname, flipud(vin)');
+        ncwrite(   fout, dname, flipud(vin)');
     else
         if size(vin, 3) ~= NREC
             disp(['Output file has a time dimension of ' NREC, ', but']);
@@ -86,10 +87,10 @@ for ii = 1:length(datasets)
             vout(:,:,nn) = flipud(vin(:,:,nn))';
         end
 
-        nccreate(fout,   dname, 'datatype','double', ...
+        nccreate(  fout, dname, 'datatype','double', ...
             'dimensions',{'lon',NLON, 'lat',NLAT, 'time',NREC}, ...
             'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         ncwriteatt(fout, dname, 'long_name',dname);
-        ncwrite(fout,    dname, vout);
+        ncwrite(   fout, dname, vout);
     end
 end

@@ -1,17 +1,17 @@
-'''
+"""
 MODIS/VIIRS processing utlities
-'''
+"""
 
 import sys
-from os import path, makedirs
+from os import path, makedirs, remove, rmdir
 from glob import glob
-from datetime import datetime
 from time import sleep
 import earthaccess
 import requests
 
+
 def download(granny, dirget, force=False):
-    '''Download MODIS/VIIRS collections'''
+    """Download MODIS/VIIRS collections"""
 
     passexs = (
         requests.exceptions.HTTPError,
@@ -25,9 +25,8 @@ def download(granny, dirget, force=False):
     SLEEPLEN = 60
     for nn in range(MAXTRIES):
         try:
-            auth = earthaccess.login(strategy='netrc')
-            results = earthaccess.search_data(short_name=shorty,
-                granule_name=granny)
+            earthaccess.login(strategy='netrc')
+            results = earthaccess.search_data(short_name=shorty, granule_name=granny)
             # Hack to deal with broken metadata in MCD43A4.061
             urls = []
             for rr in results:
@@ -35,13 +34,15 @@ def download(granny, dirget, force=False):
                     if not (ll.endswith('.jpg') or ll.endswith('.xml')):
                         urls.append(ll)
 
-            if len(urls) == 0: return []
-            # This croaks (because of parallelism?)
-#           files = earthaccess.download(urls, dirget)
+            if len(urls) == 0:
+                return []
+
+            # This croaks (because of parallelism?), resort to requests instead below
+            # files = earthaccess.download(urls, dirget)
             break
         except passexs as e:
             print(f'{type(e).__name__}: {e}', file=sys.stderr)
-        except Exception as e:
+        except Exception:
             raise
 
         sleep(SLEEPLEN)
@@ -61,17 +62,18 @@ def download(granny, dirget, force=False):
                     break
                 except passexs as e:
                     print(f'{type(e).__name__}: {e}', file=sys.stderr)
-                except Exception as e:
+                except Exception:
                     raise
 
                 sleep(SLEEPLEN)
 
     return files
 
-def swaphead(ff, listout):
-    '''Swap file in one MODIS/VIIRS collection with another'''
 
-    pin  = path.basename(ff).split('.')
+def swaphead(ff, listout):
+    """Swap file in one MODIS/VIIRS collection with another"""
+
+    pin = path.basename(ff).split('.')
     pout = path.basename(listout[0]).split('.')
     pattern = '.'.join(pout[0:2] + [pin[2], pout[3], ''])
 
@@ -80,11 +82,13 @@ def swaphead(ff, listout):
 
     return matches[0] if len(matches) > 0 else None
 
+
 def tidy(head, levs=0):
-    '''Clean up MODIS/VIIRS tiles'''
+    """Clean up MODIS/VIIRS tiles"""
 
     try:
-        for ff in glob(head): remove(ff)
+        for ff in glob(head):
+            remove(ff)
         dd = path.dirname(head)
         for nn in range(levs):
             rmdir(dd)

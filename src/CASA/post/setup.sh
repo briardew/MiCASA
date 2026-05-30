@@ -17,7 +17,7 @@ ROOTPUB="/css/gmao/geos_carb/pub"
 
 # Half-generic settings
 # ---
-# These should be better protected against something else defininit them
+# These should be better protected against something else defining them
 [[ -z "$MIROOT" ]]  && MIROOT="$HOME/Projects/MiCASA"
 [[ -z "$VERSION" ]] && VERSION="NRT"
 
