@@ -25,7 +25,6 @@
 
 runname = 'vNRT'; defineConstants;
 
-REPRO = 0;								% Reprocess?
 VERIN = '1';
 YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
@@ -57,16 +56,6 @@ NLONMX = numel(lonmx);
 YSTART = 1980;
 TSTAMP = ['days since ', num2str(YSTART), '-01-01'];
 
-% Output file settings
-FEXT    = 'nc4';
-FORMAT  = 'netcdf4';
-% We do these afterwards since Matlab appears to have memory issues
-% It is also quite long
-%DEFLATE = 9;
-%SHUFFLE = true;
-DEFLATE = 0;
-SHUFFLE = false;
-
 % Make sure the NCO utilities are available
 % Needed for monthly means, would love a better way
 [status, result] = system('ncra --version');
@@ -87,7 +76,7 @@ NBINS = 3;					% Wood, defo, and herb
 % ---
 % Assumes input version at same resolution (for now)
 syear = num2str(YEAR0);
-fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', MODVRES, ...
+fba = [DIRIN, '/burn/', syear, '/', PRODUCT, '_v', VERIN, '_burn_', MODVRES, ...
     '_monthly_', syear, '01.nc4'];
 fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M01', ...
     '/qfed2.emis_co2.061.x3600_y1800.', syear, '01mm.nc4'];
@@ -116,7 +105,7 @@ stdqf = zeros(NLONQF, NLATQF, NBINS, 12);
 maxqf = zeros(NLON, NLAT, NBINS);
 
 fclim = [DIRHEAD, '/data/', runname, '/maps/climate/burn.mat'];
-if isfile(fclim) && ~REPRO
+if isfile(fclim) && ~FORCE
     disp('Loading climatologies ...');
     tic;
     load(fclim);
@@ -133,7 +122,7 @@ else
         for nm = 1:12
             smon = num2str(nm, '%02u');
 
-            fba = [DIRIN, '/burn/', syear, '/MiCASA_v', VERIN, '_burn_', ...
+            fba = [DIRIN, '/burn/', syear, '/', PRODUCT, '_v', VERIN, '_burn_', ...
                 MODVRES, '_monthly_', syear, smon, '.nc4'];
             fqf = [QFDIR, '/0.1/monthly/Y', syear, '/M', smon, ...
                 '/qfed2.emis_co2.061.x3600_y1800.', syear, smon, 'mm.nc4'];
@@ -176,7 +165,7 @@ end
 disp('Computing dailies ...');
 tic;
 % Bit of a hack ***FIXME***
-fvcf = [DIRIN, '/cover/MiCASA_v', VERIN, '_cover_', MODVRES, ...
+fvcf = [DIRIN, '/cover/', PRODUCT, '_v', VERIN, '_cover_', MODVRES, ...
     '_yearly_2024.nc4'];
 maxba(:,:,1) = area .* ncread(fvcf, 'ftree');
 maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
@@ -197,12 +186,12 @@ for id = 1:numel(DNOUT)
     fqf = [QFNRT, '/0.1/Y', syear, '/M', smon, ...
         '/qfed2.emis_co2.061.', syear, smon, sday, '.nc4'];
     % Brutal hack? ***FIXME***
-    fout = [DIROUT, '/burn/', syear, '/MiCASA_v', VERSION, '_burn_', ...
+    fout = [DIROUT, '/burn/', syear, '/', PRODUCT, '_v', VERSION, '_burn_', ...
         MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 
-    % Skip if file exists and not reprocessing
+    % Skip if file exists and not overwriting
     if isfile(fout)
-        if REPRO
+        if FORCE
             [status, result] = system(['rm ', fout]);
         else
             continue;
@@ -314,14 +303,14 @@ for year = YRAV0:YRAVF
         monlen = datenum(year, nm+1, 01) - datenum(year, nm, 01);
         smon = num2str(nm, '%02u');
 
-        fout = [dnowout, '/MiCASA_v', VERSION, '_burn_', MODVRES, ...
+        fout = [dnowout, '/', PRODUCT, '_v', VERSION, '_burn_', MODVRES, ...
             '_monthly_', syear, smon, '.nc4'];
-        fins = [dnowout, '/MiCASA_v', VERSION, '_burn_', MODVRES, ...
+        fins = [dnowout, '/', PRODUCT, '_v', VERSION, '_burn_', MODVRES, ...
             '_daily_', syear, smon, '??.nc4'];
 
-        % Skip if file exists and not reprocessing
+        % Skip if file exists and not overwriting
         if isfile(fout)
-             if REPRO
+             if FORCE
                 [status, result] = system(['rm ', fout]);
             else
                 continue;

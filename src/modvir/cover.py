@@ -15,66 +15,67 @@ from modvir.geometry import edges, centers, singrid
 from modvir.utils import download, swaphead, tidy
 
 
-def get(dtval, **kwargs):
+def get(dtnow, **kwargs):
     """Acquire MODIS/VIIRS land cover tiles"""
 
-    kwargs = fillargs(dtval, **kwargs)
+    kwnow = fillargs(dtnow, **kwargs)
 
-    headcov = kwargs['headcov']
+    headcov = kwnow['headcov']
     dircov = path.dirname(headcov)
     grancov = path.basename(headcov)
 
-    headvcf = kwargs['headvcf']
+    headvcf = kwnow['headvcf']
     dirvcf = path.dirname(headvcf)
     granvcf = path.basename(headvcf)
 
     # Check for local copies first (earthaccess is flaky)
     filescov = glob(headcov)
-    if len(filescov) == 0 or kwargs['force']:
-        filescov = download(grancov, dircov, kwargs['force'])
+    if len(filescov) == 0 or kwnow['force']:
+        filescov = download(grancov, dircov, kwnow['force'])
     if len(filescov) == 0:
         raise EOFError('No granules found matching ' + grancov)
 
     # Check for local copies first (earthaccess is flaky)
     filesvcf = glob(headvcf)
     # MOD44B.006 is not on Earthdata, this will not work
-    if len(filesvcf) == 0 or kwargs['force']:
-        filesvcf = download(granvcf, dirvcf, kwargs['force'])
+    if len(filesvcf) == 0 or kwnow['force']:
+        filesvcf = download(granvcf, dirvcf, kwnow['force'])
     if len(filesvcf) == 0:
         raise EOFError('No granules found matching ' + granvcf)
 
     return filescov, filesvcf
 
 
-def regrid(dtval, **kwargs):
+def regrid(dtnow, **kwargs):
     """Regrid MODIS/VIIRS land cover"""
 
     # Process arguments
     # ---
-    kwargs = fillargs(dtval, **kwargs)
+    kwnow = fillargs(dtnow, **kwargs)
 
-    nlat = kwargs['nlat']
-    nlon = kwargs['nlon']
-    ver = kwargs['ver']
+    nlat = kwnow['nlat']
+    nlon = kwnow['nlon']
+    product = kwnow['product']
+    ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
-    vernum, _, verdom = ver.partition('-')
+    vernum, _, domain = ver.partition('-')
 
     # Define coordinates
     # ---
-    year = dtval.year
-    tval = (datetime(year, 1, 1) - TIME0).days
+    year = dtnow.year
+    tnow = (datetime(year, 1, 1) - TIME0).days
     yrdays = (datetime(year + 1, 1, 1) - datetime(year, 1, 1)).days
-    tbvals = np.reshape([tval, tval + yrdays], (1, 2))
+    tbnow = np.reshape([tnow, tnow + yrdays], (1, 2))
     time_bnds = xr.DataArray(
-        data=tbvals.astype(np.double),
+        data=tbnow.astype(np.double),
         dims=['time', 'nv'],
         attrs={'long_name': 'time bounds'},
     )
 
     typevals = np.linspace(1, NTYPE, NTYPE)
 
-    lat, lon = centers(nlat, nlon, verdom)
-    late, lone = edges(nlat, nlon, verdom)
+    lat, lon = centers(nlat, nlon, domain)
+    late, lone = edges(nlat, nlon, domain)
 
     timeattrs = {
         'long_name': 'time',
@@ -115,7 +116,7 @@ def regrid(dtval, **kwargs):
     }
 
     coords = {
-        'time': (['time'], np.array([tval]).astype(np.double), timeattrs),
+        'time': (['time'], np.array([tnow]).astype(np.double), timeattrs),
         'type': (['type'], typevals.astype(np.short), typeattrs),
         'lat': (['lat'], lat.astype(np.double), latattrs),
         'lon': (['lon'], lon.astype(np.double), lonattrs),
@@ -161,10 +162,13 @@ def regrid(dtval, **kwargs):
 
     # Define attributes
     # ---
-    reslong = f'{round(180 / nlat, 3)} degree x {round(360 / nlon, 3)} degree'
-    shortname = 'MICASA_COVER_Y'
-    longname = f'MiCASA Yearly Land Cover {reslong}'
-    dtend = dtval + timedelta(days=yrdays) - timedelta(microseconds=1)
+    reslong = (
+        f'{round(late[1] - late[0], 3)} degree x '
+        + f'{round(lone[1] - lone[0], 3)} degree'
+    )
+    shortname = f'{product.upper()}_COVER_Y'
+    longname = f'{product} Yearly Land Cover {reslong}'
+    dtend = dtnow + timedelta(days=yrdays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
     attrs = {
@@ -174,16 +178,16 @@ def regrid(dtval, **kwargs):
         'VersionID': ver,
     }
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution', 'contact']:
-        if key in kwargs:
-            attrs[key] = kwargs[key]
+        if key in kwnow:
+            attrs[key] = kwnow[key]
     attrs = {
         **attrs,
-        'NorthernmostLatiude': '90.0',
-        'WesternmostLongitude': '-180.0',
-        'SouthernmostLatitude': '-90.0',
-        'EasternmostLongitude': '180.0',
-        'RangeBeginningDate': dtval.strftime('%Y-%m-%d'),
-        'RangeBeginningTime': dtval.strftime('%H:%M:%S.%f'),
+        'SouthernmostLatitude': f'{np.min(late)}',
+        'NorthernmostLatiude': f'{np.max(late)}',
+        'WesternmostLongitude': f'{np.min(lone)}',
+        'EasternmostLongitude': f'{np.max(lone)}',
+        'RangeBeginningDate': dtnow.strftime('%Y-%m-%d'),
+        'RangeBeginningTime': dtnow.strftime('%H:%M:%S.%f'),
         'RangeEndingDate': dtend.strftime('%Y-%m-%d'),
         'RangeEndingTime': dtend.strftime('%H:%M:%S.%f'),
     }
@@ -201,12 +205,12 @@ def regrid(dtval, **kwargs):
     )
 
     # Just give the empty structure if not regridding
-    if not kwargs['regrid']:
+    if not kwnow['regrid']:
         return ds
 
     # Read and regrid files
     # ---
-    filescov, filesvcf = get(dtval, **kwargs)
+    filescov, filesvcf = get(dtnow, **kwnow)
 
     ftype = np.zeros((NTYPE, nlat, nlon))
     num = np.zeros((nlat, nlon))
@@ -317,28 +321,34 @@ def build(dtbeg, dtend, **kwargs):
 
     print('===    ____ Land Cover')
 
+    # Process arguments that are constant
+    # ---
+    kwnow = fillargs(dtbeg, **kwargs)
+
+    product = kwnow['product']
+    ver = kwnow['ver']
+    restag = kwnow['restag']
+    output = kwnow['output']
+
+    doget = kwnow['get']
+    doregrid = kwnow['regrid']
+    doforce = kwnow['force']
+    dotidy = kwnow['tidy']
+
     for year in range(dtbeg.year, dtend.year + 1):
         print(f'===    ________ {year}')
 
-        # Process arguments
+        # Process arguments that can change
         # ---
         dtnow = datetime(year, 1, 1)
         kwnow = fillargs(dtnow, **kwargs)
 
-        ver = kwnow['ver']
-        restag = kwnow['restag']
-        output = kwnow['output']
         headcov = kwnow['headcov']
         headvcf = kwnow['headvcf']
 
-        doget = kwnow['get']
-        doregrid = kwnow['regrid']
-        doforce = kwnow['force']
-        dotidy = kwnow['tidy']
-
         # Output vars
         dirout = path.join(output, 'cover')
-        fgran = f'MiCASA_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
+        fgran = f'{product}_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
         fout = path.join(dirout, fgran)
 
         # Download if needed for regrid or requested

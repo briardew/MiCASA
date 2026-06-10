@@ -18,18 +18,16 @@ QBASE  = 1.5;					% Base of Q10 function
 
 % INITIALIZE
 %===============================================================================
-lofi.setup;					% Just needed for lat/lon
+lofi.setup;
 
 TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 DNUM0  = datenum(startYearTime, 01, 01);
 TOTYRS = endYearClim - startYearClim + 1;
 
+LONGNAME = ['MiCASA 3-hourly Climatological Meteorology ', RESLONG];
+
 % Simplify do_meteo_type for comparisons
 do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
-
-% Need to turn this off to reproduce v1 2001-2024
-%DEFLATE = 9;
-%SHUFFLE = true;
 
 % Climatology variabiles
 % Note 1: Although variables have trends, disaggregation only uses
@@ -137,7 +135,6 @@ swlong = ncreadatt(frad, VARSW, 'long_name');
 lonmx = [lonm2; 180];
 [LAMX, LOMX] = meshgrid(latm2, lonmx);
 
-lenmsg = 0;
 for nyday = 1:365
     cxrad = [clrad(:,:,:,nyday); clrad(1,:,:,nyday)];
     cxq10 = [clq10(:,:,:,nyday); clq10(1,:,:,nyday)];
@@ -150,37 +147,20 @@ for nyday = 1:365
     end
 
     % Output variables (DIRMET defined in setup)
-    dstr = datestr(datenum(midYearClim,01,01)+nyday-1, 'yyyymmdd');
-    fbit = ['MiCASA_v', VERSION, '_meteo_x', num2str(NLON), '_y', ...
-        num2str(NLAT), '_3hrly-climate_', dstr, '.', FEXT];
+    dnum = datenum(midYearClim,01,01) + nyday - 1;
+    fbit = [METHEAD, datestr(dnum, 'yyyymmdd'), '.', FEXT];
     fout = [DIRMET, '/', fbit];
 
     disp(['Writing ', fbit, ' ...']);
-    fprintf(repmat('\b', 1, lenmsg));
-    message = ['Writing ', fbit, ' ...'];
-    fprintf(message);
-    lenmsg = length(message);
 
     if isfile(fout)
-        if ~REPRO, continue; end
+        if ~FORCE, continue; end
         [status, result] = system(['rm ', fout]);
     else
         [status, result] = system(['mkdir -p ', DIRMET]);
     end
 
-    times = datenum(midYearClim, 01, 01) + nyday - 1 - DNUM0 + [0:3:21]'/24;
-
-    nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
-        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'lat', 'long_name','latitude');
-    ncwriteatt(fout, 'lat', 'units','degrees_north');
-    ncwrite(   fout, 'lat', lat);
-
-    nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
-        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'lon', 'long_name','longitude');
-    ncwriteatt(fout, 'lon', 'units','degrees_east');
-    ncwrite(   fout, 'lon', lon);
+    times = dnum - DNUM0 + [0:3:21]'/24;
 
     nccreate(  fout, 'time', 'dimensions',{'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
@@ -194,7 +174,19 @@ for nyday = 1:365
         'dimensions',{'nv',2, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
     ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
-    ncwrite(fout,    'time_bnds', [times'; times' + times(2)-times(1)]);
+    ncwrite(   fout, 'time_bnds', [times'; times' + times(2)-times(1)]);
+
+    nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
+        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+    ncwriteatt(fout, 'lat', 'long_name','latitude');
+    ncwriteatt(fout, 'lat', 'units','degrees_north');
+    ncwrite(   fout, 'lat', lat);
+
+    nccreate(  fout, 'lon', 'dimensions',{'lon',NLON}, ...
+        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+    ncwriteatt(fout, 'lon', 'long_name','longitude');
+    ncwriteatt(fout, 'lon', 'units','degrees_east');
+    ncwrite(   fout, 'lon', lon);
 
     nccreate(  fout, VARSW, 'datatype','single', ...
         'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
@@ -210,13 +202,25 @@ for nyday = 1:365
     ncwriteatt(fout, 'Q10', 'units', 'none');
     ncwrite(   fout, 'Q10', single(q10out));
 
-    ncwriteatt(fout, '/', 'Conventions', 'CF-1.9');
-    ncwriteatt(fout, '/', 'title',       '3-hourly meteorological fields');
-    ncwriteatt(fout, '/', 'comment',     ['Climatology over ', ...
-        num2str(startYearClim), '-', num2str(endYearClim)]);
+    ncwriteatt(fout, '/', 'ShortName',   'MICASA_METEO_3HC');
+    ncwriteatt(fout, '/', 'LongName',    LONGNAME);
+    ncwriteatt(fout, '/', 'title',       [LONGNAME, ' v', VERSION]);
+    ncwriteatt(fout, '/', 'Conventions', CONVENTIONS);
+    ncwriteatt(fout, '/', 'ProcessingLevel', '4');
     ncwriteatt(fout, '/', 'institution', INSTITUTION);
     ncwriteatt(fout, '/', 'contact',     CONTACT);
-    ncwriteatt(fout, '/', 'ProductionDateTime', ...
-        datestr(now, 'yyyy-mm-ddTHH:MM:SSZ'));
+    ncwriteatt(fout, '/', 'SouthernmostLatitude', LATMIN);
+    ncwriteatt(fout, '/', 'NorthernmostLatiude',  LATMAX);
+    ncwriteatt(fout, '/', 'WesternmostLongitude', LONMIN);
+    ncwriteatt(fout, '/', 'EasternmostLongitude', LONMAX);
+    ncwriteatt(fout, '/', 'RangeBeginningDate',   datestr(dnum, 'yyyy-mm-dd'));
+    ncwriteatt(fout, '/', 'RangeBeginningTime',   '00:00:00.000000');
+    ncwriteatt(fout, '/', 'RangeEndingDate',      datestr(dnum, 'yyyy-mm-dd'));
+    ncwriteatt(fout, '/', 'RangeEndingTime',      '23:59:59.999999');
+    ncwriteatt(fout, '/', 'comment',     ...
+        ['Climatology over ', num2str(startYearClim), '-', num2str(endYearClim)]);
+    ncwriteatt(fout, '/', 'GranuleID',   fbit);
+    ncwriteatt(fout, '/', 'history',     ...
+        ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
 end
 fprintf('\n');

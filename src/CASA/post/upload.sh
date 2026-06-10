@@ -18,7 +18,7 @@ echo "---"
 echo "$BLURB"
 echo "---"
 echo "COG directory: $DIRCOG"
-echo "Collection: $FLXTAG"
+echo "Collection: $FLUXHEAD"
 echo "Year: $year"
 
 # Give a chance to abort

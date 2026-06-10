@@ -23,7 +23,8 @@ if lower(do_deprecated(1)) == 'y'
     clay = zeros(NLAT, NLON, 'single');
 else
     datasets = {datasets{:}, 'sand', 'silt', 'clay'};
-    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
+    fmaps = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, ...
+        '_climate.nc4'];
     for ii = 1:length(datasets)
         xout = flipud(ncread(fmaps, datasets{ii})');
         eval([datasets{ii} ' = xout;']);

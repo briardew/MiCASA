@@ -1,5 +1,5 @@
 """
-MiCASA burned area module
+MODIS/VIIRS burned area module
 """
 
 from os import path, makedirs
@@ -17,53 +17,54 @@ from modvir.geometry import edges, centers, singrid, sinarea
 from modvir.utils import download, swaphead, tidy
 
 
-def get(dtval, **kwargs):
+def get(dtnow, **kwargs):
     """Acquire MODIS/VIIRS burned area tiles"""
 
-    kwargs = fillargs(dtval, **kwargs)
-    headburn = kwargs['headburn']
+    kwnow = fillargs(dtnow, **kwargs)
+    headburn = kwnow['headburn']
     dirburn = path.dirname(headburn)
     granburn = path.basename(headburn)
 
     # Check for local copies first (earthaccess is flaky)
     files = glob(headburn)
-    if len(files) == 0 or kwargs['force']:
-        files = download(granburn, dirburn, kwargs['force'])
+    if len(files) == 0 or kwnow['force']:
+        files = download(granburn, dirburn, kwnow['force'])
     if len(files) == 0:
         raise EOFError('No granules found matching ' + granburn)
 
     return files
 
 
-def regrid(dtval, monthly=False, **kwargs):
+def regrid(dtnow, monthly=False, **kwargs):
     """Regrid MODIS/VIIRS burned area"""
 
     # Process arguments
     # ---
-    kwargs = fillargs(dtval, **kwargs)
+    kwnow = fillargs(dtnow, **kwargs)
 
-    nlat = kwargs['nlat']
-    nlon = kwargs['nlon']
-    ver = kwargs['ver']
+    nlat = kwnow['nlat']
+    nlon = kwnow['nlon']
+    product = kwnow['product']
+    ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
-    vernum, _, verdom = ver.partition('-')
+    vernum, _, domain = ver.partition('-')
 
     # Define coordinates
     # ---
-    tval = (dtval - TIME0).days
+    tnow = (dtnow - TIME0).days
     if not monthly:
         ndays = 1
     else:
-        ndays = monthrange(dtval.year, dtval.month)[1]
-    tbvals = np.reshape([tval, tval + ndays], (1, 2))
+        ndays = monthrange(dtnow.year, dtnow.month)[1]
+    tbnow = np.reshape([tnow, tnow + ndays], (1, 2))
     time_bnds = xr.DataArray(
-        data=tbvals.astype(np.double),
+        data=tbnow.astype(np.double),
         dims=['time', 'nv'],
         attrs={'long_name': 'time bounds'},
     )
 
-    lat, lon = centers(nlat, nlon, verdom)
-    late, lone = edges(nlat, nlon, verdom)
+    lat, lon = centers(nlat, nlon, domain)
+    late, lone = edges(nlat, nlon, domain)
 
     timeattrs = {
         'long_name': 'time',
@@ -81,7 +82,7 @@ def regrid(dtval, monthly=False, **kwargs):
     }
 
     coords = {
-        'time': (['time'], np.array([tval]).astype(np.double), timeattrs),
+        'time': (['time'], np.array([tnow]).astype(np.double), timeattrs),
         'lat': (['lat'], lat.astype(np.double), latattrs),
         'lon': (['lon'], lon.astype(np.double), lonattrs),
     }
@@ -116,14 +117,17 @@ def regrid(dtval, monthly=False, **kwargs):
 
     # Define attributes
     # ---
-    reslong = f'{round(180 / nlat, 3)} degree x {round(360 / nlon, 3)} degree'
+    reslong = (
+        f'{round(late[1] - late[0], 3)} degree x '
+        + f'{round(lone[1] - lone[0], 3)} degree'
+    )
     if not monthly:
-        shortname = 'MICASA_BURN_D'
-        longname = f'MiCASA Daily Burned Area {reslong}'
+        shortname = f'{product.upper()}_BURN_D'
+        longname = f'{product} Daily Burned Area {reslong}'
     else:
-        shortname = 'MICASA_BURN_M'
-        longname = f'MiCASA Monthly Burned Area {reslong}'
-    dtend = dtval + timedelta(days=ndays) - timedelta(microseconds=1)
+        shortname = f'{product.upper()}_BURN_M'
+        longname = f'{product} Monthly Burned Area {reslong}'
+    dtend = dtnow + timedelta(days=ndays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
     attrs = {
@@ -133,16 +137,16 @@ def regrid(dtval, monthly=False, **kwargs):
         'VersionID': ver,
     }
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution', 'contact']:
-        if key in kwargs:
-            attrs[key] = kwargs[key]
+        if key in kwnow:
+            attrs[key] = kwnow[key]
     attrs = {
         **attrs,
-        'NorthernmostLatiude': '90.0',
-        'WesternmostLongitude': '-180.0',
-        'SouthernmostLatitude': '-90.0',
-        'EasternmostLongitude': '180.0',
-        'RangeBeginningDate': dtval.strftime('%Y-%m-%d'),
-        'RangeBeginningTime': dtval.strftime('%H:%M:%S.%f'),
+        'SouthernmostLatitude': f'{np.min(late)}',
+        'NorthernmostLatiude': f'{np.max(late)}',
+        'WesternmostLongitude': f'{np.min(lone)}',
+        'EasternmostLongitude': f'{np.max(lone)}',
+        'RangeBeginningDate': dtnow.strftime('%Y-%m-%d'),
+        'RangeBeginningTime': dtnow.strftime('%H:%M:%S.%f'),
         'RangeEndingDate': dtend.strftime('%Y-%m-%d'),
         'RangeEndingTime': dtend.strftime('%H:%M:%S.%f'),
     }
@@ -159,13 +163,13 @@ def regrid(dtval, monthly=False, **kwargs):
     )
 
     # Just give the empty structure if not regridding
-    if not kwargs['regrid']:
+    if not kwnow['regrid']:
         return ds
 
     # Read and regrid files in dirin
     # ---
-    files = get(dtval, **kwargs)
-    filescov, filesvcf = cover.get(datetime(dtval.year, 1, 1), **kwargs)
+    files = get(dtnow, **kwnow)
+    filescov, filesvcf = cover.get(datetime(dtnow.year, 1, 1), **kwnow)
 
     num = np.zeros((nlat, nlon))
     burn = np.zeros((nlat, nlon))
@@ -234,7 +238,7 @@ def regrid(dtval, monthly=False, **kwargs):
 
         # Use doy if daily, otherwise use all valid dates in month
         if not monthly:
-            doy = (dtval - datetime(dtval.year, 1, 1)).days + 1
+            doy = (dtnow - datetime(dtnow.year, 1, 1)).days + 1
             iok = datein == doy
         else:
             iok = datein > 0
@@ -290,22 +294,27 @@ def build(dtbeg, dtend, **kwargs):
 
     print('===    ____ Burned Area')
 
+    # Process arguments that are constant
+    # ---
+    kwnow = fillargs(dtbeg, **kwargs)
+
+    product = kwnow['product']
+    ver = kwnow['ver']
+    restag = kwnow['restag']
+    output = kwnow['output']
+
+    doget = kwnow['get']
+    doregrid = kwnow['regrid']
+    doforce = kwnow['force']
+    dotidy = kwnow['tidy']
+
     for year in range(dtbeg.year, dtend.year + 1):
         print(f'===    ________ {year}')
 
-        # Process arguments
-        # ---
-        dtyear = datetime(year, 1, 1)
-        kwyear = fillargs(dtyear, **kwargs)
-
-        ver = kwyear['ver']
-        restag = kwyear['restag']
-        output = kwyear['output']
-
         # Output vars
         dirout = path.join(output, 'burn', f'{year}')
-        headmon = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_monthly_')
-        headday = path.join(dirout, f'MiCASA_v{ver}_burn_{restag}_daily_')
+        headmon = path.join(dirout, f'{product}_v{ver}_burn_{restag}_monthly_')
+        headday = path.join(dirout, f'{product}_v{ver}_burn_{restag}_daily_')
 
         # Build burned area
         # ---
@@ -316,28 +325,23 @@ def build(dtbeg, dtend, **kwargs):
             elif year == dtend.year and dtend.month < nm:
                 continue
 
-            # Process arguments
+            # Process arguments that can change
             # ---
-            dtmon = datetime(year, nm, 1)
-            kwmon = fillargs(dtmon, **kwargs)
+            dtnow = datetime(year, nm, 1)
+            kwnow = fillargs(dtnow, **kwargs)
 
-            headburn = kwmon['headburn']
+            headburn = kwnow['headburn']
 
-            doget = kwmon['get']
-            doregrid = kwmon['regrid']
-            doforce = kwmon['force']
-            dotidy = kwmon['tidy']
-
-            print('===    ________ ' + dtmon.strftime('%Y-%m'))
+            print('===    ________ ' + dtnow.strftime('%Y-%m'))
 
             # Output vars
-            fmon = headmon + dtmon.strftime('%Y%m') + '.' + FEXT
+            fmon = headmon + dtnow.strftime('%Y%m') + '.' + FEXT
 
             # Download if requested or needed for regrid
             get4regrid = doregrid and (not path.isfile(fmon) or doforce)
             if get4regrid or doget:
                 print('===    ____________ Downloading')
-                get(dtmon, **kwmon)
+                get(dtnow, **kwnow)
 
             if doregrid:
                 # Regrid monthlies
@@ -346,7 +350,7 @@ def build(dtbeg, dtend, **kwargs):
                 if path.isfile(fmon) and not doforce:
                     dsmon = xr.open_dataset(fmon)
                 else:
-                    dsmon = regrid(dtmon, monthly=True, **kwmon)
+                    dsmon = regrid(dtnow, monthly=True, **kwnow)
                     makedirs(dirout, exist_ok=True)
                     dsmon.to_netcdf(fmon, unlimited_dims=['time'])
 
@@ -361,7 +365,7 @@ def build(dtbeg, dtend, **kwargs):
                         if ver == '1':
                             ds = regrid(dtnow, **{**kwnow, 'regrid': False})
 
-                            nd = (dtnow - dtyear).days + 1
+                            nd = (dtnow - datetime(year, 1, 1)).days + 1
                             iok = dsmon['date'].values == nd
                             ino = dsmon['date'].values != nd
 
@@ -388,8 +392,8 @@ def build(dtbeg, dtend, **kwargs):
 
         # Slightly terrifying
         if dotidy and doregrid:
-            tidy(kwyear['headcov'], 3)
-            tidy(kwyear['headvcf'], 3)
+            tidy(kwnow['headcov'], 3)
+            tidy(kwnow['headvcf'], 3)
 
     # Not sure why this is here of it's useful
     return ds

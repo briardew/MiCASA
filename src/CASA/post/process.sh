@@ -2,7 +2,6 @@
 
 # NB: Keeping this named "process.sh", but may mv to "fluxes.sh"
 
-COMMENT='Positive NPP indicates uptake by vegetation. Positive Rh indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for missing processes and better match long-term atmospheric budgets.'
 BLURB="MiCASA flux post-processor"
 
 # Process settings & arguments
@@ -24,7 +23,7 @@ echo "$BLURB"
 echo "---"
 echo "Input  directory: $DIRIN"
 echo "Output directory: $DIROUT"
-echo "Collection: $FLXTAG"
+echo "Collection: $FLUXHEAD"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
@@ -40,7 +39,7 @@ if [[ "$BATCH" != true ]]; then
     echo ""
 fi
 
-# COMPRESS & ADD METADATA
+# COMPRESS
 # ===
 for mon in $(seq -f %02g "$MON0" "$MONF"); do
     # 3-Hourly
@@ -51,46 +50,23 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     ndays=0
     nproc=0
     for day in $(seq -f "%02g" 01 "$monlen"); do
-        ff="${FLXTAG}_3hrly_${year}${mon}${day}.${FEXT}"
+        ff="${FLUXHEAD}_3hrly_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/3hrly/$year/$mon/$ff"
-        fout="$DIROUT/3hrly/$year/$mon/$ff"
 
-        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        # Skip if input file is missing
+        [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$FORCE" != true ]] && continue	# Skip if 3hrly file exists and not overwriting
+
+        # Skip if input file is already compressed
+        nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
+        [[ "$nmatch" -eq 0 ]] && continue
         nproc=$((nproc + 1))
 
-        mkdir -p "$DIROUT/3hrly/$year/$mon"
-
-        # A little extra in case $fin == $fout
-        ftmp="${fout%"$FEXT"}tmp.$FEXT"
+        # nccopy needs unique input and output files
+        ftmp="${fin%"$FEXT"}tmp.$FEXT"
         nccopy -s -d 9 "$fin" "$ftmp"
-        mv "$ftmp" "$fout"
-
-        ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
-        ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
-        ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
-        ncatted -O -h -a LongName,global,o,c,"MiCASA 3-hourly NPP NEE Fluxes $RESLONG" "$fout"
-        ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_3H' "$fout"
-        ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
-        ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"
-        ncatted -O -h -a Format,global,o,c,'netCDF' "$fout"
-        ncatted -O -h -a ProcessingLevel,global,o,c,'4' "$fout"
-        ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
-        ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/AS9U6AWVTY69' "$fout"
-#       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/3hrly/$year/$mon/$ff" "$fout"
-        ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
-        ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
-        ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
-        ncatted -O -h -a RangeEndingDate,global,o,c,"$year-$mon-$day" "$fout"
-        ncatted -O -h -a RangeEndingTime,global,o,c,"23:59:59.999999" "$fout"
-        ncatted -O -h -a NorthernmostLatiude,global,o,c,'90.0' "$fout"
-        ncatted -O -h -a WesternmostLongitude,global,o,c,'-180.0' "$fout"
-        ncatted -O -h -a SouthernmostLatitude,global,o,c,'-90.0' "$fout"
-        ncatted -O -h -a EasternmostLongitude,global,o,c,'180.0' "$fout"
-        ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
-        ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
+        ncatted -O -h -a stage,global,d,, "$ftmp"
+        mv "$ftmp" "$fin"
     done
 
     echo ""
@@ -98,94 +74,44 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
 
     # Daily
     # ---
-    monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
     ndays=0
     nproc=0
     for day in $(seq -f "%02g" 01 "$monlen"); do
-        ff="${FLXTAG}_daily_${year}${mon}${day}.${FEXT}"
+        ff="${FLUXHEAD}_daily_${year}${mon}${day}.${FEXT}"
         fin="$DIRIN/daily/$year/$mon/$ff"
-        fout="$DIROUT/daily/$year/$mon/$ff"
 
-        [[ ! -f "$fin" ]] && continue				# Skip if input file is missing
+        # Skip if input file is missing
+        [[ ! -f "$fin" ]] && continue
         ndays=$((ndays + 1))
-        [[ -f "$fout" && "$FORCE" != true ]] && continue	# Skip if file exists and not overwriting
+
+        # Skip if file exists and not overwriting
+        nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
+        [[ "$nmatch" -eq 0 ]] && continue
         nproc=$((nproc + 1))
 
-        mkdir -p "$DIROUT/daily/$year/$mon"
-
-        # A little extra in case $fin == $fout
-        ftmp="${fout%"$FEXT"}tmp.$FEXT"
+        # nccopy needs unique input and output files
+        ftmp="${fin%"$FEXT"}tmp.$FEXT"
         nccopy -s -d 9 "$fin" "$ftmp"
-        mv "$ftmp" "$fout"
-
-        ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
-        ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
-        ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG v$VERSION" "$fout"
-        ncatted -O -h -a LongName,global,o,c,"MiCASA Daily NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG" "$fout"
-        ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_D' "$fout"
-        ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
-        ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"
-        ncatted -O -h -a Format,global,o,c,'netCDF' "$fout"
-        ncatted -O -h -a ProcessingLevel,global,o,c,'4' "$fout"
-        ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
-        ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/ZBXSA1LEN453' "$fout"
-#       ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/daily/$year/$mon/$ff" "$fout"
-        ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
-        ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-$day" "$fout"
-        ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
-        ncatted -O -h -a RangeEndingDate,global,o,c,"$year-$mon-$day" "$fout"
-        ncatted -O -h -a RangeEndingTime,global,o,c,"23:59:59.999999" "$fout"
-        ncatted -O -h -a NorthernmostLatiude,global,o,c,'90.0' "$fout"
-        ncatted -O -h -a WesternmostLongitude,global,o,c,'-180.0' "$fout"
-        ncatted -O -h -a SouthernmostLatitude,global,o,c,'-90.0' "$fout"
-        ncatted -O -h -a EasternmostLongitude,global,o,c,'180.0' "$fout"
-        ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
-        ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
+        ncatted -O -h -a stage,global,d,, "$ftmp"
+        mv "$ftmp" "$fin"
     done
 
     echo "$year/$mon: Processed $nproc out of $ndays daily flux file(s)"
 
     # Monthly
     # ---
-    ff="${FLXTAG}_monthly_${year}${mon}.${FEXT}"
+    ff="${FLUXHEAD}_monthly_${year}${mon}.${FEXT}"
     fin="$DIRIN/monthly/$year/$ff"
-    fout="$DIROUT/monthly/$year/$ff"
 
-    [[ -f "$fout" && "$FORCE" != true ]] && continue		# Skip if file exists and not overwriting
-    [[ $ndays -ne $monlen ]] && continue			# Skip if not all daily outputs are available
+    # Skip if file exists and not overwriting
+    nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
+    [[ "$nmatch" -eq 0 ]] && continue
 
-    mkdir -p "$DIROUT/monthly/$year"
-
-    # A little extra in case $fin == $fout
-    ftmp="${fout%"$FEXT"}tmp.$FEXT"
+    # nccopy needs unique input and output files
+    ftmp="${fin%"$FEXT"}tmp.$FEXT"
     nccopy -s -d 9 "$fin" "$ftmp"
-    mv "$ftmp" "$fout"
-
-    ncatted -O -h -a Conventions,global,o,c,'CF-1.9' "$fout"
-    ncatted -O -h -a contact,global,o,c,'Brad Weir <brad.weir@nasa.gov>' "$fout"
-    ncatted -O -h -a institution,global,o,c,'NASA Goddard Space Flight Center' "$fout"
-    ncatted -O -h -a title,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG v$VERSION" "$fout"
-    ncatted -O -h -a LongName,global,o,c,"MiCASA Monthly NPP Rh ATMC NEE FIRE FUEL Fluxes $RESLONG" "$fout"
-    ncatted -O -h -a ShortName,global,o,c,'MICASA_FLUX_M' "$fout"
-    ncatted -O -h -a VersionID,global,o,c,"$VERSION" "$fout"
-    ncatted -O -h -a GranuleID,global,o,c,"$(basename "$fout")" "$fout"
-    ncatted -O -h -a Format,global,o,c,'netCDF' "$fout"
-    ncatted -O -h -a ProcessingLevel,global,o,c,'4' "$fout"
-    ncatted -O -h -a IdentifierProductDOIAuthority,global,o,c,'https://doi.org/' "$fout"
-    ncatted -O -h -a IdentifierProductDOI,global,o,c,'10.5067/UCFEAAIDIUEQ' "$fout"
-#   ncatted -O -h -a ProductURL,global,o,c,"$SERVE/$HEADOUT/monthly/$year/$mon/$ff" "$fout"
-    ncatted -O -h -a ReadMeURL,global,o,c,"$SERVE/$HEADDOC/MiCASA_README.pdf" "$fout"
-    ncatted -O -h -a RangeBeginningDate,global,o,c,"$year-$mon-01" "$fout"
-    ncatted -O -h -a RangeBeginningTime,global,o,c,"00:00:00.000000" "$fout"
-    ncatted -O -h -a RangeEndingDate,global,o,c,"$year-$mon-$monlen" "$fout"
-    ncatted -O -h -a RangeEndingTime,global,o,c,"23:59:59.999999" "$fout"
-    ncatted -O -h -a NorthernmostLatiude,global,o,c,'90.0' "$fout"
-    ncatted -O -h -a WesternmostLongitude,global,o,c,'-180.0' "$fout"
-    ncatted -O -h -a SouthernmostLatitude,global,o,c,'-90.0' "$fout"
-    ncatted -O -h -a EasternmostLongitude,global,o,c,'180.0' "$fout"
-    ncatted -O -h -a comment,global,o,c,"$COMMENT" "$fout"
-    ncatted -O -h -a ProductionDateTime,global,o,c,"$(date -u +"%Y-%m-%dT%H:%M:%SZ")" "$fout"
+    ncatted -O -h -a stage,global,d,, "$ftmp"
+    mv "$ftmp" "$fin"
 
     echo "$year/$mon: Processed monthly flux file"
 done
@@ -200,6 +126,6 @@ done
 
         mkdir -p "$ROOTPUB/$HEADOUT/daily/$year/$mon"
         rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
-    # Publish
-    mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
-    rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+
+mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
+rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"

@@ -9,6 +9,8 @@ if ~exist('runname', 'var')
     error('The variable `runname` is undefined.');
 end
 
+% Meteorology
+% ---
 % NB: This will only work on systems that already have MERRA-2 or GEOS IT
 % *** This and makeNRTburn are the only Discover-specific bits left ***
 DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
@@ -53,4 +55,25 @@ else
     error(['Was unable to parse a valid version from the runname: ', runname]);
 end
 
-REPRO = lower(do_reprocess(1)) == 'y';				% Reprocess/overwrite results
+FORCE = lower(do_force(1)) == 'y';				% Force overwrite existing files?
+
+% File output
+% ---
+FEXT    = 'nc4';
+FORMAT  = 'netcdf4';
+% We compress in post since it is very time consuming and Discover limits compute
+% jobs to 24 hours
+DEFLATE = 0;
+SHUFFLE = false;
+CONVENTIONS = 'CF-1.9';
+INSTITUTION = 'NASA Goddard Space Flight Center';
+CONTACT = 'Brad Weir <brad.weir@nasa.gov>';
+PRODUCT = 'MiCASA';
+
+dotzero = @(xx) [num2str(xx), repmat('.0', floor(xx) == xx)];
+RESLONG = [dotzero(lat(2) - lat(1)), ' degree x ', ...
+    dotzero(lon(2) - lon(1)), ' degree'];
+LATMIN = dotzero(lat(  1) - 0.5*(lat(2) - lat(1)));
+LATMAX = dotzero(lat(end) + 0.5*(lat(2) - lat(1))); 
+LONMIN = dotzero(lon(  1) - 0.5*(lon(2) - lon(1)));
+LONMAX = dotzero(lon(end) + 0.5*(lon(2) - lon(1))); 

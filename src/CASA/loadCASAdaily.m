@@ -13,13 +13,13 @@ sday  = datestr(dnum, 'dd');
 
 % Read MODIS/VIIRS fPAR
 % ---
-fin = [DIRMODV, '/vegind/', syear, '/MiCASA_v', VERUSE, ...
+fin = [DIRMODV, '/vegind/', syear, '/', PRODUCT, '_v', VERUSE, ...
     '_vegind_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 FPAR = flipud(ncread(fin, 'fPAR')');
 
 % Read MODIS/VIIRS burned area
 % ---
-fin = [DIRMODV, '/burn/', syear, '/MiCASA_v', VERUSE, ...
+fin = [DIRMODV, '/burn/', syear, '/', PRODUCT, '_v', VERUSE, ...
     '_burn_', MODVRES, '_daily_', syear, smon, sday, '.nc4'];
 BAdefo = flipud(ncread(fin, 'badefo')');
 BAherb = flipud(ncread(fin, 'baherb')');

@@ -27,6 +27,7 @@ defaults = {
     # NB: NBAR data start 2000-02-16
     'dtbeg': datetime(2001, 1, 1),
     'dtend': datetime.now(),
+    'product': 'MiCASA',
     'ver': 'NRT',
     # 0.1 deg regular grid
     'nlat': 1800,
@@ -59,12 +60,6 @@ def fillargs(dtval, **kwargs):
     ver = kwargs['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
     vernum, _, domain = ver.partition('-')
-
-    # Overwrite nlat & nlon for special domains (see geometry)
-    # ---
-    if domain[:5].upper() == 'CONUS':
-        kwargs['nlat'] = 25 * 120
-        kwargs['nlon'] = 60 * 120
 
     # Fill resolution tag
     # ---

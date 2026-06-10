@@ -23,9 +23,7 @@ ROOTPUB="/css/gmao/geos_carb/pub"
 
 # Run specific settings
 # ---
-RESLONG="0.1 degree x 0.1 degree"
-RESTAG="x3600_y1800"
-FLXTAG="MiCASA_v${VERSION}_flux_${RESTAG}"
+FLUXHEAD="MiCASA_v${VERSION}_flux_x3600_y1800"
 FEXT="nc4"
 
 # The rest should auto-generate

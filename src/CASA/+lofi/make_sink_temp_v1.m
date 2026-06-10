@@ -1,4 +1,5 @@
-%MAKE_SINK_PREP1  Compute growth rates for atmospheric correction to MiCASA
+%MAKE_SINK_TEMP_V1  Compute temperature term for atmospheric correction to
+%MiCASA (Approach used for Version 1 only)
 
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
@@ -6,7 +7,6 @@
 % 2024-05-16	Initial version
 %
 % TODO:
-% * Write AIRT out from CASA, add to extras file, and process
 %===============================================================================
 
 lofi.setup;
@@ -18,7 +18,7 @@ smon  = '12';
 fm2   = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavgM_2d_slv_Nx.', ...
     syear, smon, '.nc4'];
 % Copying what's in CASA; bad practice; fixme?
-airt0 = ncread(fm2, 'TS') - 273.15;
+airt0 = ncread(fm2, VARTS) - 273.15;
 
 dtposm2 = zeros(NLONM2, NLATM2, 12);
 dtnegm2 = zeros(NLONM2, NLATM2, 12);
@@ -29,7 +29,7 @@ for nyear = startYearClim:endYearClim
         fm2  = [DIRM2, '/Y', syear, '/M', smon, '/MERRA2.tavgM_2d_slv_Nx.', ...
             syear, smon, '.nc4'];
         % Copying what's in CASA; bad practice; fixme?
-        airtm2 = ncread(fm2, 'TS') - 273.15;
+        airtm2 = ncread(fm2, VARTS) - 273.15;
 
         dtposm2(:,:,nmon) = dtposm2(:,:,nmon) + max(airtm2 - airt0, 0)/10;
         dtnegm2(:,:,nmon) = dtnegm2(:,:,nmon) + min(airtm2 - airt0, 0)/10;

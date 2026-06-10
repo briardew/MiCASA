@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MODIS/VIIRS land cover, vegetation, and burned area generator
+MODIS/VIIRS land cover, vegetation index, and burned area generator
 """
 
 import sys
@@ -22,31 +22,35 @@ parser = argparse.ArgumentParser(
 # fmt: off
 parser.add_argument(
     'name', metavar='name', type=str, choices=NAMELIST,
-    help='name of product to build: ' + ', '.join(NAMELIST),
+    help='name of dataset to build: ' + ', '.join(NAMELIST),
 )
 parser.add_argument(
     '-m', '--mode', metavar='MODE', type=str, choices=MODELIST, default='all',
     help='operation mode: ' + ', '.join(MODELIST),
 )
-parser.add_argument('-v', '--ver', default=defaults['ver'], help='version')
 parser.add_argument(
-    '--beg', metavar='YYYY-MM-DD', default=defaults['dtbeg'].strftime('%Y-%m-%d'),
-    help='begin date',
+    '-p', '--product', type=str, default=defaults['product'], help='product name',
+)
+parser.add_argument('-v', '--ver', type=str, default=defaults['ver'], help='version')
+parser.add_argument(
+    '--beg', metavar='YYYY-MM-DD', type=str,
+    default=defaults['dtbeg'].strftime('%Y-%m-%d'), help='begin date',
 )
 parser.add_argument(
-    '--end', metavar='YYYY-MM-DD', default=defaults['dtend'].strftime('%Y-%m-%d'),
-    help='end date',
+    '--end', metavar='YYYY-MM-DD', type=str,
+    default=defaults['dtend'].strftime('%Y-%m-%d'), help='end date',
 )
 parser.add_argument('--nlat', type=int, default=defaults['nlat'], help='latitude dimension')
 parser.add_argument('--nlon', type=int, default=defaults['nlon'], help='longitude dimension')
 parser.add_argument(
-    '-o', '--output', metavar='DIR', default=defaults['output'],
+    '-o', '--output', metavar='DIR', type=str, default=defaults['output'],
     help='output directory',
 )
 # These are hard coded, but a pain to do right
 parser.add_argument('-f', '--force', action='store_true', help='overwrite files')
 parser.add_argument('-t', '--tidy', action='store_true', help='remove downloads')
-parser.add_argument('--yaml', help='yaml settings file')
+# Not supported yet
+#parser.add_argument('--yaml', help='yaml settings file')
 # fmt: on
 
 

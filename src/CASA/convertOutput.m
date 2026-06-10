@@ -1,101 +1,123 @@
-% Don't bother fixing this too much as I'd like to move to the
-% Python version
+% TODO:
+% 1. Add monthly metadata entries to colls structure
+% 2. Finish monthly means of daily output
+% 3. Add metadata to monthly output
 
 defineConstants;
 
-% Timestamp settings
-TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
+% Space-time details
+TSTAMP  = ['days since ', num2str(startYearTime), '-01-01'];
 
 % Directories and versioning
 DIRIN   = [DIRRUN, '/native'];
 DIROUT  = [DIRRUN, '/netcdf'];
 
 % Herbivory settings
-ADDHER  = 1;					% Add herbivory to respiration?
-VARHER  = 'HER';				% Herbivory variable name
+ADDHER = 1;					% Add herbivory to respiration?
+VARHER = 'HER';					% Herbivory variable name
 
-% Output file settings
-% ---
-% Shouldn't this be in defineConstants?
-FEXT    = 'nc4';
-FORMAT  = 'netcdf4';
-% We do these afterwards since Matlab appears to have memory issues
-% It is also quite long
-DEFLATE = 9;
-SHUFFLE = true;
-%DEFLATE = 0;
-%SHUFFLE = false;
+DAYSEC = 60.*60.*24.;
 
-DAYSECS = 60.*60.*24.;
+% Collection definition structure
+colls = [ ...
+    struct( ...
+        'name', 'flux', ...
+        'long', 'NPP Rh ATMC NEE FIRE FUEL Fluxes', ...
+        'comment', [ ...
+            'Positive NPP indicates uptake by vegetation. Positive Rh ', ...
+            'indicates emission to the atmosphere. NEE = Rh - NPP - ATMC, and ', ...
+            'NBE = NEE + FIRE + FUEL. ATMC adjusts net exchange to account for ', ...
+            'missing processes and better match long-term atmospheric budgets.' ...
+        ] ...
+    ), ...
+    struct( ...
+        'name', 'extra', ...
+        'long', 'Extra Variables', ...
+        'comment', '' ...
+    ), ...
+    struct( ...
+        'name', 'fire', ...
+        'long', 'Biomass Burning Components', ...
+        'comment', '' ...
+    ), ...
+];
 
-% Structure defining what to process
+% Dataset definition structure
 % EET defined in Field et al. (1995; https://doi.org/10.1016/0034-4257(94)00066-V)
 datasets = [ ...
     struct('coll','flux', 'orig','NPP', 'name','NPP', ...
         'long_name','Net primary productivity', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','flux', 'orig','RES', 'name','Rh', ...
         'long_name','Heterotrophic respiration', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','flux', 'orig','FIRE', 'name','FIRE', ...
         'long_name','Fire emission', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','flux', 'orig','FUE',  'name','FUEL', ...
         'long_name','Fuel wood emission', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','extra', 'orig','HER','name','HER', ...
         'long_name','Herbivory emission', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','extra', 'orig','EET', 'name','ET', ...
         'long_name','Evapotranspiration', ...
-        'units','mm s-1', 'scale',1/DAYSECS, 'rate',1, ...
+        'units','mm s-1', 'scale',1.0/DAYSEC, 'rate',1, ...
         'expressed_as',''); ...
     struct('coll','extra', 'orig','soilm', 'name','SOILM', ...
         'long_name','Soil moisture', ...
         'units','mm', 'scale',1.0, 'rate',0, 'expressed_as',''); ...
-%   struct('coll','extra', 'orig','AGBD', 'name','AGBD', ...
-%       'long_name','Aboveground (woody) Biomass Density', ...
-%       'units','g m-2', 'scale',1.0, 'rate',0, 'expressed_as',''); ...
+    struct('coll','extra', 'orig','AGBD', 'name','AGBD', ...
+        'long_name','Aboveground (woody) Biomass Density', ...
+        'units','g m-2', 'scale',1.0, 'rate',0, 'expressed_as',''); ...
     struct('coll','fire', 'orig','COMherb', 'name','FIREherb', ...
         'long_name','Fire emission (herbaceous)', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','fire', 'orig','COMwood', 'name','FIREwood', ...
         'long_name','Fire emission (woody)', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','fire', 'orig','COMdefo', 'name','FIREdefo', ...
         'long_name','Fire emission (deforestation)', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
     struct('coll','fire', 'orig','COMpeat', 'name','FIREpeat', ...
         'long_name','Fire emission (peat)', ...
-        'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+        'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
         'expressed_as','carbon'); ...
 %   struct('coll','debug', 'orig','NPPtemp', 'name','NPPtemp', ...
 %       'long_name','Net primary productivity temperature constraint', ...
-%       'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+%       'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
 %       'expressed_as','carbon'); ...
 %   struct('coll','debug', 'orig','NPPmoist', 'name','NPPmoist', ...
 %       'long_name','Net primary productivity moisture constraint', ...
-%       'units','kg m-2 s-1', 'scale',1.E-3/DAYSECS, 'rate',1, ...
+%       'units','kg m-2 s-1', 'scale',1.0E-3/DAYSEC, 'rate',1, ...
 %       'expressed_as','carbon'); ...
 ];
 
 % RUN
 %==============================================================================
-if lower(do_reprocess(1)) == 'y'
-    disp('Reprocessing ... Press any key to continue');
+% Make sure the NCO utilities are available
+[status, result] = system('ncra --version');
+if status ~= 0
+    error(sprintf([...
+        '*** Missing NCO utilities ***\n\n', ...
+        'On NCCS Discover, run\n', ...
+        '    > module load nco\n', ...
+        'from the terminal before starting Octave/Matlab.']));
+end
+
+if FORCE
+    disp('Force overwriting ... Press any key to continue');
     pause;
 end
 if ADDHER, disp('Adding herbivory to respiration ...'); end
-
-colls = unique({datasets(:).coll});
 
 % For extracting variables
 fspinup = [DIRRUN, '/spinup1.mat'];
@@ -116,8 +138,8 @@ for year = startYear:endYear
     tic;
     syear = num2str(year);
 
-    % Daily
-    % ---
+    % Daily output
+    % ===
     if lower(do_daily(1)) == 'y'
         for mon = 1:12
             smon = num2str(mon, '%02u');
@@ -144,24 +166,22 @@ for year = startYear:endYear
                     [status, result] = system(['mkdir -p ', dnowout]);
                 end
 
-                % Create files if they don't exist or reprocessing
                 for nn = 1:numel(colls)
-                    coll = colls{nn};
-
-                    fbit = ['MiCASA_v', VERSION, '_', coll, '_', CASARES, ...
-                        '_daily_', syear, smon, sday, '.', FEXT];
+                    fbit = [PRODUCT, '_v', VERSION, '_', colls(nn).name, '_', ...
+                        CASARES, '_daily_', syear, smon, sday, '.', FEXT];
                     fout = [dnowout, '/', fbit];
 
-                    % Skip if file exists and not reprocessing
+                    % Skip if file exists and not overwriting
                     if isfile(fout)
-                        if lower(do_reprocess(1)) == 'y'
+                        if FORCE
                             [status, result] = system(['rm ', fout]);
                         else
                             continue;
                         end
                     end
 
-                    time = datenum(year, mon, nd) - datenum(startYearTime, 1, 1);
+                    dnum = datenum(year, mon, nd);
+                    time = dnum - datenum(startYearTime, 1, 1);
 
                     nccreate(  fout, 'time', 'dimensions',{'time',inf}, ...
                         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
@@ -188,6 +208,31 @@ for year = startYear:endYear
                     ncwriteatt(fout, 'lon', 'long_name','longitude');
                     ncwriteatt(fout, 'lon', 'units','degrees_east');
                     ncwrite(   fout, 'lon', lon);
+
+                    shortname = [upper(PRODUCT), '_', upper(colls(nn).name), '_D'];
+                    longname  = [PRODUCT, ' Daily ', colls(nn).long, ' ', RESLONG];
+                    ncwriteatt(fout, '/', 'ShortName',   shortname);
+                    ncwriteatt(fout, '/', 'LongName',    longname);
+                    ncwriteatt(fout, '/', 'title',       [longname, ' v', VERSION]);
+                    ncwriteatt(fout, '/', 'Conventions', CONVENTIONS);
+                    ncwriteatt(fout, '/', 'ProcessingLevel', '4');
+                    ncwriteatt(fout, '/', 'institution', INSTITUTION);
+                    ncwriteatt(fout, '/', 'contact',     CONTACT);
+                    ncwriteatt(fout, '/', 'SouthernmostLatitude', LATMIN);
+                    ncwriteatt(fout, '/', 'NorthernmostLatiude',  LATMAX);
+                    ncwriteatt(fout, '/', 'WesternmostLongitude', LONMIN);
+                    ncwriteatt(fout, '/', 'EasternmostLongitude', LONMAX);
+                    ncwriteatt(fout, '/', 'RangeBeginningDate',   datestr(dnum, 'yyyy-mm-dd'));
+                    ncwriteatt(fout, '/', 'RangeBeginningTime',   '00:00:00.000000');
+                    ncwriteatt(fout, '/', 'RangeEndingDate',      datestr(dnum, 'yyyy-mm-dd'));
+                    ncwriteatt(fout, '/', 'RangeEndingTime',      '23:59:59.999999');
+                    if numel(colls(nn).comment) > 0
+                        ncwriteatt(fout, '/', 'comment', colls(nn).comment);
+                    end
+                    ncwriteatt(fout, '/', 'GranuleID',   fbit);
+                    ncwriteatt(fout, '/', 'history',     ...
+                        ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
+                    ncwriteatt(fout, '/', 'stage', 'intermediate');
                 end
 
                 for nn = 1:numel(datasets)
@@ -199,21 +244,26 @@ for year = startYear:endYear
                     lname = datasets(nn).long_name;
                     expra = datasets(nn).expressed_as;
 
-                    fbit = ['MiCASA_v', VERSION, '_', coll, '_', CASARES, ...
+                    fbit = [PRODUCT, '_v', VERSION, '_', coll, '_', CASARES, ...
                         '_daily_', syear, smon, sday, '.', FEXT];
                     fout = [dnowout, '/', fbit];
 
-                    if strcmp(vin, 'FIRE')
-                        vdefo = 'COMdefo';
-                        vherb = 'COMherb';
-                        vpeat = 'COMpeat';
-                        vwood = 'COMwood';
-                        tempin = load([dnowin, '/', vdefo, '.mat']).(vdefo) ...
-                               + load([dnowin, '/', vherb, '.mat']).(vherb) ...
-                               + load([dnowin, '/', vpeat, '.mat']).(vpeat) ...
-                               + load([dnowin, '/', vwood, '.mat']).(vwood);
-                    else
-                        tempin = load([dnowin, '/', vin, '.mat']).(vin);
+                    % Allow for backwards compatibility if dataset wasn't output
+                    try
+                        if strcmp(vin, 'FIRE')
+                            vdefo = 'COMdefo';
+                            vherb = 'COMherb';
+                            vpeat = 'COMpeat';
+                            vwood = 'COMwood';
+                            tempin = load([dnowin, '/', vdefo, '.mat']).(vdefo) ...
+                                   + load([dnowin, '/', vherb, '.mat']).(vherb) ...
+                                   + load([dnowin, '/', vpeat, '.mat']).(vpeat) ...
+                                   + load([dnowin, '/', vwood, '.mat']).(vwood);
+                        else
+                            tempin = load([dnowin, '/', vin, '.mat']).(vin);
+                        end
+                    catch
+                        continue
                     end
 
                     % Add herbivory to respiration?
@@ -241,10 +291,83 @@ for year = startYear:endYear
                     end
                 end
             end
+
+            % Monthly means of daily output
+            % ---
+            for nn = 1:numel(colls)
+                dnowin  = [DIROUT, '/daily/',   syear, '/', smon];
+                dnowout = [DIROUT, '/monthly/', syear];
+                fhead = [PRODUCT, '_v', VERSION, '_', colls(nn).name, '_', CASARES];
+                fins  = [dnowin,  '/', fhead, '_daily_', syear, smon, '??.', FEXT];
+                fbit  = [fhead, '_monthly_', syear, smon, '.', FEXT];
+                fout  = [dnowout, '/', fbit];
+
+                % Skip if file exists and not overwriting
+                if isfile(fout)
+                    if FORCE
+                        [status, result] = system(['rm ', fout]);
+                    else
+                        continue;
+                    end
+                end
+
+                % Skip if we don't have a whole month (brutal hack)
+                [status, result] = system(['ls -1 ', fins, ' | wc -l']);
+                if status ~= 0 || ~strcmp(result(1:2), num2str(monlen))
+                    continue;
+                end
+
+                % Make sure output folder exists
+                if ~isfolder(dnowout)
+                    [status, result] = system(['mkdir -p ', dnowout]);
+                end
+
+                [status, result] = system(['ncra -O -h ', fins, ' ', fout]);
+                % Delete unwanted attributes and all global (to keep order)
+                [status, result] = system(['ncatted -O -h -a cell_methods,,d,, ', fout]);
+                [status, result] = system(['ncatted -O -h -a ,global,d,, ', fout]);
+
+                dnum = datenum(year, mon, 1);
+                time = dnum - datenum(startYearTime, 1, 1);
+
+                % Fix time and time_bnds
+                ncwrite(fout, 'time',      time);
+                ncwrite(fout, 'time_bnds', [time; time+monlen]);
+
+                % Fix metadata
+                % NB: Changing an attribute's length will change its order
+                % Delete all global attributes (above) and redefine to keep order
+                shortname = [upper(PRODUCT), '_', upper(colls(nn).name), '_M'];
+                longname  = [PRODUCT, ' Monthly ', colls(nn).long, ' ', RESLONG];
+                ncwriteatt(fout, '/', 'ShortName',   shortname);
+                ncwriteatt(fout, '/', 'LongName',    longname);
+                ncwriteatt(fout, '/', 'title',       [longname, ' v', VERSION]);
+                ncwriteatt(fout, '/', 'Conventions', CONVENTIONS);
+                ncwriteatt(fout, '/', 'ProcessingLevel', '4');
+                ncwriteatt(fout, '/', 'institution', INSTITUTION);
+                ncwriteatt(fout, '/', 'contact',     CONTACT);
+                ncwriteatt(fout, '/', 'SouthernmostLatitude', LATMIN);
+                ncwriteatt(fout, '/', 'NorthernmostLatiude',  LATMAX);
+                ncwriteatt(fout, '/', 'WesternmostLongitude', LONMIN);
+                ncwriteatt(fout, '/', 'EasternmostLongitude', LONMAX);
+                ncwriteatt(fout, '/', 'RangeBeginningDate',   ...
+                    datestr(dnum, 'yyyy-mm-dd'));
+                ncwriteatt(fout, '/', 'RangeBeginningTime',   '00:00:00.000000');
+                ncwriteatt(fout, '/', 'RangeEndingDate',      ...
+                    datestr(dnum+monlen-1, 'yyyy-mm-dd'));
+                ncwriteatt(fout, '/', 'RangeEndingTime',      '23:59:59.999999');
+                if numel(colls(nn).comment) > 0
+                    ncwriteatt(fout, '/', 'comment', colls(nn).comment);
+                end
+                ncwriteatt(fout, '/', 'GranuleID',   fbit);
+                ncwriteatt(fout, '/', 'history',     ...
+                    ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
+                ncwriteatt(fout, '/', 'stage', 'intermediate');
+            end
         end
 
-    % Monthly
-    % ---
+    % Monthly output
+    % ===
     else
         monlens = zeros(12, 1);
         for mon = 1:12
@@ -264,8 +387,7 @@ for year = startYear:endYear
             lname = datasets(nn).long_name;
             expra = datasets(nn).expressed_as;
 
-            fout  = [DIROUT, '/', vout, '_', CASARES, ...
-                '_monthly_', syear, '.', FEXT];
+            fout = [DIROUT, '/', vout, '_', CASARES, '_monthly_', syear, '.', FEXT];
 
             xx = zeros(NLON, NLAT, 12);
 
@@ -304,7 +426,7 @@ for year = startYear:endYear
                 end
             end
 
-            if lower(do_reprocess(1)) == 'y'
+            if FORCE
                 [status, result] = system(['rm ', fout]);
             end
 
@@ -346,6 +468,31 @@ for year = startYear:endYear
                 ncwriteatt(fout, vout, 'expressed_as',expra);
             end
             ncwrite(   fout, vout, single(xx));
+
+            shortname = [upper(PRODUCT), '_', upper(colls(nn).name), '_M'];
+            longname  = [PRODUCT, ' Monthly ', colls(nn).long, ' ', RESLONG];
+            ncwriteatt(fout, '/', 'ShortName',   shortname);
+            ncwriteatt(fout, '/', 'LongName',    longname);
+            ncwriteatt(fout, '/', 'title',       [longname, ' v', VERSION]);
+            ncwriteatt(fout, '/', 'Conventions', CONVENTIONS);
+            ncwriteatt(fout, '/', 'ProcessingLevel', '4');
+            ncwriteatt(fout, '/', 'institution', INSTITUTION);
+            ncwriteatt(fout, '/', 'contact',     CONTACT);
+            ncwriteatt(fout, '/', 'SouthernmostLatitude', LATMIN);
+            ncwriteatt(fout, '/', 'NorthernmostLatiude',  LATMAX);
+            ncwriteatt(fout, '/', 'WesternmostLongitude', LONMIN);
+            ncwriteatt(fout, '/', 'EasternmostLongitude', LONMAX);
+            ncwriteatt(fout, '/', 'RangeBeginningDate',   [syear, '-01-01']);
+            ncwriteatt(fout, '/', 'RangeBeginningTime',   '00:00:00.000000');
+            ncwriteatt(fout, '/', 'RangeEndingDate',      [syear, '-12-31']);
+            ncwriteatt(fout, '/', 'RangeEndingTime',      '23:59:59.999999');
+            if numel(colls(nn).comment) > 0
+                ncwriteatt(fout, '/', 'comment', colls(nn).comment);
+            end
+            ncwriteatt(fout, '/', 'GranuleID',   fbit);
+            ncwriteatt(fout, '/', 'history',     ...
+                ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
+            ncwriteatt(fout, '/', 'stage', 'intermediate');
         end
     end
 

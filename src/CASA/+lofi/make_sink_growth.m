@@ -1,4 +1,4 @@
-%MAKE_SINK_PREP1  Compute growth rates for atmospheric correction to MiCASA
+%MAKE_SINK_GROWTH  Compute growth rates for atmospheric correction to MiCASA
 
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %

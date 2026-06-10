@@ -26,16 +26,16 @@ if lower(do_deprecated(1)) == 'y'
     interpms = {interpms{:}, 'nearest',  'linear',       'nearest'};
 else
     % Eventually want to have an OPeNDAP URL option
-    fmaps = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
+    fmaps = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
 end
 
 for ii = 1:length(datasets)
     dname = datasets{ii};
     fout  = [DIRCLIM, '/', dname, '.mat'];
 
-    if isfile(fout) && ~REPRO, continue; end
+    if isfile(fout) && ~FORCE, continue; end
 
-    if ~isfile(fmaps) || REPRO
+    if ~isfile(fmaps) || FORCE
         fin = [DIRDATA, '/v0/original/maps/climate/', dname, '.mat'];
         AA = load(fin).(dname);
     else
@@ -71,11 +71,11 @@ for ii = 1:length(datasets)
     dname = datasets{ii};
     fout  = [DIRCLIM, '/', dname, '.mat'];
 
-    if isfile(fout) && ~REPRO, continue; end
+    if isfile(fout) && ~FORCE, continue; end
 
     % Create climatology
     BB = zeros(NLAT, NLON, 12);
-    if ~isfile(fmaps) || REPRO
+    if ~isfile(fmaps) || FORCE
         AAmo = 0;
         for year = startYearClim:endYearClim
             fin  = [DIRDATA, '/v0/original/maps/annual/', num2str(year), ...
@@ -106,7 +106,7 @@ end
 %%% Peat fraction
 dname = 'PF';
 fout = [DIRCLIM, '/', dname, '.mat'];
-if ~isfile(fout) || REPRO
+if ~isfile(fout) || FORCE
     PF = zeros(NLAT, NLON, 12);
     [AA, RR] = readgeoraster([DIRAUX, '/soil/CIFOR/TROP-SUBTROP_PeatV21_', ...
         '2016_CIFOR.', CASARES, '.tif']);
@@ -121,7 +121,7 @@ end
 %%% Population density
 dname = 'POPDENS';
 fout = [DIRCLIM, '/', dname, '.mat'];
-if ~isfile(fout) || REPRO
+if ~isfile(fout) || FORCE
     POPDENS = zeros(NLAT, NLON);
 
     % Add actual appropriate year weights ***FIXME***
@@ -143,7 +143,7 @@ ftypemv = 0;
 VERUSE = VERSION; if VERSION(1) == '0', VERUSE = '1'; end
 for year = startYearClim:endYearClim
     syear = num2str(year);
-    fin = [DIRMODV, '/cover/MiCASA_v', VERUSE, '_cover_', MODVRES, ...
+    fin = [DIRMODV, '/cover/', PRODUCT, '_v', VERUSE, '_cover_', MODVRES, ...
         '_yearly_', syear, '.nc4'];
 
     ftreein = ncread(fin, 'ftree');
@@ -170,7 +170,7 @@ end
 %%% Specific land cover type classification for soil moisture
 dname = 'VEG';
 fout = [DIRCLIM, '/', dname, '.mat'];
-if ~isfile(fout) || REPRO
+if ~isfile(fout) || FORCE
     VEG = zeros(NLAT, NLON);
 
     [maxfrac, lct] = max(ftype, [], 3);
@@ -238,7 +238,7 @@ for ii = 1:length(datasets)
     dname = datasets{ii};
     fout  = [DIRCLIM, '/', dname, '.mat'];
 
-    if isfile(fout) && ~REPRO, continue; end
+    if isfile(fout) && ~FORCE, continue; end
 
     save(fout, dname, '-v7');
 end
@@ -298,7 +298,7 @@ for ii = 1:length(datasets)
     dname = datasets{ii};
     fout  = [DIRCLIM, '/', dname, '.mat'];
 
-    if isfile(fout) && ~REPRO, continue; end
+    if isfile(fout) && ~FORCE, continue; end
 
     save(fout, dname, '-v7');
 end
@@ -392,7 +392,7 @@ for ii = 1:length(datasets)
     dname = datasets{ii};
     fout  = [DIRCLIM, '/', dname, '.mat'];
 
-    if isfile(fout) && ~REPRO, continue; end
+    if isfile(fout) && ~FORCE, continue; end
 
     save(fout, dname, '-v7');
 end

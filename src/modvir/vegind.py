@@ -40,54 +40,55 @@ def ndvi2fpar(ndvi):
     return fpar
 
 
-def get(dtval, **kwargs):
+def get(dtnow, **kwargs):
     """Acquire MODIS/VIIRS vegetation index tiles"""
 
-    kwargs = fillargs(dtval, **kwargs)
-    headveg = kwargs['headveg']
+    kwnow = fillargs(dtnow, **kwargs)
+    headveg = kwnow['headveg']
     dirveg = path.dirname(headveg)
     granveg = path.basename(headveg)
 
     # Check for local copies first (earthaccess is flaky)
     files = glob(headveg)
-    if len(files) == 0 or kwargs['force']:
-        files = download(granveg, dirveg, kwargs['force'])
+    if len(files) == 0 or kwnow['force']:
+        files = download(granveg, dirveg, kwnow['force'])
     if len(files) == 0:
         raise EOFError('No granules found matching ' + granveg)
 
     return files
 
 
-def regrid(dtval, mask=None, monthly=False, **kwargs):
+def regrid(dtnow, mask=None, monthly=False, **kwargs):
     """Regrid MODIS/VIIRS vegetation indicies"""
 
     # Process arguments
     # ---
-    kwargs = fillargs(dtval, **kwargs)
+    kwnow = fillargs(dtnow, **kwargs)
 
-    nlat = kwargs['nlat']
-    nlon = kwargs['nlon']
-    ver = kwargs['ver']
+    nlat = kwnow['nlat']
+    nlon = kwnow['nlon']
+    product = kwnow['product']
+    ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
-    vernum, _, verdom = ver.partition('-')
+    vernum, _, domain = ver.partition('-')
 
     if not monthly:
         ndays = 1
     else:
-        ndays = monthrange(dtval.year, dtval.month)[1]
+        ndays = monthrange(dtnow.year, dtnow.month)[1]
 
     # Define coordinates
     # ---
-    tval = (dtval - TIME0).days
-    tbvals = np.reshape([tval, tval + ndays], (1, 2))
+    tnow = (dtnow - TIME0).days
+    tbnow = np.reshape([tnow, tnow + ndays], (1, 2))
     time_bnds = xr.DataArray(
-        data=tbvals.astype(np.double),
+        data=tbnow.astype(np.double),
         dims=['time', 'nv'],
         attrs={'long_name': 'time bounds'},
     )
 
-    lat, lon = centers(nlat, nlon, verdom)
-    late, lone = edges(nlat, nlon, verdom)
+    lat, lon = centers(nlat, nlon, domain)
+    late, lone = edges(nlat, nlon, domain)
 
     timeattrs = {
         'long_name': 'time',
@@ -105,7 +106,7 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
     }
 
     coords = {
-        'time': (['time'], np.array([tval]).astype(np.double), timeattrs),
+        'time': (['time'], np.array([tnow]).astype(np.double), timeattrs),
         'lat': (['lat'], lat.astype(np.double), latattrs),
         'lon': (['lon'], lon.astype(np.double), lonattrs),
     }
@@ -140,14 +141,17 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
 
     # Define attributes
     # ---
-    reslong = f'{round(180 / nlat, 3)} degree x {round(360 / nlon, 3)} degree'
+    reslong = (
+        f'{round(late[1] - late[0], 3)} degree x '
+        + f'{round(lone[1] - lone[0], 3)} degree'
+    )
     if not monthly:
-        shortname = 'MICASA_VEGIND_D'
-        longname = f'MiCASA Daily Vegetation Indices {reslong}'
+        shortname = f'{product.upper()}_VEGIND_D'
+        longname = f'{product} Daily Vegetation Indices {reslong}'
     else:
-        shortname = 'MICASA_VEGIND_M'
-        longname = 'MiCASA Monthly Vegetation Indices {reslong}'
-    dtend = dtval + timedelta(days=ndays) - timedelta(microseconds=1)
+        shortname = f'{product.upper()}_VEGIND_M'
+        longname = f'{product} Monthly Vegetation Indices {reslong}'
+    dtend = dtnow + timedelta(days=ndays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
     attrs = {
@@ -157,16 +161,16 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
         'VersionID': ver,
     }
     for key in ['Format', 'Conventions', 'ProcessingLevel', 'institution', 'contact']:
-        if key in kwargs:
-            attrs[key] = kwargs[key]
+        if key in kwnow:
+            attrs[key] = kwnow[key]
     attrs = {
         **attrs,
-        'NorthernmostLatiude': '90.0',
-        'WesternmostLongitude': '-180.0',
-        'SouthernmostLatitude': '-90.0',
-        'EasternmostLongitude': '180.0',
-        'RangeBeginningDate': dtval.strftime('%Y-%m-%d'),
-        'RangeBeginningTime': dtval.strftime('%H:%M:%S.%f'),
+        'SouthernmostLatitude': f'{np.min(late)}',
+        'NorthernmostLatiude': f'{np.max(late)}',
+        'WesternmostLongitude': f'{np.min(lone)}',
+        'EasternmostLongitude': f'{np.max(lone)}',
+        'RangeBeginningDate': dtnow.strftime('%Y-%m-%d'),
+        'RangeBeginningTime': dtnow.strftime('%H:%M:%S.%f'),
         'RangeEndingDate': dtend.strftime('%Y-%m-%d'),
         'RangeEndingTime': dtend.strftime('%H:%M:%S.%f'),
     }
@@ -177,12 +181,12 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
     )
 
     # Just give the empty structure if not regridding or monthly mean
-    if not kwargs['regrid'] or monthly:
+    if not kwnow['regrid'] or monthly:
         return ds
 
     # Read and regrid files
     # ---
-    files = get(dtval, **kwargs)
+    files = get(dtnow, **kwnow)
 
     num = np.zeros((nlat, nlon))
     qcw = np.zeros((nlat, nlon))
@@ -197,7 +201,7 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
         VARPRE = 'Nadir_Reflectance_Band'
         QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_Band'
         # Need mask_and_scale=False for zero-diff with rioxarray
-        kwargs = {'engine': 'rasterio', 'mask_and_scale': False}
+        inargs = {'engine': 'rasterio', 'mask_and_scale': False}
         xyargs = {'engine': 'rasterio', 'mask_and_scale': False}
     elif files[0][-2:] == 'h5':
         # VIIRS
@@ -208,7 +212,7 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
         QCFPRE = 'BRDF_Albedo_Band_Mandatory_Quality_I'
         # Need mask_and_scale=False for zero-diff with rioxarray
         # Here again for compatibility with HDF-EOS
-        kwargs = {
+        inargs = {
             'engine': 'h5netcdf',
             'phony_dims': 'sort',
             'group': '/HDFEOS/GRIDS/VIIRS_Grid_BRDF/Data Fields',
@@ -227,7 +231,7 @@ def regrid(dtval, mask=None, monthly=False, **kwargs):
     for ff in files:
         # Skip corrupted files in NRT mode, fail otherwise
         try:
-            dsin = xr.open_dataset(ff, **kwargs).squeeze(drop=True)
+            dsin = xr.open_dataset(ff, **inargs).squeeze(drop=True)
             dsxy = xr.open_dataset(ff, **xyargs).squeeze(drop=True)
         except Exception as e:
             if ver == 'NRT':
@@ -320,33 +324,41 @@ def build(dtbeg, dtend, **kwargs):
 
     print('===    ____ Vegetation Indicies')
 
+    # Process arguments that are constant
+    # ---
+    kwnow = fillargs(dtbeg, **kwargs)
+
+    product = kwnow['product']
+    ver = kwnow['ver']
+    restag = kwnow['restag']
+    output = kwnow['output']
+
+    dofill = kwnow['fill']
+    doget = kwnow['get']
+    doregrid = kwnow['regrid']
+    doforce = kwnow['force']
+    dotidy = kwnow['tidy']
+
     dsold = None
     for year in range(dtbeg.year, dtend.year + 1):
         print(f'===    ________ {year}')
 
-        # Process arguments
-        # ---
-        dtyear = datetime(year, 1, 1)
-        kwyear = fillargs(dtyear, **kwargs)
-
-        ver = kwyear['ver']
-        restag = kwyear['restag']
-        output = kwyear['output']
-
         # Output vars
         dirpre = path.join(output, 'vegpre', f'{year}')
-        headpre = path.join(dirpre, f'MiCASA_v{ver}_vegpre_{restag}_daily_')
+        headpre = path.join(dirpre, f'{product}_v{ver}_vegpre_{restag}_daily_')
         dirout = path.join(output, 'vegind', f'{year}')
-        headout = path.join(dirout, f'MiCASA_v{ver}_vegind_{restag}_daily_')
+        headout = path.join(dirout, f'{product}_v{ver}_vegind_{restag}_daily_')
 
         # Compute vegetation mask
         # ---
-        if kwyear['regrid'] or kwyear['fill']:
+        dtnow = datetime(year, 1, 1)
+        kwnow = fillargs(dtnow, **kwargs)
+        if kwnow['regrid'] or kwnow['fill']:
             print('')
             # Build/read land cover
-            kwcov = kwyear
+            kwcov = kwnow
             kwcov['regrid'] = True
-            dscov = cover.build(dtyear, dtyear, **kwcov)
+            dscov = cover.build(dtnow, dtnow, **kwcov)
 
             # Recall values have a singleton time dim
             ftype = dscov['ftype'].values[0, :, :, :]
@@ -367,16 +379,10 @@ def build(dtbeg, dtend, **kwargs):
 
             print('===    ________ ' + dtnow.strftime('%Y-%m-%d'))
 
-            # Process arguments
+            # Process arguments that can change
             # ---
             kwnow = fillargs(dtnow, **kwargs)
             headveg = kwnow['headveg']
-
-            doget = kwnow['get']
-            doregrid = kwnow['regrid']
-            dofill = kwnow['fill']
-            doforce = kwnow['force']
-            dotidy = kwnow['tidy']
 
             dateout = dtnow.strftime('%Y%m%d')
             fout = headout + dateout + '.' + FEXT
@@ -440,7 +446,7 @@ def build(dtbeg, dtend, **kwargs):
         # Compute monthly means
         # ---
         if dofill:
-            headmon = path.join(dirout, f'MiCASA_v{ver}_vegind_{restag}_monthly_')
+            headmon = path.join(dirout, f'{product}_v{ver}_vegind_{restag}_monthly_')
             for mon in range(1, 13):
                 datemon = f'{year:04}{mon:02}'
                 fmon = headmon + datemon + '.' + FEXT

@@ -27,7 +27,7 @@ for ii = 1:length(datasets)
 
         if step == 12
             fout = [dout, '/', dd, '.mat'];
-            if ~isfile(fout) || lower(do_reprocess(1)) == 'y'
+            if ~isfile(fout) || FORCE
                 save(fout, dd, '-v7');
             end
             eval(['clear ', dd]);
@@ -43,7 +43,7 @@ for ii = 1:length(datasets)
         end
 
         fout = [dout, '/', dd, '.mat'];
-        if ~isfile(fout) || lower(do_reprocess(1)) == 'y'
+        if ~isfile(fout) || FORCE
             save(fout, dd, '-v7');
         end
     end

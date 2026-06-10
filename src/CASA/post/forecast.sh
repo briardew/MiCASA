@@ -25,7 +25,7 @@ fi
 echo "WARNING: This script overwrites files no matter what" 1>&2
 
 echo "Output directory: $DIROUT"
-echo "Collection: $FLXTAG"
+echo "Collection: $FLUXHEAD"
 
 # Get and check start date and forecast length
 daybeg=$(date -d "$1" +%F)
@@ -51,7 +51,7 @@ year=$(date -d "$daynow" +%Y)
 mon=$(date -d "$daynow" +%m)
 day=$(date -d "$daynow" +%d)
 
-ff="${FLXTAG}_3hrly_$year$mon$day.$FEXT"
+ff="${FLUXHEAD}_3hrly_$year$mon$day.$FEXT"
 f3hr="$DIROUT/3hrly/$year/$mon/$ff"
 # Exit if 3hrly file is missing
 if [[ ! -f "$f3hr" ]]; then
@@ -60,7 +60,7 @@ if [[ ! -f "$f3hr" ]]; then
     exit 1
 fi
 
-ff="${FLXTAG}_daily_$year$mon$day.$FEXT"
+ff="${FLUXHEAD}_daily_$year$mon$day.$FEXT"
 fday="$DIROUT/daily/$year/$mon/$ff"
 # Exit if daily file is missing
 if [[ ! -f "$fday" ]]; then
@@ -75,13 +75,13 @@ for num in $(seq 1 "$NFCST"); do
     mon=$(date -d "$daynow" +%m)
     day=$(date -d "$daynow" +%d)
 
-    ff="${FLXTAG}_3hrly_$year$mon$day.$FEXT"
+    ff="${FLUXHEAD}_3hrly_$year$mon$day.$FEXT"
     mkdir -p "$DIROUT/3hrly/$year/$mon"
     fout="$DIROUT/3hrly/$year/$mon/$ff"
     echo "Writing $fout ..."
     ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
 
-    ff="${FLXTAG}_daily_$year$mon$day.$FEXT"
+    ff="${FLUXHEAD}_daily_$year$mon$day.$FEXT"
     mkdir -p "$DIROUT/daily/$year/$mon"
     fout="$DIROUT/daily/$year/$mon/$ff"
     echo "Writing $fout ..."

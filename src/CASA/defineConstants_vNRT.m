@@ -27,7 +27,7 @@ do_spinup_stage1 = 'n';						% Do first  stage spin-up (as opposed to loading it
 do_spinup_stage2 = 'n';						% Do second stage spin-up (as opposed to loading it)
 do_restart_load  = 'y';						% Load workspace to start
 
-do_reprocess  = 'n';						% Reprocess/overwrite results
+do_force      = 'n';						% Force overwrite
 do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
 do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
 do_meteo_type = 'geosit';					% Meteorology type (merra2, geosit)

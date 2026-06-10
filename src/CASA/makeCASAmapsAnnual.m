@@ -44,10 +44,10 @@ for year = double(startYear):double(endYear)
     for ii = 1:length(datasets)
         dd = datasets{ii};
 
-        % Check if file exists; skip if not reprocessing
+        % Check if file exists; skip if not overwriting
         dout = [DIRMAPS, '/annual/', int2str(year)];
         fout = [dout, '/', dd, '.mat'];
-        if isfile(fout) && ~REPRO, continue; end
+        if isfile(fout) && ~FORCE, continue; end
 
         if ~isfolder(dout)
             [status, result] = system(['mkdir -p ', dout]);

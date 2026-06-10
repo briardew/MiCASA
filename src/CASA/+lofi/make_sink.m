@@ -3,7 +3,7 @@
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
 %
 % Changelog:
-% 2024/05/16	Initial version
+% 2024-10-11	New version for MiCASA
 %===============================================================================
 
 RESWGT  = 0.0;			% Have tested 0.25 in the past
@@ -13,22 +13,15 @@ SINKVAR = 'ATMC';
 % INITIALIZE
 %===============================================================================
 lofi.setup;
-restag = ['x', num2str(NLON), '_y', num2str(NLAT)];
 
 % Build sink weights
-lofi.make_sink_prep1;
-lofi.make_sink_prep2;
-dtwgt = dtpos + RESWGT*dtneg;
-
-% Make sure the NCO utilities are available
-[status, result] = system('ncra --version');
-if status ~= 0
-    error(sprintf([...
-        '*** Missing NCO utilities ***\n\n', ...
-        'On NCCS Discover, run\n', ...
-        '    > module load nco\n', ...
-        'from the terminal before starting Octave/Matlab.']));
+lofi.make_sink_growth;
+if strcmp(VERSION,'1')
+    lofi.make_sink_temp_v1;
+else
+    lofi.make_sink_temp;
 end
+dtwgt = dtpos + RESWGT*dtneg;
 
 % READ FLUXES
 %===============================================================================
@@ -44,20 +37,21 @@ for nyear = startYear:endYear
             260; 290.5; 321; 351.5; 368];
     end
 
+    fprintf('\n');
+
     nnow = 1;
     nprv = 12;
     nday = 0;
     for nmon = 1:12
         smon = num2str(nmon, '%02u');
-        monlen = datenum(nyear,nmon+1,01) - datenum(nyear,nmon,01);
-        monsink = zeros(NLON, NLAT);
+        monlen  = datenum(nyear,nmon+1,01) - datenum(nyear,nmon,01);
+        monsink = 0;
 
         % Daily
         % ---
         for nd = 1:monlen
-            fout = [DIROUT, '/daily/', syear, '/', smon, ...
-                '/MiCASA_v', VERSION, '_flux_', restag, '_daily_', ...
-                syear, smon, num2str(nd,'%02u'), '.', FEXT];
+            fbit = [FLUXHEAD, '_daily_', syear, smon, num2str(nd,'%02u'), '.', FEXT];
+            fout = [DIROUT, '/daily/', syear, '/', smon, '/', fbit];
 
             if ~isfile(fout), continue; end
 
@@ -77,15 +71,17 @@ for nyear = startYear:endYear
             sink = min(hetr, single(sink));
             monsink = monsink + sink;
 
-            % A little tricky since file should exist already        
+            % A little tricky since file should exist already
             hasvar = 0;
             try
                 ncread(fout, SINKVAR);
                 hasvar = 1;
             end
 
-            % Skip if not reprocessing and variable exists
-            if hasvar && ~REPRO, continue; end
+            % Skip if variable exists and not overwriting
+            if hasvar && ~FORCE, continue; end
+
+            disp(['Writing ', fbit, ' ...']);
 
             if ~hasvar
                 nccreate(fout, SINKVAR, 'datatype','single', ...
@@ -111,42 +107,44 @@ for nyear = startYear:endYear
 
         % Monthly
         % ---
-        dnowout = [DIROUT, '/monthly/', syear];
-        dnowin  = [DIROUT, '/daily/',   syear, '/', smon];
-        fout = [dnowout, '/MiCASA_v', VERSION, '_flux_', restag, ...
-            '_monthly_', syear, smon, '.', FEXT];
-        fins = [dnowin,  '/MiCASA_v', VERSION, '_flux_', restag, ...
-            '_daily_', syear, smon, '??.', FEXT];
+        fbit = [FLUXHEAD, '_monthly_', syear, smon, '.', FEXT];
+        fout = [DIROUT, '/monthly/', syear, '/', fbit];
 
-        % Skip if file exists and not reprocessing
-        if isfile(fout)
-            if REPRO
-                [status, result] = system(['rm ', fout]);
-            else
-                continue;
-            end
+        npp  = ncread(fout, 'NPP');
+        hetr = ncread(fout, 'Rh');
+        sink = monsink/monlen;
+
+        % A little tricky since file should exist already
+        hasvar = 0;
+        try
+            ncread(fout, SINKVAR);
+            hasvar = 1;
         end
 
-        % Skip if we don't have a whole month (brutal hack)
-        [status, result] = system(['ls -1 ', fins, ' | wc -l']);
-        if status ~= 0 || ~strcmp(result(1:2), num2str(monlen))
-            continue;
+        % Skip if variable exists and not overwriting
+        if hasvar && ~FORCE, continue; end
+
+        disp(['Writing ', fbit, ' ...']);
+
+        if ~hasvar
+            nccreate(fout, SINKVAR, 'datatype','single', ...
+                'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
+                'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         end
+        ncwriteatt(fout, SINKVAR, 'long_name','Atmospheric correction');
+        ncwriteatt(fout, SINKVAR, 'units','kg m-2 s-1');
+        ncwriteatt(fout, SINKVAR, 'expressed_as','carbon');
+        ncwrite(   fout, SINKVAR, single(sink));
 
-        % Make sure output folder exists
-        if ~isfolder(dnowout)
-            [status, result] = system(['mkdir -p ', dnowout]);
+        % Write NEE too for clarity
+        try
+            nccreate(fout, 'NEE', 'datatype','single', ...
+                'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
+                'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
         end
-
-        [status, result] = system(['ncra -O -h ', fins, ' ', fout]);
-
-        time = datenum(nyear, nmon, 1) - datenum(startYearTime, 1, 1);
-
-        % Fix time and time_bnds
-        ncwriteatt(fout, 'time',      'cell_methods','time: minimum');
-        ncwrite(   fout, 'time', ...
-             datenum(nyear, nmon, 1) - datenum(startYearTime, 1, 1));
-        ncwriteatt(fout, 'time_bnds', 'cell_methods','time: minimum');
-        ncwrite(   fout, 'time_bnds', [time; time+monlen]);
+        ncwriteatt(fout, 'NEE', 'long_name','Net ecosystem exchange');
+        ncwriteatt(fout, 'NEE', 'units','kg m-2 s-1');
+        ncwriteatt(fout, 'NEE', 'expressed_as','carbon');
+        ncwrite(   fout, 'NEE', single(hetr-sink-npp));
     end
 end

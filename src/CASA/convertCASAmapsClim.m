@@ -1,7 +1,7 @@
 defineConstants;
 
 % DIRMAPS is also the read directory, so it needs to exist
-fout = [DIRMAPS, '/MiCASA_v', VERSION, '_maps_', CASARES, ...
+fout = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, ...
     '_monthly-climate.nc4'];
 
 % Datasets to convert
@@ -11,19 +11,11 @@ datasets = {'basisregions', 'FUELNEED', 'FP', 'MORT', 'PF', ...
     'POPDENS', 'VEG', 'FTC', 'FHC', 'FBC', 'EMAX', 'SINK', ...
     'ORGC_top', 'ORGC_sub', 'sand', 'silt', 'clay'};
 
-% Output file settings
-% ---
-% Shouldn't this be in defineConstants?
-FEXT    = 'nc4';
-FORMAT  = 'netcdf4';
-DEFLATE = 9;
-SHUFFLE = true;
-
 if isfile(fout)
-    if lower(do_reprocess(1)) == 'y'
+    if FORCE
         [status, result] = system(['rm ', fout]);
     else
-        disp(['File ', fout, ' exists and not reprocessing']);
+        disp(['File ', fout, ' exists and not overwriting.']);
         return;
     end
 end
