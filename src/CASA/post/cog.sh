@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 BLURB="MiCASA COG generator"
 
+# Process settings & arguments
+# ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
@@ -9,17 +11,14 @@ POSTDIR=$(dirname "$(readlink -f "$0")")
 # Get and check arguments
 argparse "$(basename "$0")" "$BLURB" "$@"
 
-# Re-run setup in case $VERSION has changed
-. "$POSTDIR"/setup.sh
-
 # Outputs and warnings
 # ---
 echo "---"
 echo "$BLURB" 
 echo "---"
-echo "Input  directory: $DIROUT"
-echo "Output directory: $DIRCOG"
-echo "Collection: $FLUXHEAD"
+echo "Input  directory: $DOUTFLX"
+echo "Output directory: $DOUTCOG"
+echo "Collection: $HEADFLX"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
@@ -42,25 +41,25 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     for day in $(seq -f %02g 01 "$monlen"); do
         # BEWARE: Filenames have underscores that are valid in variable names
         # Being extra cautious about protecting variables with braces in file name
-        ff="${FLUXHEAD}_daily_${year}${mon}${day}.${FEXT}"
-        fin="$DIROUT/daily/$year/$mon/$ff"
+        ff="${HEADFLX}_daily_${year}${mon}${day}.${FEXT}"
+        fin="$DOUTFLX/daily/$year/$mon/$ff"
 
         [[ -f "$fin" ]] && flist+=("$fin")
     done
 
     [[ ${#flist[@]} -eq 0 ]] && exit				# Exit if no files found
-    mkdir -p "$DIRCOG/daily/$year/$mon"
+    mkdir -p "$DOUTCOG/daily/$year/$mon"
 
     # Add monthly file if present
-    ff="${FLUXHEAD}_monthly_${year}${mon}.${FEXT}"
-    fin="$DIROUT/monthly/$year/$ff"
+    ff="${HEADFLX}_monthly_${year}${mon}.${FEXT}"
+    fin="$DOUTFLX/monthly/$year/$ff"
     if [[ ${#flist[@]} -eq $monlen ]]; then
         flist+=("$fin")
-        mkdir -p "$DIRCOG/monthly/$year"
+        mkdir -p "$DOUTCOG/monthly/$year"
     fi
 
     for fin in "${flist[@]}"; do
-        ftmp="$DIRCOG/$(basename "$fin" ."$FEXT").tmp.$FEXT"
+        ftmp="$DOUTCOG/$(basename "$fin" ."$FEXT").tmp.$FEXT"
         cp "$fin" "$ftmp"
 
         # Scale everything to g C m-2 day-1
@@ -84,9 +83,9 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
 
         # Sort into daily and monthly folders
         if [[ "$fin" == *"_daily_"* ]]; then
-            DIRUSE="$DIRCOG/daily/$year/$mon"
+            DIRUSE="$DOUTCOG/daily/$year/$mon"
         else
-            DIRUSE="$DIRCOG/monthly/$year"
+            DIRUSE="$DOUTCOG/monthly/$year"
         fi
 
         # Convert to COG

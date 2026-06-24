@@ -29,7 +29,7 @@ parser.add_argument(
     help='operation mode: ' + ', '.join(MODELIST),
 )
 parser.add_argument(
-    '-p', '--product', type=str, default=defaults['product'], help='product name',
+    '-p', '--prod', type=str, default=defaults['prod'], help='product name',
 )
 parser.add_argument('-v', '--ver', type=str, default=defaults['ver'], help='version')
 parser.add_argument(

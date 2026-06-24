@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This is a big script for batch processing a retrospective stream.  It is
 # very NCCS Discover specific.  Not much effort has been put into
@@ -24,10 +24,9 @@ if [[ "$#" -lt 1 || ! -f "$COMMAND" ]]; then
     exit 1
 fi
 
-# 2001-2009: discover21
+# 2001-2009: discover31
 for year in {2001..2009}; do
-    NODE="discover21"
-    [[ "$1" == "upload" ]] && NODE="discover31"				# Hack for upload
+    NODE="discover31"
     ssh "$NODE" "
         cd $MIROOT
         mkdir -p logs/post/$year
@@ -36,10 +35,9 @@ for year in {2001..2009}; do
         exit"
 done
 
-# 2010-2018: discover22
-for year in {2010..2018}; do
-    NODE="discover22"
-    [[ "$1" == "upload" ]] && NODE="discover32"				# Hack for upload
+# 2010-2019: discover32
+for year in {2010..2019}; do
+    NODE="discover32"
     ssh "$NODE" "
         cd $MIROOT
         mkdir -p logs/post/$year
@@ -48,10 +46,9 @@ for year in {2010..2018}; do
         exit"
 done
 
-# 2019-2023: discover23
-for year in {2019..2023}; do
-    NODE="discover23"
-    [[ "$1" == "upload" ]] && NODE="discover33"				# Hack for upload
+# 2020-2026: discover33
+for year in {2020..2026}; do
+    NODE="discover33"
     ssh "$NODE" "
         cd $MIROOT
         mkdir -p logs/post/$year

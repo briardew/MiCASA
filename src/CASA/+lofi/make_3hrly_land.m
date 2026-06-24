@@ -16,6 +16,9 @@
 %===============================================================================
 lofi.setup;
 
+LONGNAME  = [PRODUCT, ' 3-hourly NPP Rh ATMC NEE FIRE FUEL Fluxes ', RESLONG];
+SHORTNAME = [upper(PRODUCT), '_FLUX_3H'];
+
 TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 DNUM0  = datenum(startYearTime, 01, 01);
 TOTYRS = endYear - startYear + 1;

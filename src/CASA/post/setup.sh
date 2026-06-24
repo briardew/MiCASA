@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Be strict about errors
+set -euo pipefail
 
 # NCCS Discover specific settings
 # ---
@@ -10,110 +13,138 @@ source "$LMOD_PKG"/init/bash
 module load nco
 
 # Public URL and on-prem directories
-# ---
 SERVE="https://portal.nccs.nasa.gov/datashare/gmao/geos_carb"
-ROOTOUT="/discover/nobackup/projects/gmao/geos_carb/share"
-ROOTPUB="/css/gmao/geos_carb/pub"
 
 # Half-generic settings
 # ---
 # These should be better protected against something else defining them
-[[ -z "$MIROOT" ]]  && MIROOT="$HOME/Projects/MiCASA"
-[[ -z "$VERSION" ]] && VERSION="NRT"
+MIROOT=${MIROOT:-"$HOME/Projects/MiCASA"}
+ROOTPUB=${ROOTPUB:-"/css/gmao/geos_carb/pub/MiCASA"}
 
-# Run specific settings
-# ---
-FLUXHEAD="MiCASA_v${VERSION}_flux_x3600_y1800"
 FEXT="nc4"
-
-# The rest should auto-generate
-# ---
-DIRIN="$MIROOT/data/v$VERSION/netcdf"
-VEGIN="$MIROOT/data/v$VERSION/drivers"
-
-# Output (fluxes)
-HEADOUT="MiCASA/v$VERSION/netcdf"
-DIROUT="$ROOTOUT/$HEADOUT"					# Form needed for URLs
-HEADDOC="MiCASA/v$VERSION"					# Form needed for URLs
-
-# COG
-HEADCOG="MiCASA/v$VERSION/cog"
-DIRCOG="$ROOTPUB/$HEADCOG"					# Copying netCDF form
-
-# Drivers
-HEADVEG="MiCASA/v$VERSION/drivers"
-DIRVEG="$ROOTPUB/$HEADVEG"					# Form needed for URLs
 
 # Get and check arguments
 # ---
 usage() {
-    echo "usage: $1 year [options]"
-    echo ""
-    echo "$2"
+    echo "usage: $1 [-h] [-m MON] [-p PROD] [-v VER] [-r RES] [-f] [-b] year"
+}
+
+helpout() {
+    echo "$1"
     echo ""
     echo "positional arguments:"
-    echo "  year               4-digit year to process"
+    echo "  year                  4-digit year to process"
     echo ""
     echo "options:"
-    echo "  -h, --help         show this help message and exit"
-    echo "  -m MON, --mon MON  only process month MON (default: None)"
-    echo "  -v VER, --ver VER  version (default: $VERSION)"
-    echo "  -f, --force        overwrite files (default: False)"
-    echo "  -b, --batch        operate in batch mode (default: False)"
+    echo "  -h, --help            show this help message and exit"
+    echo "  -m MON, --mon MON     only process month MON (default: None)"
+    echo "  -p PROD, --prod PROD  product name (default: MiCASA)"
+    echo "  -v VER, --ver VER     version (default: NRT)"
+    echo "  -r RES, --res RES     resolution (default: x3600_y1800)"
+    echo "  -f, --force           overwrite files (default: False)"
+    echo "  -b, --batch           operate in batch mode (default: False)"
+}
+
+warnings() {
+    if [[ "$FORCE" == true ]]; then
+        echo ""
+        echo "WARNING: Overwriting existing files ..."
+    fi
+
+    # Give a chance to abort
+    if [[ "$BATCH" != true ]]; then
+        echo ""
+        read -n1 -s -r -p $"Press any key to continue ..." unused
+        echo ""
+    fi
 }
 
 argparse() {
     # Defaults
-    MON0=01
+    MON0=1
     MONF=12
+    PROD="MiCASA"
+    VER="NRT"
+    RES="x3600_y1800"
     FORCE=false
     BATCH=false
 
-    year="$3"
-    if [[ "$year" == "-h" || "$year" == "--help" ]]; then
-        usage "$1" "$2"
-        exit
-    elif [[ "$#" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
-        echo "ERROR: Invalid year $year"
-        echo ""
-        usage "$1" "$2"
+    # First two args are for help
+    MYNAME="$1"
+    BLURB="$2"
+    shift 2
+
+    POSARGS=()
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -m|--mon)
+                # Force base 10 interpretation of 08 and 09
+                mon="$((10#$2))"
+                if [[ $mon -lt 1 || 12 -lt $mon ]]; then
+                    usage "$MYNAME" >&2
+                    echo "$MYNAME: error: invalid month $mon" >&2
+                    exit 1
+                fi
+                MON0=$mon
+                MONF=$mon
+                shift 2
+                ;;
+            -p|--prod)
+                PROD="$2"
+                shift 2
+                ;;
+            -v|--ver)
+                VER="$2"
+                shift 2
+                ;;
+            -r|--res)
+                RES="$2"
+                shift 2
+                ;;
+            -f|--force)
+                FORCE=true
+                shift
+                ;;
+            -b|--batch)
+                BATCH=true
+                shift
+                ;;
+            -h|--help)
+                usage "$MYNAME"
+                echo ""
+                helpout "$BLURB"
+                exit
+                ;;
+            -*)
+                usage "$MYNAME" >&2
+                echo "$MYNAME: error: unknown option $1" >&2
+                exit 1
+                ;;
+            # Handle positional arguments (arguments without flags)
+            *)
+                POSARGS+=("$1")
+                shift
+            ;;
+        esac
+    done
+
+    year="${POSARGS[0]}"
+    if [[ "${#POSARGS[@]}" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
+        usage "$MYNAME" >&2
+        echo "$MYNAME: error: invalid year $year" >&2
         exit 1
     fi
 
-    ii=4
-    while [[ "$ii" -le "$#" ]]; do
-        arg="${@:$ii:1}"
-        if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
-            usage "$1" "$2"
-            exit
-        elif [[ "$arg" == "-m" || "$arg" == "--mon" ]]; then
-            ii=$((ii+1))
-            mon="${@:$ii:1}"
-            # Force base 10 interpretation of 08 and 09
-            if [[ "$((10#$mon))" -lt 1 || 12 -lt "$((10#$mon))" ]]; then
-                echo "ERROR: Invalid month $mon"
-                echo ""
-                usage "$1" "$2"
-                exit 1
-            fi
-            MON0=$(printf %02g "$mon")
-            MONF=$(printf %02g "$mon")
-        elif [[ "$arg" == "-v" || "$arg" == "--ver" ]]; then
-            ii=$((ii+1))
-            VERSION="${@:$ii:1}"
-        elif [[ "$arg" == "-f" || "$arg" == "--force" ]]; then
-            FORCE=true
-        elif [[ "$arg" == "-b" || "$arg" == "--batch" ]]; then
-            BATCH=true
-        elif [[ "$arg" == "-fb" || "$arg" == "-bf" ]]; then
-            FORCE=true
-            BATCH=true
-        else
-            echo "ERROR: Invalid $ii-th argument $arg"
-            echo ""
-            usage "$1" "$2"
-            exit 1
-        fi
-        ii=$((ii+1))
-    done
+    DINFLX="$MIROOT/data/v$VER/netcdf"
+    DINDRV="$MIROOT/data/v$VER/drivers"
+    DOUTFLX="$ROOTPUB/v$VER/netcdf"
+    DOUTDRV="$ROOTPUB/v$VER/drivers"
+    DOUTCOG="$ROOTPUB/v$VER/cog"
+
+    HEADFLX="${PROD}_v${VER}_flux_$RES"
+
+    CPCMD="rsync"
+    CPARGS=("-av" "-R")
+    $FORCE || CPARGS+=("--ignore-existing")
 }

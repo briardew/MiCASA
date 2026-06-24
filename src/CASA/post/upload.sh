@@ -1,63 +1,42 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 BLURB="MiCASA COG uploader"
 
+# Process settings & arguments
+# ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
-
-# Get and check arguments
 argparse "$(basename "$0")" "$BLURB" "$@"
-
-# Re-run setup in case $VERSION has changed
-. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
 echo "$BLURB"
 echo "---"
-echo "COG directory: $DIRCOG"
-echo "Collection: $FLUXHEAD"
+echo "COG directory: $DOUTCOG"
+echo "Collection: $HEADFLX"
 echo "Year: $year"
+echo "Month(s): $MON0..$MONF"
 
-# Give a chance to abort
-if [[ "$BATCH" != true ]]; then
-    echo ""
-    read -n1 -s -r -p $"Press any key to continue ..." unused
-    echo ""
-fi
+warnings
 
-# I think this is better?
-while read -r ff; do
-    (
-    fbit=${ff#$ROOTPUB/}
-    fbit=${fbit/\/cog/}
-    fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
+for mon in $(seq -f %02g "$MON0" "$MONF"); do
+    flist=()
+    flist+=("$DOUTCOG/daily/$year/$mon"*".tif")
+    flist+=("$DOUTCOG/monthly/$year/$mon"*".tif")
+    for ff in "${flist[@]}"; do
+        fbit=${ff#"$ROOTPUB"/}
+        fbit=${fbit/\/cog/}
+        fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
 
-    echo "Uploading $fbit ..."
+        echo "Uploading $fbit ..."
 
-    checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
+        checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
 
-    # NB: Uses the AWS profile ghgc
-    aws s3api put-object --bucket ghgc-data-store-develop \
-        --key "$fbit" --body "$ff" --checksum-sha256 "$checksum" \
-        --profile ghgc
-    )
-done <<< "$(find "$DIRCOG/daily/$year" "$DIRCOG/monthly/$year" \
-    -name "*.tif")"
-#while IFS= read -r -d '' ff; do
-#    fbit=${ff#$ROOTPUB/}
-#    fbit=${fbit/\/cog/}
-#    fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
-#
-#    echo "Uploading $fbit ..."
-#
-#    checksum="$(shasum -a 256 "$ff" | cut -f1 -d\ | xxd -r -p | base64)"
-#
-#    # NB: Uses the AWS profile ghgc
-#    aws s3api put-object --bucket ghgc-data-store-develop \
-#        --key "$fbit" --body "$ff" --checksum-sha256 "$checksum" \
-#        --profile ghgc
-#done < <(find "$DIRCOG/daily/$year" "$DIRCOG/monthly/$year" \
-#    -name '*.tif' -print0)
+        # NB: Uses the AWS profile ghgc
+        aws s3api put-object --bucket ghgc-data-store-develop \
+            --key "$fbit" --body "$ff" --checksum-sha256 "$checksum" \
+            --profile ghgc
+    done
+done

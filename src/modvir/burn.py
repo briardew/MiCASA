@@ -44,7 +44,7 @@ def regrid(dtnow, monthly=False, **kwargs):
 
     nlat = kwnow['nlat']
     nlon = kwnow['nlon']
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
     vernum, _, domain = ver.partition('-')
@@ -122,11 +122,11 @@ def regrid(dtnow, monthly=False, **kwargs):
         + f'{round(lone[1] - lone[0], 3)} degree'
     )
     if not monthly:
-        shortname = f'{product.upper()}_BURN_D'
-        longname = f'{product} Daily Burned Area {reslong}'
+        shortname = f'{prod.upper()}_BURN_D'
+        longname = f'{prod} Daily Burned Area {reslong}'
     else:
-        shortname = f'{product.upper()}_BURN_M'
-        longname = f'{product} Monthly Burned Area {reslong}'
+        shortname = f'{prod.upper()}_BURN_M'
+        longname = f'{prod} Monthly Burned Area {reslong}'
     dtend = dtnow + timedelta(days=ndays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
@@ -298,7 +298,7 @@ def build(dtbeg, dtend, **kwargs):
     # ---
     kwnow = fillargs(dtbeg, **kwargs)
 
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     restag = kwnow['restag']
     output = kwnow['output']
@@ -313,8 +313,8 @@ def build(dtbeg, dtend, **kwargs):
 
         # Output vars
         dirout = path.join(output, 'burn', f'{year}')
-        headmon = path.join(dirout, f'{product}_v{ver}_burn_{restag}_monthly_')
-        headday = path.join(dirout, f'{product}_v{ver}_burn_{restag}_daily_')
+        headmon = path.join(dirout, f'{prod}_v{ver}_burn_{restag}_monthly_')
+        headday = path.join(dirout, f'{prod}_v{ver}_burn_{restag}_daily_')
 
         # Build burned area
         # ---

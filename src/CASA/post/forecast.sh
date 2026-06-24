@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Brutal hack to persist for a specified number of days. Hope is to actually do
 # something scientifically defensible. Expect this script and its use to be
@@ -24,8 +24,8 @@ fi
 # Would be nice to have a help file (***FIXME***)
 echo "WARNING: This script overwrites files no matter what" 1>&2
 
-echo "Output directory: $DIROUT"
-echo "Collection: $FLUXHEAD"
+echo "Output directory: $DOUTFLX"
+echo "Collection: $HEADFLX"
 
 # Get and check start date and forecast length
 daybeg=$(date -d "$1" +%F)
@@ -51,8 +51,8 @@ year=$(date -d "$daynow" +%Y)
 mon=$(date -d "$daynow" +%m)
 day=$(date -d "$daynow" +%d)
 
-ff="${FLUXHEAD}_3hrly_$year$mon$day.$FEXT"
-f3hr="$DIROUT/3hrly/$year/$mon/$ff"
+ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
+f3hr="$DOUTFLX/3hrly/$year/$mon/$ff"
 # Exit if 3hrly file is missing
 if [[ ! -f "$f3hr" ]]; then
     echo "ERROR: 3-hourly file for $daybeg is missing"
@@ -60,8 +60,8 @@ if [[ ! -f "$f3hr" ]]; then
     exit 1
 fi
 
-ff="${FLUXHEAD}_daily_$year$mon$day.$FEXT"
-fday="$DIROUT/daily/$year/$mon/$ff"
+ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
+fday="$DOUTFLX/daily/$year/$mon/$ff"
 # Exit if daily file is missing
 if [[ ! -f "$fday" ]]; then
     echo "ERROR: Daily file for $daybeg is missing"
@@ -75,15 +75,15 @@ for num in $(seq 1 "$NFCST"); do
     mon=$(date -d "$daynow" +%m)
     day=$(date -d "$daynow" +%d)
 
-    ff="${FLUXHEAD}_3hrly_$year$mon$day.$FEXT"
-    mkdir -p "$DIROUT/3hrly/$year/$mon"
-    fout="$DIROUT/3hrly/$year/$mon/$ff"
+    ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
+    mkdir -p "$DOUTFLX/3hrly/$year/$mon"
+    fout="$DOUTFLX/3hrly/$year/$mon/$ff"
     echo "Writing $fout ..."
     ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
 
-    ff="${FLUXHEAD}_daily_$year$mon$day.$FEXT"
-    mkdir -p "$DIROUT/daily/$year/$mon"
-    fout="$DIROUT/daily/$year/$mon/$ff"
+    ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
+    mkdir -p "$DOUTFLX/daily/$year/$mon"
+    fout="$DOUTFLX/daily/$year/$mon/$ff"
     echo "Writing $fout ..."
     ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$fday" "$fout"
 done

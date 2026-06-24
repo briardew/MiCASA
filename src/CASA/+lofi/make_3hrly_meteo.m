@@ -20,11 +20,12 @@ QBASE  = 1.5;					% Base of Q10 function
 %===============================================================================
 lofi.setup;
 
+LONGNAME  = [PRODUCT, ' 3-hourly Climatological Meteorology ', RESLONG];
+SHORTNAME = [upper(PRODUCT), '_METEO_3HC'];
+
 TSTAMP = ['days since ', num2str(startYearTime), '-01-01'];
 DNUM0  = datenum(startYearTime, 01, 01);
 TOTYRS = endYearClim - startYearClim + 1;
-
-LONGNAME = ['MiCASA 3-hourly Climatological Meteorology ', RESLONG];
 
 % Simplify do_meteo_type for comparisons
 do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
@@ -135,6 +136,7 @@ swlong = ncreadatt(frad, VARSW, 'long_name');
 lonmx = [lonm2; 180];
 [LAMX, LOMX] = meshgrid(latm2, lonmx);
 
+lenmsg = 0;
 for nyday = 1:365
     cxrad = [clrad(:,:,:,nyday); clrad(1,:,:,nyday)];
     cxq10 = [clq10(:,:,:,nyday); clq10(1,:,:,nyday)];
@@ -151,7 +153,10 @@ for nyday = 1:365
     fbit = [METHEAD, datestr(dnum, 'yyyymmdd'), '.', FEXT];
     fout = [DIRMET, '/', fbit];
 
-    disp(['Writing ', fbit, ' ...']);
+    fprintf(repmat('\b', 1, lenmsg));
+    message = ['Writing ', fbit, ' ...'];
+    fprintf(message);
+    lenmsg = length(message);
 
     if isfile(fout)
         if ~FORCE, continue; end
@@ -202,7 +207,7 @@ for nyday = 1:365
     ncwriteatt(fout, 'Q10', 'units', 'none');
     ncwrite(   fout, 'Q10', single(q10out));
 
-    ncwriteatt(fout, '/', 'ShortName',   'MICASA_METEO_3HC');
+    ncwriteatt(fout, '/', 'ShortName',   SHORTNAME);
     ncwriteatt(fout, '/', 'LongName',    LONGNAME);
     ncwriteatt(fout, '/', 'title',       [LONGNAME, ' v', VERSION]);
     ncwriteatt(fout, '/', 'Conventions', CONVENTIONS);

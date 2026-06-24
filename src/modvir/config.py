@@ -27,7 +27,7 @@ defaults = {
     # NB: NBAR data start 2000-02-16
     'dtbeg': datetime(2001, 1, 1),
     'dtend': datetime.now(),
-    'product': 'MiCASA',
+    'prod': 'MiCASA',
     'ver': 'NRT',
     # 0.1 deg regular grid
     'nlat': 1800,

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Converts to a lower resolution
 
@@ -11,13 +11,13 @@ XIN=3600
 YIN=1800
 XOUT=720
 YOUT=360
-VERSION="1"
+VER="1"
 
 GRIDIN="x${XIN}_y${YIN}"
 GRIDOUT="x${XOUT}_y${YOUT}"
 
-DIRIN="/css/gmao/geos_carb/pub/MiCASA/v$VERSION/netcdf"
-DIROUT="/css/gmao/geos_carb/pub/MiCASA/v$VERSION/netcdf-0.5deg"
+DIRIN="/css/gmao/geos_carb/pub/MiCASA/v$VER/netcdf"
+DIROUT="/css/gmao/geos_carb/pub/MiCASA/v$VER/netcdf-0.5deg"
 
 # RUN
 module load nco
@@ -31,11 +31,11 @@ if [[ ! -f "map_${GRIDIN}_to_${GRIDOUT}.nc" ]]; then
 fi
 
 for year in $(seq "$YEAR0" "$YEARF"); do
-    echo $year
+    echo "$year"
     for mon in $(seq -f %02g 01 12); do
         # 3-hourly
         timespan="3-hourly"
-        fhead="$DIRIN/3hrly/$year/$mon/MiCASA_v${VERSION}_flux_${GRIDIN}_3hrly_$year$mon"
+        fhead="$DIRIN/3hrly/$year/$mon/MiCASA_v${VER}_flux_${GRIDIN}_3hrly_$year$mon"
         for fin in "$fhead"??.nc4; do
             fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
@@ -44,7 +44,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/3hrly/$year/$mon"
             ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VER" "$fout"
             ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
             ncatted -O -h -a remap_hostname,global,d,, "$fout"
             ncatted -O -h -a input_file,global,d,, "$fout"
@@ -55,7 +55,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
 
         # Daily
         timespan="Daily"
-        fhead="$DIRIN/daily/$year/$mon/MiCASA_v${VERSION}_flux_${GRIDIN}_daily_$year$mon"
+        fhead="$DIRIN/daily/$year/$mon/MiCASA_v${VER}_flux_${GRIDIN}_daily_$year$mon"
         for fin in "$fhead"??.nc4; do
             fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
@@ -64,7 +64,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
             echo "Converting $fin to $fout ..."
             mkdir -p "$DIROUT/daily/$year/$mon"
             ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+            ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VER" "$fout"
             ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
             ncatted -O -h -a remap_hostname,global,d,, "$fout"
             ncatted -O -h -a input_file,global,d,, "$fout"
@@ -75,7 +75,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
 
         # Monthly
         timespan="Monthly"
-        fin="$DIRIN/monthly/$year/MiCASA_v${VERSION}_flux_${GRIDIN}_monthly_$year$mon.nc4"
+        fin="$DIRIN/monthly/$year/MiCASA_v${VER}_flux_${GRIDIN}_monthly_$year$mon.nc4"
         fout="$(echo "$fin" | sed -e "s?$GRIDIN?$GRIDOUT?" | sed -e "s?$DIRIN?$DIROUT?")"
 
         [[ "$FORCE" != true && -f "$fout" ]] && continue
@@ -83,7 +83,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
         echo "Converting $fin to $fout ..."
         mkdir -p "$DIROUT/monthly/$year"
         ncremap -n -h -m "map_${GRIDIN}_to_${GRIDOUT}.nc" "$fin" "$fout"
-        ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VERSION" "$fout"
+        ncatted -O -h -a title,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG v$VER" "$fout"
         ncatted -O -h -a LongName,global,o,c,"MiCASA $timespan NPP NEE Fluxes $RESLONG" "$fout"
         ncatted -O -h -a remap_hostname,global,d,, "$fout"
         ncatted -O -h -a input_file,global,d,, "$fout"

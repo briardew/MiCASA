@@ -55,7 +55,7 @@ def regrid(dtnow, **kwargs):
 
     nlat = kwnow['nlat']
     nlon = kwnow['nlon']
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
     vernum, _, domain = ver.partition('-')
@@ -166,8 +166,8 @@ def regrid(dtnow, **kwargs):
         f'{round(late[1] - late[0], 3)} degree x '
         + f'{round(lone[1] - lone[0], 3)} degree'
     )
-    shortname = f'{product.upper()}_COVER_Y'
-    longname = f'{product} Yearly Land Cover {reslong}'
+    shortname = f'{prod.upper()}_COVER_Y'
+    longname = f'{prod} Yearly Land Cover {reslong}'
     dtend = dtnow + timedelta(days=yrdays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
@@ -325,7 +325,7 @@ def build(dtbeg, dtend, **kwargs):
     # ---
     kwnow = fillargs(dtbeg, **kwargs)
 
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     restag = kwnow['restag']
     output = kwnow['output']
@@ -348,7 +348,7 @@ def build(dtbeg, dtend, **kwargs):
 
         # Output vars
         dirout = path.join(output, 'cover')
-        fgran = f'{product}_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
+        fgran = f'{prod}_v{ver}_cover_{restag}_yearly_{year}.{FEXT}'
         fout = path.join(dirout, fgran)
 
         # Download if needed for regrid or requested

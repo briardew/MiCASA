@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # NB: Keeping this named "process.sh", but may mv to "fluxes.sh"
 
@@ -9,102 +9,89 @@ BLURB="MiCASA flux post-processor"
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
-
-# Get and check arguments
 argparse "$(basename "$0")" "$BLURB" "$@"
-
-# Re-run setup in case $VERSION has changed
-. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
 echo "$BLURB" 
 echo "---"
-echo "Input  directory: $DIRIN"
-echo "Output directory: $DIROUT"
-echo "Collection: $FLUXHEAD"
+echo "Input  directory: $DINFLX"
+echo "Output directory: $DOUTFLX"
+echo "Collection: $HEADFLX"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$FORCE" == true ]]; then
-    echo ""
-    echo "WARNING: Overwriting existing files ..."
-fi
+warnings
 
-# Give a chance to abort
-if [[ "$BATCH" != true ]]; then
-    echo ""
-    read -n1 -s -r -p $"Press any key to continue ..." unused
-    echo ""
-fi
-
-# COMPRESS
+# COMPRESSION & CHECKSUM
 # ===
+# BEWARE: Filenames have underscores that are valid in variable names
+# Being extra cautious about protecting variables with braces in file name
+echo ""
 for mon in $(seq -f %02g "$MON0" "$MONF"); do
-    # 3-Hourly
+    # 3-Hourly & Daily
     # ---
-    # BEWARE: Filenames have underscores that are valid in variable names
-    # Being extra cautious about protecting variables with braces in file name
     monlen=$(date -d "$year-$mon-01 + 1 month - 1 day" "+%d")
-    ndays=0
-    nproc=0
-    for day in $(seq -f "%02g" 01 "$monlen"); do
-        ff="${FLUXHEAD}_3hrly_${year}${mon}${day}.${FEXT}"
-        fin="$DIRIN/3hrly/$year/$mon/$ff"
+    for tag in 3hrly daily; do
+        # Compression
+        # ---
+        ndays=0
+        nproc=0
+        for day in $(seq -f "%02g" 01 "$monlen"); do
+            ff="${HEADFLX}_${tag}_${year}${mon}${day}.$FEXT"
+            fin="$DINFLX/$tag/$year/$mon/$ff"
 
-        # Skip if input file is missing
-        [[ ! -f "$fin" ]] && continue
-        ndays=$((ndays + 1))
+            # Skip if input file is missing
+            [[ ! -f "$fin" ]] && continue
+            ndays=$((ndays + 1))
 
-        # Skip if input file is already compressed
-        nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
-        [[ "$nmatch" -eq 0 ]] && continue
-        nproc=$((nproc + 1))
+            # Skip if input file is already compressed
+            nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;' || true)
+            [[ "$nmatch" -eq 0 ]] && continue
+            nproc=$((nproc + 1))
 
-        # nccopy needs unique input and output files
-        ftmp="${fin%"$FEXT"}tmp.$FEXT"
-        nccopy -s -d 9 "$fin" "$ftmp"
-        ncatted -O -h -a stage,global,d,, "$ftmp"
-        mv "$ftmp" "$fin"
+            # nccopy needs unique input and output files
+            ftmp="${fin%"$FEXT"}tmp.$FEXT"
+            nccopy -s -d 9 "$fin" "$ftmp"
+            ncatted -O -h -a stage,global,d,, "$ftmp"
+            mv "$ftmp" "$fin"
+        done
+
+        echo "$year/$mon: Compressed $nproc out of $ndays $tag flux file(s)"
+
+        # Checksum
+        # ---
+        fin="${HEADFLX}_${tag}_${year}${mon}??.$FEXT"
+        fchk="${HEADFLX}_${tag}_${year}${mon}_sha256.txt"
+        (
+            cd "$DINFLX/$tag/$year/$mon" || exit
+
+            findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
+            # Only overwrite checksum if file(s) are newer than it
+            [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
+
+            fnew=$(find . "${findargs[@]}" -name "$fin")
+
+            if [[ ${#fnew} -gt 0 ]]; then
+                echo "$year/$mon: Creating flux checksum $fchk"
+                for ff in $fin; do
+                    shasum -a 256 "$(basename "$ff")"
+                done > "$fchk"
+            fi
+
+            cd - > /dev/null || exit
+        )
+        echo ""
     done
 
-    echo ""
-    echo "$year/$mon: Processed $nproc out of $ndays 3hrly flux file(s)"
-
-    # Daily
+    # Monthly compression
     # ---
-    ndays=0
-    nproc=0
-    for day in $(seq -f "%02g" 01 "$monlen"); do
-        ff="${FLUXHEAD}_daily_${year}${mon}${day}.${FEXT}"
-        fin="$DIRIN/daily/$year/$mon/$ff"
-
-        # Skip if input file is missing
-        [[ ! -f "$fin" ]] && continue
-        ndays=$((ndays + 1))
-
-        # Skip if file exists and not overwriting
-        nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
-        [[ "$nmatch" -eq 0 ]] && continue
-        nproc=$((nproc + 1))
-
-        # nccopy needs unique input and output files
-        ftmp="${fin%"$FEXT"}tmp.$FEXT"
-        nccopy -s -d 9 "$fin" "$ftmp"
-        ncatted -O -h -a stage,global,d,, "$ftmp"
-        mv "$ftmp" "$fin"
-    done
-
-    echo "$year/$mon: Processed $nproc out of $ndays daily flux file(s)"
-
-    # Monthly
-    # ---
-    ff="${FLUXHEAD}_monthly_${year}${mon}.${FEXT}"
-    fin="$DIRIN/monthly/$year/$ff"
+    ff="${HEADFLX}_monthly_${year}${mon}.$FEXT"
+    fin="$DINFLX/monthly/$year/$ff"
 
     # Skip if file exists and not overwriting
-    nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;')
+    nmatch=$(ncdump -h "$fin" | grep -c '    :stage = "intermediate" ;' || true)
     [[ "$nmatch" -eq 0 ]] && continue
 
     # nccopy needs unique input and output files
@@ -113,19 +100,61 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     ncatted -O -h -a stage,global,d,, "$ftmp"
     mv "$ftmp" "$fin"
 
-    echo "$year/$mon: Processed monthly flux file"
+    echo "$year/$mon: Compressed monthly flux file"
+    echo ""
 done
 
-# CREATE CHECKSUMS
-# ===
+# Monthly checksum
+# ---
+# A reasonable? compromise to avoid races
+if [[ "$MONF" -eq 12 ]]; then
+    fin="${HEADFLX}_monthly_${year}??.$FEXT"
+    fchk="${HEADFLX}_monthly_${year}_sha256.txt"
+    (
+        cd "$DINFLX/monthly/$year" || exit
+
+        findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
+        # Only overwrite checksum if file(s) are newer than it
+        [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
+
+        fnew=$(find . "${findargs[@]}" -name "$fin")
+
+        if [[ ${#fnew} -gt 0 ]]; then
+            echo "$year: Creating flux checksum $fchk"
+            for ff in $fin; do
+                shasum -a 256 "$(basename "$ff")"
+            done > "$fchk"
+        fi
+
+        cd - > /dev/null || exit
+    )
+fi
 
 # PUBLISH
 # ===
-        mkdir -p "$ROOTPUB/$HEADOUT/3hrly/$year/$mon"
-        rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+# rsync will make sub-directories, but not root
+mkdir -p "$DOUTFLX"
+(
+    cd "$DINFLX" || exit
 
-        mkdir -p "$ROOTPUB/$HEADOUT/daily/$year/$mon"
-        rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+    # Make sure null file globs return empty lists
+    shopt -s nullglob
 
-mkdir -p "$ROOTPUB/$HEADOUT/monthly/$year"
-rsync -av "$fout" "$(echo $fout | sed -e "s?$ROOTOUT?$ROOTPUB?")"
+    flist=()
+    for mon in $(seq -f %02g "$MON0" "$MONF"); do
+        flist+=("3hrly/$year/$mon/${HEADFLX}_3hrly_${year}${mon}"*)
+        flist+=("daily/$year/$mon/${HEADFLX}_daily_${year}${mon}"*)
+        flist+=("monthly/$year/${HEADFLX}_monthly_${year}${mon}.$FEXT")
+    done
+    # A reasonable? compromise to avoid races
+    if [[ "$MONF" -eq 12 ]]; then
+        flist+=("monthly/$year/${HEADFLX}_monthly_${year}_sha256.txt")
+    fi
+
+    # Return to normal globbing
+    shopt -u nullglob
+
+    "$CPCMD" "${CPARGS[@]}" "${flist[@]}" "$DOUTFLX/" || exit $?
+
+    cd - > /dev/null || exit
+)

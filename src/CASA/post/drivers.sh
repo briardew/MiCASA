@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 BLURB="MiCASA driver post-processor"
 
@@ -7,46 +7,101 @@ BLURB="MiCASA driver post-processor"
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
-
-# Get and check arguments
 argparse "$(basename "$0")" "$BLURB" "$@"
-
-# Re-run setup in case $VERSION has changed
-. "$POSTDIR"/setup.sh
 
 # Outputs and warnings
 # ---
 echo "---"
 echo "$BLURB" 
 echo "---"
-echo "Input  directory: $VEGIN"
-echo "Output directory: $DIRVEG"
+echo "Input  directory: $DINDRV"
+echo "Output directory: $DOUTDRV"
 echo "Collection(s): cover, vegind, burn"
 echo "Year: $year"
+echo "Month(s): $MON0..$MONF"
 
-if [[ "$FORCE" == true ]]; then
-    echo ""
-    echo "WARNING: Overwriting existing files ..."
-fi
+warnings
 
-# Give a chance to abort
-if [[ "$BATCH" != true ]]; then
-    echo ""
-    read -n1 -s -r -p $"Press any key to continue ..." unused
-    echo ""
-fi
-
-# Build command and arguments
-CPCMD="rsync"
-CPARGS=("-av" "-R")
-$FORCE || CPARGS+=("--ignore-existing")
-
+# CHECKSUMS
+# ===
+# This can race if different years are run in parallel. Maybe just don't?
+fin="${PROD}_v${VER}_cover_${RES}_yearly_????.${FEXT}"
+fchk="${PROD}_v${VER}_cover_${RES}_yearly_sha256.txt"
 (
-cd "$VEGIN" || exit
+    cd "$DINDRV/cover" || exit
 
-"$CPCMD" "${CPARGS[@]}" "cover/*$year*" "$DIRVEG"
-"$CPCMD" "${CPARGS[@]}" "vegind/$year"  "$DIRVEG"
-"$CPCMD" "${CPARGS[@]}" "burn/$year"    "$DIRVEG"
+    findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
+    # Only overwrite checksum if file(s) are newer than it
+    [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
 
-cd - > /dev/null || exit
+    fnew=$(find . "${findargs[@]}" -name "$fin")
+
+    if [[ ${#fnew} -gt 0 ]]; then
+        echo "Creating cover checksum $fchk"
+        for ff in $fin; do
+            shasum -a 256 "$(basename "$ff")"
+        done > "$fchk"
+    fi
+
+    cd - > /dev/null || exit
+)
+# A reasonable? compromise to avoid races
+if [[ "$MONF" -eq 12 ]]; then
+    for tag in vegind burn; do
+        (
+            cd "$DINDRV/$tag/$year" || exit
+
+            for freq in daily monthly; do
+                fin="${PROD}_v${VER}_${tag}_${RES}_${freq}_${year}*.${FEXT}"
+                fchk="${PROD}_v${VER}_${tag}_${RES}_${freq}_${year}_sha256.txt"
+
+                findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
+                # Only overwrite checksum if file(s) are newer than it
+                [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
+
+                fnew=$(find . "${findargs[@]}" -name "$fin")
+
+                if [[ ${#fnew} -gt 0 ]]; then
+                    echo "$year: Creating $tag checksum $fchk"
+                    for ff in $fin; do
+                        shasum -a 256 "$(basename "$ff")"
+                    done > "$fchk"
+                fi
+            done
+
+            cd - > /dev/null || exit
+        )
+    done
+fi
+
+# PUBLISH
+# ===
+# rsync will make sub-directories, but not root
+mkdir -p "$DOUTDRV"
+echo ""
+(
+    cd "$DINDRV" || exit
+
+    # Make sure null file globs return empty lists
+    shopt -s nullglob
+
+    flist=()
+    # A reasonable? compromise to avoid races
+    if [[ "$MONF" -eq 12 ]]; then
+        flist+=("cover/${PROD}_v${VER}_cover_${RES}_yearly_"*)
+        flist+=("vegind/$year/${PROD}_v${VER}_vegind_${RES}_"*"_sha256.txt")
+        flist+=("burn/$year/${PROD}_v${VER}_burn_${RES}_"*"_sha256.txt")
+    fi
+    for mon in $(seq -f %02g "$MON0" "$MONF"); do
+        flist+=("vegind/$year/${PROD}_v${VER}_vegind_${RES}_"*"_$year$mon"*)
+        flist+=("burn/$year/${PROD}_v${VER}_burn_${RES}_"*"_$year$mon"*)
+    done
+
+    # Return to normal globbing
+    shopt -u nullglob
+
+    # Trailing slashes are necessary for rsync as is exit to capture SIGINT
+    "$CPCMD" "${CPARGS[@]}" "${flist[@]}" "$DOUTDRV/" || exit $?
+
+    cd - > /dev/null || exit
 )

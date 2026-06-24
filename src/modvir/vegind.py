@@ -67,7 +67,7 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
 
     nlat = kwnow['nlat']
     nlon = kwnow['nlon']
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     # Split full version (###-XYZ) into number (###) and domain (XYZ)
     vernum, _, domain = ver.partition('-')
@@ -146,11 +146,11 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
         + f'{round(lone[1] - lone[0], 3)} degree'
     )
     if not monthly:
-        shortname = f'{product.upper()}_VEGIND_D'
-        longname = f'{product} Daily Vegetation Indices {reslong}'
+        shortname = f'{prod.upper()}_VEGIND_D'
+        longname = f'{prod} Daily Vegetation Indices {reslong}'
     else:
-        shortname = f'{product.upper()}_VEGIND_M'
-        longname = f'{product} Monthly Vegetation Indices {reslong}'
+        shortname = f'{prod.upper()}_VEGIND_M'
+        longname = f'{prod} Monthly Vegetation Indices {reslong}'
     dtend = dtnow + timedelta(days=ndays) - timedelta(microseconds=1)
 
     # Strange syntax so attributes are in desired order
@@ -328,7 +328,7 @@ def build(dtbeg, dtend, **kwargs):
     # ---
     kwnow = fillargs(dtbeg, **kwargs)
 
-    product = kwnow['product']
+    prod = kwnow['prod']
     ver = kwnow['ver']
     restag = kwnow['restag']
     output = kwnow['output']
@@ -345,9 +345,9 @@ def build(dtbeg, dtend, **kwargs):
 
         # Output vars
         dirpre = path.join(output, 'vegpre', f'{year}')
-        headpre = path.join(dirpre, f'{product}_v{ver}_vegpre_{restag}_daily_')
+        headpre = path.join(dirpre, f'{prod}_v{ver}_vegpre_{restag}_daily_')
         dirout = path.join(output, 'vegind', f'{year}')
-        headout = path.join(dirout, f'{product}_v{ver}_vegind_{restag}_daily_')
+        headout = path.join(dirout, f'{prod}_v{ver}_vegind_{restag}_daily_')
 
         # Compute vegetation mask
         # ---
@@ -446,7 +446,7 @@ def build(dtbeg, dtend, **kwargs):
         # Compute monthly means
         # ---
         if dofill:
-            headmon = path.join(dirout, f'{product}_v{ver}_vegind_{restag}_monthly_')
+            headmon = path.join(dirout, f'{prod}_v{ver}_vegind_{restag}_monthly_')
             for mon in range(1, 13):
                 datemon = f'{year:04}{mon:02}'
                 fmon = headmon + datemon + '.' + FEXT
