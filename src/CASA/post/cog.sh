@@ -41,7 +41,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     for day in $(seq -f %02g 01 "$monlen"); do
         # BEWARE: Filenames have underscores that are valid in variable names
         # Being extra cautious about protecting variables with braces in file name
-        ff="${HEADFLX}_daily_${year}${mon}${day}.${FEXT}"
+        ff="${HEADFLX}_daily_${year}${mon}${day}.$FEXT"
         fin="$DOUTFLX/daily/$year/$mon/$ff"
 
         [[ -f "$fin" ]] && flist+=("$fin")
@@ -51,7 +51,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     mkdir -p "$DOUTCOG/daily/$year/$mon"
 
     # Add monthly file if present
-    ff="${HEADFLX}_monthly_${year}${mon}.${FEXT}"
+    ff="${HEADFLX}_monthly_${year}${mon}.$FEXT"
     fin="$DOUTFLX/monthly/$year/$ff"
     if [[ ${#flist[@]} -eq $monlen ]]; then
         flist+=("$fin")

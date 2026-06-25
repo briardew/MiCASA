@@ -24,27 +24,36 @@ warnings
 
 # CHECKSUMS
 # ===
-# This can race if different years are run in parallel. Maybe just don't?
-fin="${PROD}_v${VER}_cover_${RES}_yearly_????.${FEXT}"
-fchk="${PROD}_v${VER}_cover_${RES}_yearly_sha256.txt"
-(
-    cd "$DINDRV/cover" || exit
+echo ""
+# Land cover
+# ---
+# A reasonable? compromise to avoid races
+if [[ "$MON0" -eq 1 ]]; then
+    # This can race if different years are run in parallel. Maybe just don't?
+    fin="${PROD}_v${VER}_cover_${RES}_yearly_????.$FEXT"
+    fchk="${PROD}_v${VER}_cover_${RES}_yearly_sha256.txt"
+    (
+        cd "$DINDRV/cover" || exit
 
-    findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
-    # Only overwrite checksum if file(s) are newer than it
-    [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
+        findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
+        # Only overwrite checksum if file(s) are newer than it
+        [[ -f "$fchk" ]] && findargs+=("-newer" "$fchk")
 
-    fnew=$(find . "${findargs[@]}" -name "$fin")
+        fnew=$(find . "${findargs[@]}" -name "$fin")
 
-    if [[ ${#fnew} -gt 0 ]]; then
-        echo "Creating cover checksum $fchk"
-        for ff in $fin; do
-            shasum -a 256 "$(basename "$ff")"
-        done > "$fchk"
-    fi
+        if [[ ${#fnew} -gt 0 ]]; then
+            echo "Creating cover checksum $fchk"
+            for ff in $fin; do
+                shasum -a 256 "$(basename "$ff")"
+            done > "$fchk"
+        fi
 
-    cd - > /dev/null || exit
-)
+        cd - > /dev/null || exit
+    )
+fi
+
+# Vegetation index & Burned area
+# ---
 # A reasonable? compromise to avoid races
 if [[ "$MONF" -eq 12 ]]; then
     for tag in vegind burn; do
@@ -52,7 +61,7 @@ if [[ "$MONF" -eq 12 ]]; then
             cd "$DINDRV/$tag/$year" || exit
 
             for freq in daily monthly; do
-                fin="${PROD}_v${VER}_${tag}_${RES}_${freq}_${year}*.${FEXT}"
+                fin="${PROD}_v${VER}_${tag}_${RES}_${freq}_${year}*.$FEXT"
                 fchk="${PROD}_v${VER}_${tag}_${RES}_${freq}_${year}_sha256.txt"
 
                 findargs=("-mindepth" 1 "-maxdepth" 1 "-type" f)
@@ -77,8 +86,8 @@ fi
 # PUBLISH
 # ===
 # rsync will make sub-directories, but not root
-mkdir -p "$DOUTDRV"
 echo ""
+mkdir -p "$DOUTDRV"
 (
     cd "$DINDRV" || exit
 
@@ -87,15 +96,19 @@ echo ""
 
     flist=()
     # A reasonable? compromise to avoid races
-    if [[ "$MONF" -eq 12 ]]; then
-        flist+=("cover/${PROD}_v${VER}_cover_${RES}_yearly_"*)
-        flist+=("vegind/$year/${PROD}_v${VER}_vegind_${RES}_"*"_sha256.txt")
-        flist+=("burn/$year/${PROD}_v${VER}_burn_${RES}_"*"_sha256.txt")
+    if [[ "$MON0" -eq 1 ]]; then
+        flist+=("cover/${PROD}_v${VER}_cover_${RES}_yearly_$year.$FEXT")
+        flist+=("cover/${PROD}_v${VER}_cover_${RES}_yearly_sha256.txt")
     fi
     for mon in $(seq -f %02g "$MON0" "$MONF"); do
         flist+=("vegind/$year/${PROD}_v${VER}_vegind_${RES}_"*"_$year$mon"*)
         flist+=("burn/$year/${PROD}_v${VER}_burn_${RES}_"*"_$year$mon"*)
     done
+    # A reasonable? compromise to avoid races
+    if [[ "$MONF" -eq 12 ]]; then
+        flist+=("vegind/$year/${PROD}_v${VER}_vegind_${RES}_"*"_sha256.txt")
+        flist+=("burn/$year/${PROD}_v${VER}_burn_${RES}_"*"_sha256.txt")
+    fi
 
     # Return to normal globbing
     shopt -u nullglob

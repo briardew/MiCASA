@@ -133,6 +133,7 @@ fi
 # PUBLISH
 # ===
 # rsync will make sub-directories, but not root
+echo ""
 mkdir -p "$DOUTFLX"
 (
     cd "$DINFLX" || exit
