@@ -77,3 +77,5 @@ LATMIN = dotzero(lat(  1) - 0.5*(lat(2) - lat(1)));
 LATMAX = dotzero(lat(end) + 0.5*(lat(2) - lat(1))); 
 LONMIN = dotzero(lon(  1) - 0.5*(lon(2) - lon(1)));
 LONMAX = dotzero(lon(end) + 0.5*(lon(2) - lon(1))); 
+
+DAYSEC = 60.*60.*24.;						% Seconds in day

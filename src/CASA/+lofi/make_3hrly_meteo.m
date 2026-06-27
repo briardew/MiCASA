@@ -19,6 +19,9 @@ QBASE  = 1.5;					% Base of Q10 function
 % INITIALIZE
 %===============================================================================
 lofi.setup;
+% Compress these files since they are final
+DEFLATE = 9;
+SHUFFLE = true;
 
 LONGNAME  = [PRODUCT, ' 3-hourly Climatological Meteorology ', RESLONG];
 SHORTNAME = [upper(PRODUCT), '_METEO_3HC'];
@@ -148,10 +151,10 @@ for nyday = 1:365
         q10out(:,:,n3hr) = interp2(LAMX, LOMX, cxq10(:,:,n3hr), LA, LO, 'linear');
     end
 
-    % Output variables (DIRMET defined in setup)
+    % Output variables (METHEAD & DIRMET defined in setup)
     dnum = datenum(midYearClim,01,01) + nyday - 1;
     fbit = [METHEAD, datestr(dnum, 'yyyymmdd'), '.', FEXT];
-    fout = [DIRMET, '/', fbit];
+    fout = [DIRMET, '/climate/', fbit];
 
     fprintf(repmat('\b', 1, lenmsg));
     message = ['Writing ', fbit, ' ...'];
@@ -162,7 +165,7 @@ for nyday = 1:365
         if ~FORCE, continue; end
         [status, result] = system(['rm ', fout]);
     else
-        [status, result] = system(['mkdir -p ', DIRMET]);
+        [status, result] = system(['mkdir -p ', DIRMET, '/climate']);
     end
 
     times = dnum - DNUM0 + [0:3:21]'/24;

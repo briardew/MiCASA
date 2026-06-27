@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Defaults
+ROOTDEF="$HOME/Projects/MiCASA/data"
+FEXT="nc4"
+
 # Be strict about errors
 set -euo pipefail
 
@@ -12,21 +16,11 @@ source "$LMOD_PKG"/init/bash
 #module load nco/5.1.4						# Value used for v1
 module load nco
 
-# Public URL and on-prem directories
-SERVE="https://portal.nccs.nasa.gov/datashare/gmao/geos_carb"
-
-# Half-generic settings
-# ---
-# These should be better protected against something else defining them
-MIROOT=${MIROOT:-"$HOME/Projects/MiCASA"}
-ROOTPUB=${ROOTPUB:-"/css/gmao/geos_carb/pub/MiCASA"}
-
-FEXT="nc4"
-
 # Get and check arguments
 # ---
 usage() {
-    echo "usage: $1 [-h] [-m MON] [-p PROD] [-v VER] [-r RES] [-f] [-b] year"
+    echo "usage: $1 [-h] [-m MON] [-p PROD] [-v VER] [-r RES] [-i DIR] [-o DIR]" \
+        "[-f] [-b] year"
 }
 
 helpout() {
@@ -41,6 +35,8 @@ helpout() {
     echo "  -p PROD, --prod PROD  product name (default: MiCASA)"
     echo "  -v VER, --ver VER     version (default: NRT)"
     echo "  -r RES, --res RES     resolution (default: x3600_y1800)"
+    echo "  -i DIR, --input DIR   input root directory (default: $ROOTDEF)"
+    echo "  -o DIR, --output DIR  output root directory (default: $ROOTDEF)"
     echo "  -f, --force           overwrite files (default: False)"
     echo "  -b, --batch           operate in batch mode (default: False)"
 }
@@ -66,6 +62,8 @@ argparse() {
     PROD="MiCASA"
     VER="NRT"
     RES="x3600_y1800"
+    ROOTIN=$ROOTDEF
+    ROOTOUT=$ROOTDEF
     FORCE=false
     BATCH=false
 
@@ -102,6 +100,14 @@ argparse() {
                 RES="$2"
                 shift 2
                 ;;
+            -i|--input)
+                ROOTIN="$2"
+                shift 2
+                ;;
+            -o|--output)
+                ROOTOUT="$2"
+                shift 2
+                ;;
             -f|--force)
                 FORCE=true
                 shift
@@ -129,22 +135,45 @@ argparse() {
         esac
     done
 
+    # Get and check year
+    # ---
+    if [[ ${#POSARGS[@]} -eq 0 ]]; then
+        usage "$MYNAME" >&2
+        echo "$MYNAME: error: the following arguments are required: year" >&2
+        exit 1
+    fi
     year="${POSARGS[0]}"
     if [[ "${#POSARGS[@]}" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
         usage "$MYNAME" >&2
-        echo "$MYNAME: error: invalid year $year" >&2
+        echo "$MYNAME: error: argument year: invalid choice: \'$year\'" >&2
         exit 1
     fi
 
-    DINFLX="$MIROOT/data/v$VER/netcdf"
-    DINDRV="$MIROOT/data/v$VER/drivers"
-    DOUTFLX="$ROOTPUB/v$VER/netcdf"
-    DOUTDRV="$ROOTPUB/v$VER/drivers"
-    DOUTCOG="$ROOTPUB/v$VER/cog"
+    # Define derived variables
+    # ---
+    DINFLX="$ROOTIN/v$VER/netcdf"
+    DINDRV="$ROOTIN/v$VER/drivers"
+    DOUTFLX="$ROOTOUT/v$VER/netcdf"
+    DOUTDRV="$ROOTOUT/v$VER/drivers"
+    DOUTCOG="$ROOTOUT/v$VER/cog"
 
     HEADFLX="${PROD}_v${VER}_flux_$RES"
 
     CPCMD="rsync"
     CPARGS=("-av" "-R")
     $FORCE || CPARGS+=("--ignore-existing")
+}
+
+# Mostly so shellcheck won't complain
+debugargs() {
+    echo "MON0 = $MON0"
+    echo "MONF = $MONF"
+    echo "DINFLX = $DINFLX"
+    echo "DINDRV = $DINDRV"
+    echo "DOUTFLX = $DOUTFLX"
+    echo "DOUTDRV = $DOUTDRV"
+    echo "DOUTCOG = $DOUTCOG"
+    echo "HEADFLX = $HEADFLX"
+    echo "CPCMD = $CPCMD"
+    echo "CPARGS =" "${CPARGS[@]}"
 }

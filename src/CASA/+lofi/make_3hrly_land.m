@@ -72,8 +72,9 @@ for nyr = 1:TOTYRS
             else
                 sdm2 = sday;
             end
+            % Input variables (METHEAD & DIRMET defined in setup)
             fbit = [METHEAD, num2str(midYearClim), smon, sdm2, '.', FEXT];
-            fm2  = [DIRMET, '/', fbit];
+            fm2  = [DIRMET, '/climate/', fbit];
 
             disp(['Reading meteo data from ', fbit, ' ...']);
 
@@ -179,6 +180,7 @@ for nyr = 1:TOTYRS
             ncwriteatt(fout, '/', 'GranuleID',   fbit);
             ncwriteatt(fout, '/', 'history',     ...
                 ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
+            ncwriteatt(fout, '/', 'stage', 'intermediate');
         end
     end
     fprintf('\n');

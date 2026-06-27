@@ -7,6 +7,7 @@ BLURB="MiCASA driver post-processor"
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
+
 argparse "$(basename "$0")" "$BLURB" "$@"
 
 # Outputs and warnings
@@ -14,17 +15,18 @@ argparse "$(basename "$0")" "$BLURB" "$@"
 echo "---"
 echo "$BLURB" 
 echo "---"
-echo "Input  directory: $DINDRV"
-echo "Output directory: $DOUTDRV"
+echo "Input location: $DINDRV"
+echo "Output location: $DOUTDRV"
 echo "Collection(s): cover, vegind, burn"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
 warnings
 
+echo ""
+
 # CHECKSUMS
 # ===
-echo ""
 # Land cover
 # ---
 # A reasonable? compromise to avoid races
@@ -42,7 +44,8 @@ if [[ "$MON0" -eq 1 ]]; then
         fnew=$(find . "${findargs[@]}" -name "$fin")
 
         if [[ ${#fnew} -gt 0 ]]; then
-            echo "Creating cover checksum $fchk"
+            echo "Creating yearly cover checksum $fchk"
+            echo ""
             for ff in $fin; do
                 shasum -a 256 "$(basename "$ff")"
             done > "$fchk"
@@ -71,7 +74,8 @@ if [[ "$MONF" -eq 12 ]]; then
                 fnew=$(find . "${findargs[@]}" -name "$fin")
 
                 if [[ ${#fnew} -gt 0 ]]; then
-                    echo "$year: Creating $tag checksum $fchk"
+                    echo "$year: Creating $freq $tag checksum $fchk"
+                    echo ""
                     for ff in $fin; do
                         shasum -a 256 "$(basename "$ff")"
                     done > "$fchk"
@@ -86,7 +90,6 @@ fi
 # PUBLISH
 # ===
 # rsync will make sub-directories, but not root
-echo ""
 mkdir -p "$DOUTDRV"
 (
     cd "$DINDRV" || exit

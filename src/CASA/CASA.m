@@ -55,8 +55,7 @@ if lower(do_spinup_stage1(1)) == 'y'
 
             processData
         end
-        disp(['Year ', int2str(year), ', time used = ', ...
-            int2str(toc), ' seconds']);
+        disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
     end
 
     % Run carbon pools in equilibrium
@@ -78,21 +77,16 @@ if lower(do_spinup_stage1(1)) == 'y'
             saveData
         end
 
-        disp(['Year ', int2str(year), ', time used = ', ...
-            int2str(toc), ' seconds']);
+        disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
     end
 
     save([DIRRUN, '/spinup1.mat'], '-v7');
 else
     % The stage1 data only needs to be loaded if it is going to be used by stage2
     if lower(do_spinup_stage2(1)) == 'y'
-        % Use spinup in spinup directory if none present
         fspinup = [DIRRUN, '/spinup1.mat'];
-        if ~isfile(fspinup)
-            fspinup = [DIRRUN, '/spinup/spinup1.mat'];
-        end
 
-        % Allows sharing of spinup/restart across runs
+        % KEEPVARS allows sharing of spinup/restart across runs
         load(fspinup, '-regexp', KEEPVARS);
         defineConstants
     end
@@ -120,18 +114,14 @@ if lower(do_spinup_stage2(1)) == 'y'
             end
         end
 
-        disp(['Year ', int2str(year), ', time used = ', ...
-            int2str(toc), ' seconds']);
+        disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
     end
     save([DIRRUN, '/spinup2.mat'], '-v7');
 else
-    % Use spinup in spinup directory if none present
-    fspinup = [DIRRUN, '/spinup2.mat'];
-    if ~isfile(fspinup)
-        fspinup = [DIRRUN, '/spinup/spinup2.mat'];
-    end
+    % If no spinup is happening, load stage2 data from the spinup run
+    fspinup = [DIRRUN, '/spinup/spinup2.mat'];
 
-    % Allows sharing of spinup/restart across runs
+    % KEEPVARS allows sharing of spinup/restart across runs
     load(fspinup, '-regexp', KEEPVARS);
     defineConstants
 end
@@ -176,8 +166,7 @@ for year = startYear:endYear
 
     % Begin from restart if requested
     startStep = 1;
-    if year == startYear && lower(do_restart_load(1)) == 'y' ...
-        && isfile(frestart)
+    if year == startYear && lower(do_restart_load(1)) == 'y' && isfile(frestart)
         startStep = step + 1;
     end
 
@@ -212,6 +201,5 @@ for year = startYear:endYear
     if saveRestart, save(frestart, '-v7'); end
     saveRestart = 0;
 
-    disp(['Year ', int2str(year), ', time used = ', ...
-        int2str(toc), ' seconds']);
+    disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
 end

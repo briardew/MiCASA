@@ -16,7 +16,11 @@ DIROUT  = [DIRRUN, '/netcdf'];
 ADDHER = 1;					% Add herbivory to respiration?
 VARHER = 'HER';					% Herbivory variable name
 
-DAYSEC = 60.*60.*24.;
+% Compress monthly files since they are final
+if lower(do_daily(1)) ~= 'y'
+    DEFLATE = 9;
+    SHUFFLE = true;
+end
 
 % Collection definition structure
 colls = [ ...
@@ -492,7 +496,6 @@ for year = startYear:endYear
             ncwriteatt(fout, '/', 'GranuleID',   fbit);
             ncwriteatt(fout, '/', 'history',     ...
                 ['Created on ', datestr(now, 'yyyy-mm-ddTHH:MM:SS.FFF000')]);
-            ncwriteatt(fout, '/', 'stage', 'intermediate');
         end
     end
 

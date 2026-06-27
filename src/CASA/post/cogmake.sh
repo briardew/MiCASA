@@ -8,7 +8,6 @@ BLURB="MiCASA COG generator"
 POSTDIR=$(dirname "$(readlink -f "$0")")
 . "$POSTDIR"/setup.sh
 
-# Get and check arguments
 argparse "$(basename "$0")" "$BLURB" "$@"
 
 # Outputs and warnings
@@ -16,24 +15,18 @@ argparse "$(basename "$0")" "$BLURB" "$@"
 echo "---"
 echo "$BLURB" 
 echo "---"
-echo "Input  directory: $DOUTFLX"
-echo "Output directory: $DOUTCOG"
+echo "Input location: $DOUTFLX"
+echo "Output location: $DOUTCOG"
 echo "Collection: $HEADFLX"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
-if [[ "$FORCE" == true ]]; then
-    echo ""
-    echo "WARNING: Overwriting existing files ..."
-fi
+warnings
 
-# Give a chance to abort
-if [[ "$BATCH" != true ]]; then
-    echo ""
-    read -n1 -s -r -p $"Press any key to continue ..." unused
-    echo ""
-fi
+echo ""
 
+# Run
+# ---
 for mon in $(seq -f %02g "$MON0" "$MONF"); do
     # Get daily files
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")

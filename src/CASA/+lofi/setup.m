@@ -31,7 +31,7 @@ METHEAD  = [PRODUCT, '_v', VERSION, '_meteo_', CASARES, '_3hrly-climate_'];
 % Environment settings
 % ---
 DIROUT = [DIRRUN, '/netcdf'];
-DIRMET = [DIRRUN, '/drivers/meteo/climate'];		% Where to put climatological diurnal cycle
+DIRMET = [DIRRUN, '/meteo'];				% Where to put climatological diurnal cycle
 
 % Reanalysis files & grid data
 % ---
@@ -48,4 +48,3 @@ MOLMDRY =  28.965;					% kg/Kmole
 MOLMC   =  12.011;
 MOLMCO2 =  44.0098;					% MOLMC + 2*MOLMO
 PPMTOPG = MOLMC/MOLMDRY*MASSDRY;
-DAYSEC  = 60.*60.*24.;					% Seconds in day
