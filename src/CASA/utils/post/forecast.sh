@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# Brutal hack to persist for a specified number of days. Hope is to actually do
-# something scientifically defensible. Expect this script and its use to be
-# volatile.
+# Brutal hack for now to persist for a specified number of days. Hope is to actually do
+# something scientifically defensible. Add a climatological "velocity"? ML emulator?
+# Note: Even if you had a met forecast, you don't have a VI and BA forecast.
+# It may be better to try to train a forecast of MET -> BA, VI or MET, C0 -> PP, ER?
 
 BLURB="MiCASA flux forecasting" 
 # Default forecast length in days
@@ -12,9 +13,9 @@ NDAYSDEF=14
 # ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
-. "$POSTDIR"/setup.sh
+. "$POSTDIR/../../setup.sh"
 
-# Redefine the default argument parsing with our own
+# Redefine the default argument parsing
 # ---
 usage() {
     echo "usage: $1 [-h] [-p PROD] [-v VER] [-r RES] [-i DIR] [-o DIR] [-b]" \
@@ -30,21 +31,21 @@ helpout() {
     echo ""
     echo "options:"
     echo "  -h, --help            show this help message and exit"
-    echo "  -p PROD, --prod PROD  product name (default: MiCASA)"
-    echo "  -v VER, --ver VER     version (default: NRT)"
-    echo "  -r RES, --res RES     resolution (default: x3600_y1800)"
-    echo "  -i DIR, --input DIR   input root directory (default: $ROOTDEF)"
-    echo "  -o DIR, --output DIR  output root directory (default: $ROOTDEF)"
+    echo "  -p PROD, --prod PROD  product name (default: $PRODDEF)"
+    echo "  -v VER, --ver VER     version (default: $VERDEF)"
+    echo "  -r RES, --res RES     resolution (default: $RESDEF)"
+    echo "  -i DIR, --input DIR   input root directory (default: $DATADEF)"
+    echo "  -o DIR, --output DIR  output root directory (default: $DATADEF)"
     echo "  -b, --batch           operate in batch mode (default: False)"
 }
 
 argparse() {
     # Defaults
-    PROD="MiCASA"
-    VER="NRT"
-    RES="x3600_y1800"
-    ROOTIN=$ROOTDEF
-    ROOTOUT=$ROOTDEF
+    PROD=$PRODDEF
+    VER=$VERDEF
+    RES=$RESDEF
+    DATAIN=$DATADEF
+    DATAOUT=$DATADEF
     FORCE=true
     BATCH=false
 
@@ -74,11 +75,11 @@ argparse() {
                 shift
                 ;;
             -i|--input)
-                ROOTIN="$2"
+                DATAIN="$2"
                 shift 2
                 ;;
             -o|--output)
-                ROOTOUT="$2"
+                DATAOUT="$2"
                 shift 2
                 ;;
             -h|--help)
@@ -96,7 +97,7 @@ argparse() {
             *)
                 POSARGS+=("$1")
                 shift
-            ;;
+                ;;
         esac
     done
 
@@ -107,7 +108,10 @@ argparse() {
         echo "$MYNAME: error: the following arguments are required: date" >&2
         exit 1
     fi
-    DAYBEG=$(date -d "${POSARGS[0]}" +%F)
+    if ! DAYBEG=$(date -d "${POSARGS[0]}" +%F); then
+        usage "$MYNAME" >&2
+        exit 1
+    fi
 
     NDAYS=${POSARGS[1]:-$NDAYSDEF}
     if [[ "$NDAYS" -le 0 || 366 -gt "$NDAYS" ]]; then
@@ -117,8 +121,8 @@ argparse() {
 
     # Define derived variables
     # ---
-    DINFLX="$ROOTIN/v$VER/netcdf"
-    DOUTFLX="$ROOTOUT/v$VER/netcdf"
+    DINFLX="$DATAIN/v$VER/netcdf"
+    DOUTFLX="$DATAOUT/v$VER/netcdf"
     HEADFLX="${PROD}_v${VER}_flux_$RES"
 }
 

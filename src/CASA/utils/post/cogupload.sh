@@ -7,7 +7,7 @@ S3BUCKET="ghgc-data-store-develop"
 # ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
-. "$POSTDIR"/setup.sh
+. "$POSTDIR/../../setup.sh"
 
 argparse "$(basename "$0")" "$BLURB" "$@"
 
@@ -33,7 +33,7 @@ for mon in $(seq -f %02g "$MON0" "$MONF"); do
     flist+=("$DOUTCOG/daily/$year/$mon"*".tif")
     flist+=("$DOUTCOG/monthly/$year/$mon"*".tif")
     for ff in "${flist[@]}"; do
-        fbit=${ff#"$ROOTOUT"/}
+        fbit=${ff#"$DATAOUT"/}
         fbit=${fbit/\/cog/}
         fbit=${fbit/MiCASA/delivery\/micasa-carbon-flux}
 

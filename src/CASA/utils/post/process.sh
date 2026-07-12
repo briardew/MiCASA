@@ -8,7 +8,7 @@ BLURB="MiCASA flux post-processor"
 # ---
 # Fancy way to source setup and support symlinks, spaces, etc.
 POSTDIR=$(dirname "$(readlink -f "$0")")
-. "$POSTDIR"/setup.sh
+. "$POSTDIR/../../setup.sh"
 
 argparse "$(basename "$0")" "$BLURB" "$@"
 

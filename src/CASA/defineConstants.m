@@ -9,6 +9,10 @@ if ~exist('runname', 'var')
     error('The variable `runname` is undefined.');
 end
 
+% Constants
+% ---
+DAYSEC = 60.*60.*24.;						% Seconds in day
+
 % Meteorology
 % ---
 % NB: This will only work on systems that already have MERRA-2 or GEOS IT
@@ -38,13 +42,17 @@ VERCUT  = runname(2:icut);					% Version number w/o subletters
 
 % Default directories (can be overwritten)
 % ---
-DIRHEAD = '../..';						% Head directory (needs improvement; could be worse)
-DIRDATA = [DIRHEAD, '/data'];					% Directory under which all output goes
-DIRAUX  = [DIRHEAD, '/data-aux'];				% Directory holding inputs to be regridded/etc.
+% This needs to be improved
+if ~exist('DIRDATA', 'var')
+    DIRDATA = ['../../data'];					% Directory under which all output goes
+end
+DIRAUX  = [DIRDATA, '/../data-aux'];				% Directory holding inputs to be regridded/etc.
 DIRMODV = [DIRDATA, '/v', VERSION, '/drivers'];			% Directory holding MODIS/VIIRS driver data
 DIRMAPS = [DIRDATA, '/v', VERSION, '/maps'];
 DIRRUN  = [DIRDATA, '/', runname];
 
+% Version-specific settings
+% ---
 if strcmp(VERCUT, 'NRT')
     defineConstants_vNRT;
 elseif strcmp(VERCUT, '1')
@@ -70,6 +78,7 @@ INSTITUTION = 'NASA Goddard Space Flight Center';
 CONTACT = 'Brad Weir <brad.weir@nasa.gov>';
 PRODUCT = 'MiCASA';
 
+% Variables for metadata
 dotzero = @(xx) [num2str(xx), repmat('.0', floor(xx) == xx)];
 RESLONG = [dotzero(lat(2) - lat(1)), ' degree x ', ...
     dotzero(lon(2) - lon(1)), ' degree'];
@@ -77,5 +86,3 @@ LATMIN = dotzero(lat(  1) - 0.5*(lat(2) - lat(1)));
 LATMAX = dotzero(lat(end) + 0.5*(lat(2) - lat(1))); 
 LONMIN = dotzero(lon(  1) - 0.5*(lon(2) - lon(1)));
 LONMAX = dotzero(lon(end) + 0.5*(lon(2) - lon(1))); 
-
-DAYSEC = 60.*60.*24.;						% Seconds in day

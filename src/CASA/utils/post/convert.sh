@@ -21,7 +21,7 @@ DIROUT="/css/gmao/geos_carb/pub/MiCASA/v$VER/netcdf-0.5deg"
 
 # RUN
 module load nco
-OMP_NUM_THREADS=40
+export OMP_NUM_THREADS=40
 [[ "$FORCE" == true ]] && echo "WARNING: Overwriting existing files ..."
 
 if [[ ! -f "map_${GRIDIN}_to_${GRIDOUT}.nc" ]]; then

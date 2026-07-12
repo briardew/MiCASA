@@ -52,8 +52,6 @@ def get(dtnow, **kwargs):
     files = glob(headveg)
     if len(files) == 0 or kwnow['force']:
         files = download(granveg, dirveg, kwnow['force'])
-    if len(files) == 0:
-        raise EOFError('No granules found matching ' + granveg)
 
     return files
 
@@ -339,6 +337,7 @@ def build(dtbeg, dtend, **kwargs):
     doforce = kwnow['force']
     dotidy = kwnow['tidy']
 
+    ds = None
     dsold = None
     for year in range(dtbeg.year, dtend.year + 1):
         print(f'===    ________ {year}')

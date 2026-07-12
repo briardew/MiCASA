@@ -335,6 +335,7 @@ def build(dtbeg, dtend, **kwargs):
     doforce = kwnow['force']
     dotidy = kwnow['tidy']
 
+    ds = None
     for year in range(dtbeg.year, dtend.year + 1):
         print(f'===    ________ {year}')
 

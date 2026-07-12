@@ -30,13 +30,16 @@ YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
 DNOUT = [datenum(2024,10,01):now-2];
 
-% Need to make this more robust; for now, happy not referencing
-% my own nobackup; NB: This will only work on systems that already have QFED
-DIRHEAD = '../..';
-QFDIR   = [DIRHEAD, '/data-aux/QFED/v2.6r1/sfc'];
-QFNRT   = [DIRHEAD, '/data-aux/QFED/v2.6r1-nrt/sfc'];
-DIRIN   = [DIRHEAD, '/data/v',VERIN, '/drivers'];
-DIROUT  = [DIRHEAD, '/data/',runname,'/drivers'];
+% This needs to be improved
+if ~exist('DIRDATA', 'var')
+    DIRDATA = ['../../data'];					% Directory under which all output goes
+end
+DIRAUX  = [DIRDATA, '/../data-aux'];				% Directory holding inputs to be regridded/etc.
+% Note: This will only work on systems that already have QFED
+QFDIR   = [DIRAUX,  '/QFED/v2.6r1/sfc'];
+QFNRT   = [DIRAUX,  '/QFED/v2.6r1-nrt/sfc'];
+DIRIN   = [DIRDATA, '/v',VERIN, '/drivers'];
+DIROUT  = [DIRDATA, '/',runname,'/drivers'];
 
 % Low resolution for scaling factors
 dxlo  = 4;
@@ -104,7 +107,7 @@ avgqf = zeros(NLONQF, NLATQF, NBINS, 12);
 stdqf = zeros(NLONQF, NLATQF, NBINS, 12);
 maxqf = zeros(NLON, NLAT, NBINS);
 
-fclim = [DIRHEAD, '/data/', runname, '/maps/climate/burn.mat'];
+fclim = [DIRDATA, '/', runname, '/maps/climate/burn.mat'];
 if isfile(fclim) && ~FORCE
     disp('Loading climatologies ...');
     tic;

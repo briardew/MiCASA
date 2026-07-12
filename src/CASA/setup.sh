@@ -1,25 +1,64 @@
 #!/usr/bin/env bash
 
-# Defaults
-ROOTDEF="$HOME/Projects/MiCASA/data"
-FEXT="nc4"
-
 # Be strict about errors
 set -euo pipefail
 
-# NCCS Discover specific settings
+# Initialize environment
 # ---
-# NCO utilities
-source "$LMOD_PKG"/init/bash
-# Worthwhile to keep a record, but modules aren't consistent across
-# NCCS Discover nodes, especially over OS updates
-#module load nco/5.1.4						# Value used for v1
-module load nco
+# This initialization:
+#     1) Defines a collection of hosts to distribute jobs over,
+#     2) Activates the Python stack where MiCASA is installed,
+#     3) Loads NCO and Matlab/Octave
+# Theoretically, it's possible to do this all in .bashrc, but at least on NCCS Discover
+# we don't (yet). This adds a bit of system dependence, but it seems fine.
+
+if [[ "$HOSTNAME" =~ discover* || "$HOSTNAME" =~ borg* || "$HOSTNAME" =~ warp* ]]; then
+   SITE="NCCS"
+else
+   SITE="$HOSTNAME"
+fi
+
+if [[ "$SITE" == "NCCS" ]]; then
+    # 1) Define hosts to distribute jobs over
+    HOSTS=("discover31" "discover32" "discover33" "discover34" \
+        "discover35" "discover36")
+
+    # 2) Activate Python stack
+    # Conda is designed for interactive shells. It gets cranky when you don't source
+    # $HOME/.bashrc as below.
+    # shellcheck source=/home/bweir/.bashrc
+    . "$HOME/.bashrc"
+    conda activate
+
+    # 3) Load NCO and Matlab/Octave
+    # NCO & Matlab/Octave environment variables
+    # (Worthwhile to keep a record, but modules aren't consistent across OS versions)
+    #module load nco/5.1.4						# Value used for v1
+    #module load matlab/R2020a						# Value used for v1?
+    module load nco
+    module load matlab
+    # Redefine Matlab license
+    export MLM_LICENSE_FILE="27000@ace64:28000@ls1,28000@ls2,28000@ls3"
+    MATLAB="matlab -nosplash -nodesktop"
+else
+    # You're on your on here bud
+    HOSTS=("$HOSTNAME")
+    MATLAB="matlab -nosplash -nodesktop"
+fi
 
 # Get and check arguments
 # ---
+# Defaults
+PRODDEF="MiCASA"
+VERDEF="NRT"
+LATENCY="-2 days"					# String for date to determine latency
+RESDEF="x3600_y1800"
+ROOTDEF=$(realpath -s "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../..")
+DATADEF="$ROOTDEF/data"
+FEXT="nc4"
+
 usage() {
-    echo "usage: $1 [-h] [-m MON] [-p PROD] [-v VER] [-r RES] [-i DIR] [-o DIR]" \
+    echo "usage: $1 [-h] [-p PROD] [-v VER] [-r RES] [-m MON] [-i DIR] [-o DIR]" \
         "[-f] [-b] year"
 }
 
@@ -31,12 +70,12 @@ helpout() {
     echo ""
     echo "options:"
     echo "  -h, --help            show this help message and exit"
+    echo "  -p PROD, --prod PROD  product name (default: $PRODDEF)"
+    echo "  -v VER, --ver VER     version (default: $VERDEF)"
+    echo "  -r RES, --res RES     resolution (default: $RESDEF)"
     echo "  -m MON, --mon MON     only process month MON (default: None)"
-    echo "  -p PROD, --prod PROD  product name (default: MiCASA)"
-    echo "  -v VER, --ver VER     version (default: NRT)"
-    echo "  -r RES, --res RES     resolution (default: x3600_y1800)"
-    echo "  -i DIR, --input DIR   input root directory (default: $ROOTDEF)"
-    echo "  -o DIR, --output DIR  output root directory (default: $ROOTDEF)"
+    echo "  -i DIR, --input DIR   input root directory (default: $DATADEF)"
+    echo "  -o DIR, --output DIR  output root directory (default: $DATADEF)"
     echo "  -f, --force           overwrite files (default: False)"
     echo "  -b, --batch           operate in batch mode (default: False)"
 }
@@ -50,6 +89,7 @@ warnings() {
     # Give a chance to abort
     if [[ "$BATCH" != true ]]; then
         echo ""
+        # shellcheck disable=SC2034
         read -n1 -s -r -p $"Press any key to continue ..." unused
         echo ""
     fi
@@ -59,11 +99,11 @@ argparse() {
     # Defaults
     MON0=1
     MONF=12
-    PROD="MiCASA"
-    VER="NRT"
-    RES="x3600_y1800"
-    ROOTIN=$ROOTDEF
-    ROOTOUT=$ROOTDEF
+    PROD=$PRODDEF
+    VER=$VERDEF
+    RES=$RESDEF
+    DATAIN=$DATADEF
+    DATAOUT=$DATADEF
     FORCE=false
     BATCH=false
 
@@ -101,11 +141,11 @@ argparse() {
                 shift 2
                 ;;
             -i|--input)
-                ROOTIN="$2"
+                DATAIN="$2"
                 shift 2
                 ;;
             -o|--output)
-                ROOTOUT="$2"
+                DATAOUT="$2"
                 shift 2
                 ;;
             -f|--force)
@@ -131,7 +171,7 @@ argparse() {
             *)
                 POSARGS+=("$1")
                 shift
-            ;;
+                ;;
         esac
     done
 
@@ -143,7 +183,7 @@ argparse() {
         exit 1
     fi
     year="${POSARGS[0]}"
-    if [[ "${#POSARGS[@]}" -lt 1 || "$year" -lt 1000 || 3000 -lt "$year" ]]; then
+    if [[ "$year" -lt 1000 || 3000 -lt "$year" ]]; then
         usage "$MYNAME" >&2
         echo "$MYNAME: error: argument year: invalid choice: \'$year\'" >&2
         exit 1
@@ -151,11 +191,11 @@ argparse() {
 
     # Define derived variables
     # ---
-    DINFLX="$ROOTIN/v$VER/netcdf"
-    DINDRV="$ROOTIN/v$VER/drivers"
-    DOUTFLX="$ROOTOUT/v$VER/netcdf"
-    DOUTDRV="$ROOTOUT/v$VER/drivers"
-    DOUTCOG="$ROOTOUT/v$VER/cog"
+    DINFLX="$DATAIN/v$VER/netcdf"
+    DINDRV="$DATAIN/v$VER/drivers"
+    DOUTFLX="$DATAOUT/v$VER/netcdf"
+    DOUTDRV="$DATAOUT/v$VER/drivers"
+    DOUTCOG="$DATAOUT/v$VER/cog"
 
     HEADFLX="${PROD}_v${VER}_flux_$RES"
 
@@ -164,8 +204,10 @@ argparse() {
     $FORCE || CPARGS+=("--ignore-existing")
 }
 
-# Mostly so shellcheck won't complain
-debugargs() {
+# Mostly so shellcheck won't complain, but could come in handy
+argdebug() {
+    echo "HOSTS =" "${HOSTS[@]}"
+    echo "MATLAB = $MATLAB"
     echo "MON0 = $MON0"
     echo "MONF = $MONF"
     echo "DINFLX = $DINFLX"
@@ -174,6 +216,8 @@ debugargs() {
     echo "DOUTDRV = $DOUTDRV"
     echo "DOUTCOG = $DOUTCOG"
     echo "HEADFLX = $HEADFLX"
+    echo "LATENCY = $LATENCY"
+    echo "FEXT = $FEXT"
     echo "CPCMD = $CPCMD"
     echo "CPARGS =" "${CPARGS[@]}"
 }
