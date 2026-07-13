@@ -117,7 +117,7 @@ echo "---"
 echo "$BLURB"
 echo "---"
 echo "Output location: $DIRDATA/v$VER"
-echo "Dates: $daybeg..$dayend"
+echo "Date(s): $daybeg..$dayend"
 
 warnings
 

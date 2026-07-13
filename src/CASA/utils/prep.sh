@@ -160,7 +160,7 @@ echo "Output location: $DATADIR/v$VER"
 echo "Log location: $LOGDIR/v$VER"
 echo "Collection: $name"
 echo "Mode: $mode"
-echo "Dates: $daybeg..$dayend"
+echo "Date(s): $daybeg..$dayend"
 
 warnings
 

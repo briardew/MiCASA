@@ -29,8 +29,7 @@ subsection.
 1. Install the MiCASA Python package in editable mode following the instructions in
 `requirements.txt`.
 2. Run `modvir --help` to get an example of how to generate the MODIS/VIIRS files.
-3. Look at the utilities in `src/CASA/prep` to get an idea of how to generate
-and update MODIS/VIIRS inputs.
+3. Use the utility `src/CASA/utils/prep.sh` to batch generate inputs.
 
 *NOTE*: MiCASA was originally designed to run on NASA high-performance
 computing assets. Mirroring the entire `MCD12Q1`, `MOD44B`, `MCD43A4`, and
@@ -41,13 +40,22 @@ easier.  We also plan to archive the inputs we use so that the user need not
 reproduce this step.  Nevertheless, these files will be about 4GB per year, so
 about 100GB total for the entire 24+ year record.
 
+### Run names
+Running MiCASA requies setting the variable `runname`. This variable determines
+which settings to use in `defineConstants.m`. While any choice of setting
+should be possible for a given `runname`, we leave some generic processing
+options open for ease of use. In general:
+* MODIS/VIIRS driver data is read from `data/runname/drivers`.
+* Factorial runs can be denoted with a slash, e.g., `runname/XYZ` will use the
+  driver data, maps, and meteorology from `runname`.
+
 ### Spinning up
 1. Build the climatological and annual inputs needed for spin-up. Change into
 the `src/CASA` directory and run the following in Matlab/Octave:
     ```
     runname = 'v1/spinup';
-    makeCASAinputClim;
-    makeCASAinputAnnual;
+    makeCASAmapsClim;
+    makeCASAmapsAnnual;
     ```
 2. Run monthly CASA to spin up. Run the following in Matlab/Octave:
     ```
@@ -63,12 +71,12 @@ runname = 'v1';
 CASA;
 convertOutput;
 lofi.make_sink;
+lofi.make_3hrly_meteo;
 lofi.make_3hrly_land;
 ```
-If desired, run the post-processing from the root directory:
+If desired, run the post-processing
 ```
-cd ../..
-./bin/post/process.sh
+./utils/post/batch.sh process.sh
 ```
 
 This will end once the MODIS/VIIRS inputs end. To continue, simply update the
