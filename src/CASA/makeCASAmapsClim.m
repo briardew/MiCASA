@@ -26,7 +26,8 @@ if lower(do_deprecated(1)) == 'y'
     interpms = {interpms{:}, 'nearest',  'linear',       'nearest'};
 else
     % Eventually want to have an OPeNDAP URL option
-    fmaps = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, '_climate.nc4'];
+    fmaps = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, '_climate_', ...
+        num2str(startYearClim), '.', FEXT];
 end
 
 for ii = 1:length(datasets)
@@ -278,9 +279,6 @@ totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon, RADIUS);
 total = totre .* weight;
 
 %% CASA-specific stuff
-% *** THIS MAY ALSO HAVE A BUG ***
-% If everything needs to be per m2 of tree/herb/defo, then this would need
-% should be?: SINK = SINK./FHC;
 SINK = flipud(total');
 
 EMAX = 0.40 * ones(size(SINK));
@@ -290,8 +288,10 @@ EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
 % Adjustment to better match past CASAs
 EMAX = EMAX * 1.07;
 
-% bweir: this is the FTC/FHC BUG TEST
-SINK = SINK./FHC;
+% Pretty self explanatory
+if lower(do_v1_bugs(1)) == 'n'
+    SINK = SINK./FHC;
+end
 
 datasets = {'SINK', 'EMAX'};
 for ii = 1:length(datasets)
@@ -357,11 +357,11 @@ elseif NSOILDAT == 2
     fill = flipud(ncread(fin, 't_fill')');
 end
 
-% *** MAY HAVE A BUG ***
-% I think we may have wanted to do:
-% bweir: this is the FTC/FHC BUG TEST
-ORGC_top = ORGC_top./(FTC + FHC);
-ORGC_sub = ORGC_sub./(FTC + FHC);
+% Pretty self explanatory
+if lower(do_v1_bugs(1)) == 'n'
+    ORGC_top = ORGC_top./(FTC + FHC);
+    ORGC_sub = ORGC_sub./(FTC + FHC);
+end
 
 %%% Soil texture class
 % Percentages of sand-silt-clay from Potter et al. (1993)

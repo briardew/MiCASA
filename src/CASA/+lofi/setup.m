@@ -9,12 +9,6 @@
 % Run settings
 % ---
 defineConstants;
-% Define climatology midpoint, make sure it's not a leap year
-midYearClim = floor((startYearClim + endYearClim)/2);
-if mod(midYearClim, 4) == 0 && (mod(midYearClim, 100) ~= 0 ...
-    || mod(midYearClim, 400) == 0)
-    midYearClim = midYearClim + 1;
-end
 
 FORCE  = lower(do_force(1)) == 'y';			% Force overwrite files?
 GCBTAG = '2023-v1.1';					% GCB version to use for sink size
@@ -26,7 +20,7 @@ RIVER  = 0.78;
 % Product settings
 % ---
 FLUXHEAD = [PRODUCT, '_v', VERSION, '_flux_',  CASARES];
-METHEAD  = [PRODUCT, '_v', VERSION, '_meteo_', CASARES, '_3hrly-climate_'];
+METHEAD  = [PRODUCT, '_v', VERSION, '_meteo_', CASARES, '_climate_'];
 
 % Environment settings
 % ---

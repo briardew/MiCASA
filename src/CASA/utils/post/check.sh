@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA validation check"
 
 # Process settings & arguments
@@ -17,9 +20,8 @@ DIRCHECK="$DATAIN/v$VER"
 echo "---"
 echo "$BLURB"
 echo "---"
-echo "Input location: $DIRCHECK"
-echo "Output location: N/A"
-echo "Collection(s): $HEADFLX"
+echo "Check location: $DIRCHECK"
+echo "Collection(s): ${COLSOUT[*]}"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 

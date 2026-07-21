@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA COG uploader"
 S3BUCKET="ghgc-data-store-develop"
 
@@ -18,7 +21,6 @@ echo "$BLURB"
 echo "---"
 echo "Input location: $DOUTCOG"
 echo "Output location: $S3BUCKET"
-echo "Collection: $HEADFLX"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 

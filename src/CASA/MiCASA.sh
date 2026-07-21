@@ -4,6 +4,9 @@
 # Long-term the hope is to make it a one-stop shop, but we'll probably convert
 # to Python first. To do a retrospective run, see the instructions in the README.
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="Run MiCASA"
 
 # Process settings & arguments
@@ -20,8 +23,8 @@ usage() {
 }
 
 # Defaults (NRT)
-daybeg=$(date -d "$LATENCY" +%F)			# $LATENCY defined in setup.sh
-dayend=$(date -d "$LATENCY" +%F)			# $LATENCY defined in setup.sh
+daybeg=$(date -d "-$LATENCY days" +%F)					# $LATENCY defined in setup.sh
+dayend=$(date -d "-$LATENCY days" +%F)					# $LATENCY defined in setup.sh
 
 helpout() {
     echo "$1"

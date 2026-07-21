@@ -124,9 +124,9 @@ end
 if ADDHER, disp('Adding herbivory to respiration ...'); end
 
 % For extracting variables
-fspinup = [DIRRUN, '/spinup1.mat'];
+fspinup = [DIRRUN, '/spinup2.mat'];
 if ~isfile(fspinup)
-    fspinup = [DIRRUN, '/spinup/spinup1.mat'];
+    fspinup = [DIRRUN, '/spinup/spinup2.mat'];
 end
 vaux = load(fspinup, 'mask', 'latitude');
 mast = vaux.mask';

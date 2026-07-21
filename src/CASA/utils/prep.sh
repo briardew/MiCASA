@@ -9,6 +9,9 @@
 # will cause whichever finishes second to crash trying to write the same cover file.
 # So it's a good idea to run cover first for safety.
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA prepare drivers"
 
 # Process settings & arguments
@@ -25,8 +28,8 @@ usage() {
 }
 
 # Defaults
-daybeg="2000-02-24"					# First day of MCD43A4
-dayend="$(date -d "$LATENCY" +%F)"			# $LATENCY defined in setup.sh
+daybeg="2000-02-24"							# First day of MCD43A4
+dayend="$(date -d "-$LATENCY days" +%F)"				# $LATENCY defined in setup.sh
 
 helpout() {
     echo "$1"
@@ -174,7 +177,7 @@ NUMHOSTS=${#HOSTS[@]}
 # Weird synatx to support spaces in variable names
 # Doesn't support --res at this time
 MVARGS=("$name" "--mode" "$mode" "--prod" '"'"$PROD"'"' "--ver" '"'"$VER"'"' \
-    "--output" '"'"$DATADIR/v$VER/drivers"'"')
+    "--res" '"'"$RES"'"' "--output" '"'"$DATADIR/v$VER/drivers"'"')
 [[ "$FORCE" == true ]] && MVARGS+=("--force")
 
 YEAR0=$(date -d "$daybeg" +%Y)

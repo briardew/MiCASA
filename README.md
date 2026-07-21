@@ -53,13 +53,13 @@ options open for ease of use. In general:
 1. Build the climatological and annual inputs needed for spin-up. Change into
 the `src/CASA` directory and run the following in Matlab/Octave:
     ```
-    runname = 'v1/spinup';
+    runname = 'v1A/spinup';
     makeCASAmapsClim;
     makeCASAmapsAnnual;
     ```
 2. Run monthly CASA to spin up. Run the following in Matlab/Octave:
     ```
-    runname = 'v1/spinup';
+    runname = 'v1A/spinup';
     CASA;
     ```
 
@@ -67,7 +67,7 @@ the `src/CASA` directory and run the following in Matlab/Octave:
 Once inputs are built and the monthly spin-up is done, you can run daily CASA in
 Matlab/Octave by doing the following:
 ```
-runname = 'v1';
+runname = 'v1A';
 CASA;
 convertOutput;
 lofi.make_sink;

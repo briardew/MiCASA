@@ -5,6 +5,9 @@
 # breaks years up and sends them to different servers to generate the data in a
 # feasible amount of time.
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA batch post-processing" 
 
 # Process settings
@@ -17,7 +20,7 @@ POSTDIR=$(dirname "$(readlink -f "$0")")
 # ---
 # Defaults
 YEAR0=2001
-YEARF=$(date -d "$LATENCY" +%Y)				# $LATENCY defined in setup.sh
+YEARF=$(date -d "-$LATENCY days" +%Y)					# $LATENCY defined in setup.sh
 
 helpout() {
     echo "$1"
@@ -145,7 +148,8 @@ warnings
 
 # Run
 # ---
-CMDARGS=("--prod" '"'"$PROD"'"' "--ver" '"'"$VER"'"' "--output" '"'"$DATADIR"'"')
+CMDARGS=("--prod" '"'"$PROD"'"' "--ver" '"'"$VER"'"' "--res" '"'"$RES"'"' \
+    "--output" '"'"$DATADIR"'"')
 [[ "$FORCE" == true ]] && CMDARGS+=("--force")
 
 for year in $(seq "$YEAR0" "$YEARF"); do

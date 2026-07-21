@@ -359,8 +359,10 @@ def build(dtbeg, dtend, **kwargs):
             kwcov['regrid'] = True
             dscov = cover.build(dtnow, dtnow, **kwcov)
 
-            # Recall values have a singleton time dim
-            ftype = dscov['ftype'].values[0, :, :, :]
+            ftype = dscov['ftype'].values
+            # Remove singleton time dim (and support older versions without)
+            if len(ftype.shape) == 4:
+                ftype = ftype[0, :, :, :]
             # Will need to make this a function in the class (remember
             # 0 indexing): Unclassified (17), water bodies (16), snow/ice (14)
             # Not excluding wetlands (closer to GIMMS)
@@ -419,6 +421,9 @@ def build(dtbeg, dtend, **kwargs):
                     if dsold is not None:
                         ndvi = ds['NDVI'].values
                         ndvi0 = dsold['NDVI'].values
+                        # Hack to support 2D arrays from earlier versions
+                        if len(ndvi0.shape) == 2:
+                            ndvi0 = ndvi0[None, :]
 
                         iold = ~np.isnan(ndvi0) & np.isnan(ndvi)
                         inew = ~np.isnan(ndvi0) & ~np.isnan(ndvi)

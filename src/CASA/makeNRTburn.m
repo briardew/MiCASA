@@ -28,7 +28,9 @@ runname = 'vNRT'; defineConstants;
 VERIN = '1';
 YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
-DNOUT = [datenum(2024,10,01):now-2];
+LATENCY = getenv('LATENCY');
+if isempty(LATENCY), LATENCY = 2; end
+DNOUT = [datenum(2024,10,01):now-LATENCY];
 
 % This needs to be improved
 if ~exist('DIRDATA', 'var')
@@ -168,11 +170,11 @@ end
 disp('Computing dailies ...');
 tic;
 % Bit of a hack ***FIXME***
-fvcf = [DIRIN, '/cover/', PRODUCT, '_v', VERIN, '_cover_', MODVRES, ...
+fcov = [DIRIN, '/cover/', PRODUCT, '_v', VERIN, '_cover_', MODVRES, ...
     '_yearly_2024.nc4'];
-maxba(:,:,1) = area .* ncread(fvcf, 'ftree');
-maxba(:,:,2) = area .* ncread(fvcf, 'ftree');
-maxba(:,:,3) = area .* ncread(fvcf, 'fherb');
+maxba(:,:,1) = area .* ncread(fcov, 'ftree');
+maxba(:,:,2) = area .* ncread(fcov, 'ftree');
+maxba(:,:,3) = area .* ncread(fcov, 'fherb');
 
 for id = 1:numel(DNOUT)
     dnum = DNOUT(id);

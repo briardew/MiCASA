@@ -110,6 +110,8 @@ for nyear = startYear:endYear
         fbit = [FLUXHEAD, '_monthly_', syear, smon, '.', FEXT];
         fout = [DIROUT, '/monthly/', syear, '/', fbit];
 
+        if ~isfile(fout), continue; end
+
         npp  = ncread(fout, 'NPP');
         hetr = ncread(fout, 'Rh');
         sink = monsink/monlen;

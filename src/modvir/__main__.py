@@ -33,8 +33,13 @@ parser.add_argument(
 )
 parser.add_argument('-v', '--ver', type=str, default=defaults['ver'], help='version')
 parser.add_argument(
-    '--beg', metavar='YYYY-MM-DD', type=str,
+    '--beg', dest='beg', metavar='YYYY-MM-DD', type=str,
     default=defaults['dtbeg'].strftime('%Y-%m-%d'), help='begin date',
+)
+# Allow people to waste their time typing extra characters
+parser.add_argument(
+    '--begin', dest='beg', metavar='YYYY-MM-DD', type=str,
+    default=defaults['dtbeg'].strftime('%Y-%m-%d'), help=argparse.SUPPRESS,
 )
 parser.add_argument(
     '--end', metavar='YYYY-MM-DD', type=str,

@@ -24,7 +24,7 @@ if lower(do_deprecated(1)) == 'y'
 else
     datasets = {datasets{:}, 'sand', 'silt', 'clay'};
     fmaps = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, ...
-        '_climate.nc4'];
+        '_climate_', num2str(startYearClim), '.', FEXT];
     for ii = 1:length(datasets)
         xout = flipud(ncread(fmaps, datasets{ii})');
         eval([datasets{ii} ' = xout;']);

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA driver post-processor"
 
 # Process settings & arguments

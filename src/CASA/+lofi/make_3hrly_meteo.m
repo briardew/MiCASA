@@ -152,7 +152,7 @@ for nyday = 1:365
     end
 
     % Output variables (METHEAD & DIRMET defined in setup)
-    dnum = datenum(midYearClim,01,01) + nyday - 1;
+    dnum = datenum(startYearClim,01,01) + nyday - 1;
     fbit = [METHEAD, datestr(dnum, 'yyyymmdd'), '.', FEXT];
     fout = [DIRMET, '/climate/', fbit];
 
@@ -175,14 +175,14 @@ for nyday = 1:365
     ncwriteatt(fout, 'time', 'long_name','time');
     ncwriteatt(fout, 'time', 'units',TSTAMP);
     ncwriteatt(fout, 'time', 'calendar','proleptic_gregorian');
-    ncwriteatt(fout, 'time', 'bounds','time_bnds');
+    ncwriteatt(fout, 'time', 'climatology','clim_bnds');
     ncwrite(   fout, 'time', times);
 
-    nccreate(  fout, 'time_bnds', ...
+    nccreate(  fout, 'clim_bnds', ...
         'dimensions',{'nv',2, 'time',inf}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-    ncwriteatt(fout, 'time_bnds', 'long_name','time bounds');
-    ncwrite(   fout, 'time_bnds', [times'; times' + times(2)-times(1)]);
+    ncwriteatt(fout, 'clim_bnds', 'long_name','climatology bounds');
+    ncwrite(   fout, 'clim_bnds', [times'; times' + times(2)-times(1)]);
 
     nccreate(  fout, 'lat', 'dimensions',{'lat',NLAT}, ...
         'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);

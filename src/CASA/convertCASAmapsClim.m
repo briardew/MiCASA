@@ -2,7 +2,7 @@ defineConstants;
 
 % DIRMAPS is also the read directory, so it needs to exist
 fout = [DIRMAPS, '/', PRODUCT, '_v', VERSION, '_maps_', CASARES, ...
-    '_monthly-climate.nc4'];
+    '_climate_', num2str(startYearClim), '.', FEXT];
 
 % Datasets to convert
 % Could be fancy here and also create a data structure of attributes

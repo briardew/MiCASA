@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA COG generator"
 
 # Process settings & arguments
@@ -17,7 +20,7 @@ echo "$BLURB"
 echo "---"
 echo "Input location: $DOUTFLX"
 echo "Output location: $DOUTCOG"
-echo "Collection: $HEADFLX"
+echo "Collection(s): flux"
 echo "Year: $year"
 echo "Month(s): $MON0..$MONF"
 
@@ -27,6 +30,7 @@ echo ""
 
 # Run
 # ---
+HEADFLX="${PROD}_v${VER}_flux_$RES"
 for mon in $(seq -f %02g "$MON0" "$MONF"); do
     # Get daily files
     monlen=$(date -d "$year/$mon/1 + 1 month - 1 day" "+%d")

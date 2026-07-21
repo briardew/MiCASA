@@ -119,7 +119,10 @@ if lower(do_spinup_stage2(1)) == 'y'
     save([DIRRUN, '/spinup2.mat'], '-v7');
 else
     % If no spinup is happening, load stage2 data from the spinup run
-    fspinup = [DIRRUN, '/spinup/spinup2.mat'];
+    fspinup = [DIRRUN, '/spinup2.mat'];
+    if ~isfile(fspinup)
+        fspinup = [DIRRUN, '/spinup/spinup2.mat'];
+    end
 
     % KEEPVARS allows sharing of spinup/restart across runs
     load(fspinup, '-regexp', KEEPVARS);
@@ -176,7 +179,8 @@ for year = startYear:endYear
         % Allow for soft exiting when we've run out of input
         try
             updateCASAinput
-        catch
+        catch ME
+            fprintf(2, '%s\n', getReport(ME));
             disp(['Could not load driver data for step ', num2str(step), ' ...']);
             step = step - 1;
             break;

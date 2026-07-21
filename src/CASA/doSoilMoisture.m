@@ -132,7 +132,7 @@ else
     bgmoist  = bgmoist  + 2/molen_*(bgmoist_temp  - bgmoist0);
 
     % This poorly vetted approach could go negative, testing consequences
-    if lower(do_soilm_bug(1)) == 'n'
+    if lower(do_v1_bugs(1)) == 'n'
         pack  = max(0, pack);
         soilm = max(0, soilm);
     end

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 # Be strict about errors
+# Note: This is turned off at the end and must be added at the top of each script.
+# Otherwise, sourcing from an interactive shell will keep it on for the shell, which
+# will cause it to exit on any error.
 set -euo pipefail
 
 # Initialize environment
@@ -24,10 +27,7 @@ if [[ "$SITE" == "NCCS" ]]; then
         "discover35" "discover36")
 
     # 2) Activate Python stack
-    # Conda is designed for interactive shells. It gets cranky when you don't source
-    # $HOME/.bashrc as below.
-    # shellcheck source=/home/bweir/.bashrc
-    . "$HOME/.bashrc"
+    eval "$(conda shell.bash hook)"
     conda activate
 
     # 3) Load NCO and Matlab/Octave
@@ -51,11 +51,13 @@ fi
 # Defaults
 PRODDEF="MiCASA"
 VERDEF="NRT"
-LATENCY="-2 days"					# String for date to determine latency
+LATENCY="2"								# Latency in number of days
 RESDEF="x3600_y1800"
 ROOTDEF=$(realpath -s "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../..")
 DATADEF="$ROOTDEF/data"
 FEXT="nc4"
+COLSOUT=("flux" "extra" "fire")						# Output collections
+COLSPUB=("flux")							# Public collections
 
 usage() {
     echo "usage: $1 [-h] [-p PROD] [-v VER] [-r RES] [-m MON] [-i DIR] [-o DIR]" \
@@ -197,8 +199,6 @@ argparse() {
     DOUTDRV="$DATAOUT/v$VER/drivers"
     DOUTCOG="$DATAOUT/v$VER/cog"
 
-    HEADFLX="${PROD}_v${VER}_flux_$RES"
-
     CPCMD="rsync"
     CPARGS=("-av" "-R")
     $FORCE || CPARGS+=("--ignore-existing")
@@ -210,14 +210,19 @@ argdebug() {
     echo "MATLAB = $MATLAB"
     echo "MON0 = $MON0"
     echo "MONF = $MONF"
+    echo "PROD = $PROD"
+    echo "RES = $RES"
     echo "DINFLX = $DINFLX"
     echo "DINDRV = $DINDRV"
     echo "DOUTFLX = $DOUTFLX"
     echo "DOUTDRV = $DOUTDRV"
     echo "DOUTCOG = $DOUTCOG"
-    echo "HEADFLX = $HEADFLX"
+    echo "COLSOUT = ${COLSOUT[*]}"
+    echo "COLSPUB = ${COLSPUB[*]}"
     echo "LATENCY = $LATENCY"
     echo "FEXT = $FEXT"
     echo "CPCMD = $CPCMD"
-    echo "CPARGS =" "${CPARGS[@]}"
+    echo "CPARGS = ${CPARGS[*]}"
 }
+
+set +euo pipefail

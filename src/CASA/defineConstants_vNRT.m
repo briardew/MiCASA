@@ -18,18 +18,18 @@ startYear = 2024;						% First year with interannual data
 endYear   = dvec(1);						% Last  year with interannual data
 startYearClim = 2003;						% First year to use in climatology
 endYearClim   = 2012;						% Last  year to use in climatology
-startYearTime = 1980;						% First year to use in time stamp
+startYearTime = 1980;						% First year to use in time variable
 
 % Run switches
 % ---
+do_force = 'n';							% Force overwrite
 do_daily = 'y';							% Run at a daily timestep (alternative is monthly)
 do_spinup_stage1 = 'n';						% Do first  stage spin-up (as opposed to loading it)
 do_spinup_stage2 = 'n';						% Do second stage spin-up (as opposed to loading it)
-do_restart_load  = 'y';						% Load workspace to start
-
-do_force      = 'n';						% Force overwrite
+do_restart_load = 'y';						% Load workspace to start
 do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
-do_soilm_bug  = 'y';						% Reproduce bug that allowed soil moisture to go negative
+% New choices
+do_v1_bugs = 'n';						% Reproduce version 1 bugs
 do_meteo_type = 'geosit';					% Meteorology type (merra2, geosit)
 
 % MODIS/VIIRS input grid

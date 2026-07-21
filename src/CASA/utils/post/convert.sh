@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-# Converts to a lower resolution
+# This script converts outputs to a lower resolution. It is currently discover-specific
+# as I haven't cared to generalize it yet.
+
+# Be strict about errors
+set -euo pipefail
 
 FORCE=false
 YEAR0=2001

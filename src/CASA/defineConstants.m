@@ -63,12 +63,11 @@ else
     error(['Was unable to parse a valid version from the runname: ', runname]);
 end
 
-FORCE = lower(do_force(1)) == 'y';				% Force overwrite existing files?
-
 % File output
 % ---
-FEXT    = 'nc4';
-FORMAT  = 'netcdf4';
+FORCE  = lower(do_force(1)) == 'y';				% Force overwrite existing files?
+FEXT   = 'nc4';
+FORMAT = 'netcdf4';
 % We compress in post since it is very time consuming and Discover limits compute
 % jobs to 24 hours
 DEFLATE = 0;

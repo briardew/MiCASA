@@ -1,3 +1,16 @@
+For vNRT
+---
+TODO:
+* Fix `makeNRTburn` timeframe (should it use values in `defineConstants`?)
+* Fix `MiCASA` timeframe: Currently will just run CASA until drivers run out,
+  but in NRT mode will forecast from end date.
+
+Know before you go:
+1. Run `makeCASAmapsClim`
+2. Run `makeCASAmapsAnnual` (for new `lofi.make_sink_temp` approach)
+2. Run `lofi.make_3hrly_meteo`
+3. Move data directory to CSS (make sure we can write there)
+
 For v1A and v1B
 ---
 1. Fully move to GEOS IT (need to redo meteo climatology for sink)

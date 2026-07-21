@@ -5,6 +5,9 @@
 # Note: Even if you had a met forecast, you don't have a VI and BA forecast.
 # It may be better to try to train a forecast of MET -> BA, VI or MET, C0 -> PP, ER?
 
+# Be strict about errors
+set -euo pipefail
+
 BLURB="MiCASA flux forecasting" 
 # Default forecast length in days
 NDAYSDEF=14
@@ -137,7 +140,7 @@ echo "$BLURB"
 echo "---"
 echo "Input location: $DOUTFLX"
 echo "Output location: $DOUTFLX"
-echo "Collection: $HEADFLX"
+echo "Collection(s): $HEADFLX"
 echo "Start date: $DAYBEG"
 echo "Num days: $NDAYS"
 

@@ -73,7 +73,7 @@ for nyr = 1:TOTYRS
                 sdm2 = sday;
             end
             % Input variables (METHEAD & DIRMET defined in setup)
-            fbit = [METHEAD, num2str(midYearClim), smon, sdm2, '.', FEXT];
+            fbit = [METHEAD, num2str(startYearClim), smon, sdm2, '.', FEXT];
             fm2  = [DIRMET, '/climate/', fbit];
 
             disp(['Reading meteo data from ', fbit, ' ...']);
