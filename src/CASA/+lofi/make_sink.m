@@ -6,8 +6,8 @@
 % 2024-10-11	New version for MiCASA
 %===============================================================================
 
-RESWGT  = 0.0;			% Have tested 0.25 in the past
-SINKWGT = 0.16;
+RESWGT  = 0.0;						% Have tested 0.25 in the past
+SINKWGT = 0.16;						% Hand-tuned, meant to be rough
 SINKVAR = 'ATMC';
 
 % INITIALIZE
@@ -16,10 +16,10 @@ lofi.setup;
 
 % Build sink weights
 lofi.make_sink_growth;
-if strcmp(VERSION,'1')
-    lofi.make_sink_temp_v1;
-else
+if lower(do_v1_bugs(1)) == 'n'
     lofi.make_sink_temp;
+else
+    lofi.make_sink_temp_v1;
 end
 dtwgt = dtpos + RESWGT*dtneg;
 
@@ -50,16 +50,18 @@ for nyear = startYear:endYear
         % Daily
         % ---
         for nd = 1:monlen
-            fbit = [FLUXHEAD, '_daily_', syear, smon, num2str(nd,'%02u'), '.', FEXT];
-            fout = [DIROUT, '/daily/', syear, '/', smon, '/', fbit];
-
-            if ~isfile(fout), continue; end
-
+            % Always increment counters
             nday = nday + 1;
             if dnmids(nnow) < nday
                 nprv = nnow;
                 nnow = nnow + 1;
             end
+
+            fbit = [FLUXHEAD, '_daily_', syear, smon, num2str(nd,'%02u'), '.', FEXT];
+            fout = [DIROUT, '/daily/', syear, '/', smon, '/', fbit];
+
+            if ~isfile(fout), continue; end
+
             wwprv = (dnmids(nnow) - nday)/(dnmids(nnow) - dnmids(nprv));
             % Hack to avoid pasting January onto end of dtwgt
             dtnow = wwprv*dtwgt(:,:,nprv) + (1 - wwprv)*dtwgt(:,:,mod(nprv,12)+1);

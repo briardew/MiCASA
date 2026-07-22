@@ -28,8 +28,9 @@ do_spinup_stage1 = 'n';						% Do first  stage spin-up (as opposed to loading it
 do_spinup_stage2 = 'n';						% Do second stage spin-up (as opposed to loading it)
 do_restart_load = 'y';						% Load workspace to start
 do_deprecated = 'n';						% Use deprecated functionality (for debugging, etc.)
-% New choices
-do_v1_bugs = 'n';						% Reproduce version 1 bugs
+%do_v1_bugs = 'n';						% Reproduce version 1 bugs
+% For zero-diff testing (***FIXME***)
+do_v1_bugs = 'y';						% Reproduce version 1 bugs
 do_meteo_type = 'geosit';					% Meteorology type (merra2, geosit)
 
 % MODIS/VIIRS input grid
