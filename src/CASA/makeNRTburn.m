@@ -30,7 +30,7 @@ YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
 LATENCY = getenv('LATENCY');
 if isempty(LATENCY), LATENCY = 2; end
-DNOUT = [datenum(2024,10,01):now-LATENCY];
+DNOUT = [datenum(startYear,01,01):now-LATENCY];
 
 % This needs to be improved
 if ~exist('DIRDATA', 'var')

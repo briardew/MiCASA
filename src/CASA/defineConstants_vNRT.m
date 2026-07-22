@@ -14,7 +14,7 @@ spinUpYear2 = 1750;
 SOCadjustYear = 50;						% Number of years before startYear to adjust SOC
 
 dvec = datevec(now);
-startYear = 2024;						% First year with interannual data
+startYear = 2025;						% First year with interannual data
 endYear   = dvec(1);						% Last  year with interannual data
 startYearClim = 2003;						% First year to use in climatology
 endYearClim   = 2012;						% Last  year to use in climatology

@@ -13,10 +13,6 @@ NTYPE = 18							# Including unclassified as a type
 NMISS = 16							# Missing tiles assumed water
 
 FEXT = 'nc4'							# Output file extension; see defaults['Format'] below
-YMINCOV = 2001							# Minimum year for land cover
-YMAXCOV = 2021							# Maximum year for land cover
-YMINVCF = 2007							# Minimum year for VCF (2003-2006 are corrputed)
-YMAXVCF = 2020							# Maximum year for VCF
 
 YEAR0 = 1980							# Year that all timestamps are based on
 TIME0 = datetime(YEAR0, 1, 1)					# YEAR0 in datetime format
@@ -69,6 +65,17 @@ def fillargs(dtval, **kwargs):
 
     # Fill collection names (if unspecified)
     # ---
+    # Minimum and maximum years of land cover and VCF collections
+    # Note: MOD44B.006 is only available on NCCS Discover and maybe Google Earth Engine
+    # Years 2003-2006 of MOD44B.006 on Discover were lost and recovered from GEE.
+    YMINCOV = 2001
+    YMAXCOV = datetime.now().year - 2
+    YMINVCF = 2001
+    YMAXVCF = 2020	
+    # For reproducability
+    if vernum == '1':
+        YMAXCOV = 2021
+
     # Should these be specified in defaults?
     colcov = 'MCD12Q1.061'
     colvcf = 'MOD44B.006'
