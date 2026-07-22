@@ -126,7 +126,7 @@ warnings
 
 # Create drivers
 # ---
-MVARGS=("--ver" "$VER" "--output" "$DIRDATA/v$VER/drivers")
+MVARGS=("--prod" "$PROD" "--ver" "$VER" "--output" "$DIRDATA/v$VER/drivers")
 [[ "$FORCE" == true ]] && MVARGS+=("--force")
 # A day before start so fill works
 daybe4=$(date -d "$daybeg-1 days" +%F)

@@ -169,15 +169,12 @@ warnings
 
 # Run
 # ---
-cmd0="modvir $name --mode $mode --ver \"$VER\""
-cmd0="$cmd0 --output \"$DATADIR/v$VER/drivers\""
-
 NUMHOSTS=${#HOSTS[@]}
 
 # Weird synatx to support spaces in variable names
 # Doesn't support --res at this time
 MVARGS=("$name" "--mode" "$mode" "--prod" '"'"$PROD"'"' "--ver" '"'"$VER"'"' \
-    "--res" '"'"$RES"'"' "--output" '"'"$DATADIR/v$VER/drivers"'"')
+    "--output" '"'"$DATADIR/v$VER/drivers"'"')
 [[ "$FORCE" == true ]] && MVARGS+=("--force")
 
 YEAR0=$(date -d "$daybeg" +%Y)
