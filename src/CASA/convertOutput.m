@@ -327,6 +327,15 @@ for year = startYear:endYear
                 end
 
                 [status, result] = system(['ncra -O -h ', fins, ' ', fout]);
+                % The above will fail on the flux file if it doesn't have the sink
+                % but other days do, for now we let it fail and come back later.
+                % Presumably this only happens in NRT mode when you're running every
+                % day. The monthly average will generate the next day (brutal hack)
+                if status ~= 0
+                    [status, result] = system(['rm ', fout, '.*.tmp']);
+                    continue;
+                end
+
                 % Delete unwanted attributes and all global (to keep order)
                 [status, result] = system(['ncatted -O -h -a cell_methods,,d,, ', fout]);
                 [status, result] = system(['ncatted -O -h -a ,global,d,, ', fout]);

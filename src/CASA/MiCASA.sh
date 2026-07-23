@@ -166,10 +166,15 @@ done
 # Run CASA
 # ---
 (
+    # Remove previous forecast so we write w/o force
+    [[ "$VER" == "NRT" ]] && "$CASADIR/utils/post/forecast.sh" "$daybeg" \
+        "${PPARGS[@]}" --clean
+
     cd "$CASADIR" || exit
+    # Add an extra convertOutput at the end in case we complete a month
     # Need to be careful with this, bash will expand things like *
     RUNCMDS="runname = 'v$VER'; DIRDATA = '$DIRDATA'; CASA; convertOutput; \
-        lofi.make_sink; lofi.make_3hrly_land; exit"
+        lofi.make_sink; lofi.make_3hrly_land; convertOutput; exit"
     $MATLAB -r "$RUNCMDS"
     cd - > /dev/null || exit
 )

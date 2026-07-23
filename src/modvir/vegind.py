@@ -467,10 +467,11 @@ def build(dtbeg, dtend, **kwargs):
                 print('===    ________ ' + f'{year:04}-{mon:02}')
                 print('===    ____________ Averaging')
 
-                # I try not to do this (dtmon & dsmon), but alas
-                dtmon = datetime(year, mon, 1)
-                dsmon = regrid(dtmon, mask=mask, monthly=True, **kwnow)
                 with xr.open_mfdataset(flist) as dsin:
+                    # I try not to do this (dtmon & dsmon), but alas
+                    dtmon = datetime(year, mon, 1)
+                    dsmon = regrid(dtmon, mask=mask, monthly=True, **kwnow)
+
                     # Different versions of xarray return different things for
                     # `Dataset.mean`. Better to just do the average and replace arrays
                     # in an exisiting dataset

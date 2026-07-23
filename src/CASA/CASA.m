@@ -141,6 +141,7 @@ end
 
 % Run individual years with annual driver data
 saveRestart = 0;
+missingData = 0;
 for year = startYear:endYear
     if lower(do_daily(1)) == 'y'
         NSTEPS = datenum(year+1,01,01) - datenum(year,01,01);
@@ -180,9 +181,10 @@ for year = startYear:endYear
         try
             updateCASAinput
         catch ME
+            disp(['Could not load driver data for step ', num2str(step), ':']);
             fprintf(2, '%s\n', getReport(ME));
-            disp(['Could not load driver data for step ', num2str(step), ' ...']);
             step = step - 1;
+            missingData = 1;
             break;
         end
 
@@ -206,4 +208,7 @@ for year = startYear:endYear
     saveRestart = 0;
 
     disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
+
+    % A little extra protection so we don't skip ahead
+    if missingData, break; end
 end

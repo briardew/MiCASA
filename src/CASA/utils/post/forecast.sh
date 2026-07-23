@@ -8,7 +8,7 @@
 # Be strict about errors
 set -euo pipefail
 
-BLURB="MiCASA flux forecasting" 
+BLURB="MiCASA flux forecasts"
 # Default forecast length in days
 NDAYSDEF=14
 
@@ -40,6 +40,7 @@ helpout() {
     echo "  -i DIR, --input DIR   input root directory (default: $DATADEF)"
     echo "  -o DIR, --output DIR  output root directory (default: $DATADEF)"
     echo "  -b, --batch           operate in batch mode (default: False)"
+    echo "  -c, --clean           delete previous forecast (default: False)"
 }
 
 argparse() {
@@ -51,6 +52,7 @@ argparse() {
     DATAOUT=$DATADEF
     FORCE=true
     BATCH=false
+    CLEAN=false
 
     # First two args are for help
     MYNAME="$1"
@@ -75,6 +77,10 @@ argparse() {
                 ;;
             -b|--batch)
                 BATCH=true
+                shift
+                ;;
+            -c|--clean)
+                CLEAN=true
                 shift
                 ;;
             -i|--input)
@@ -117,7 +123,7 @@ argparse() {
     fi
 
     NDAYS=${POSARGS[1]:-$NDAYSDEF}
-    if [[ "$NDAYS" -le 0 || 366 -gt "$NDAYS" ]]; then
+    if [[ "$NDAYS" -le 0 || 366 -lt "$NDAYS" ]]; then
         echo "$MYNAME: warning: '$NDAYS' is out of range. Setting to $NDAYSDEF"
         NDAYS=$NDAYSDEF
     fi
@@ -156,18 +162,18 @@ day=$(date -d "$DAYBEG" +%d)
 
 ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
 f3hr="$DINFLX/3hrly/$year/$mon/$ff"
-# Exit if 3hrly file is missing
-if [[ ! -f "$f3hr" ]]; then
-    echo "ERROR: 3-hourly file for $DAYBEG is missing:" >&2
+# Exit if we are forecasting and 3hrly file is missing
+if [[ "$CLEAN" != true && ! -f "$f3hr" ]]; then
+    echo "$MYNAME: error: 3-hourly file for $DAYBEG is missing:" >&2
     echo "$f3hr" >&2
     exit 1
 fi
 
 ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
 fday="$DINFLX/daily/$year/$mon/$ff"
-# Exit if daily file is missing
-if [[ ! -f "$fday" ]]; then
-    echo "ERROR: Daily file for $DAYBEG is missing:" >&2
+# Exit if we are forecasting and daily file is missing
+if [[ "$CLEAN" != true && ! -f "$fday" ]]; then
+    echo "$MYNAME: error: daily file for $DAYBEG is missing:" >&2
     echo "$fday" >&2
     exit 1
 fi
@@ -178,15 +184,27 @@ for num in $(seq 1 "$NDAYS"); do
     mon=$(date -d "$daynow" +%m)
     day=$(date -d "$daynow" +%d)
 
+    # 3hrly
     ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
     mkdir -p "$DOUTFLX/3hrly/$year/$mon"
     fout="$DOUTFLX/3hrly/$year/$mon/$ff"
-    echo "Writing $fout ..."
-    ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
+    if [[ "$CLEAN" != true ]]; then
+        echo "Writing $fout ..."
+        ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
+    elif [[ -f "$fout" ]]; then
+        echo "Removing $fout ..."
+        rm "$fout"
+    fi
 
+    # Daily
     ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
     mkdir -p "$DOUTFLX/daily/$year/$mon"
     fout="$DOUTFLX/daily/$year/$mon/$ff"
-    echo "Writing $fout ..."
-    ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$fday" "$fout"
+    if [[ "$CLEAN" != true ]]; then
+        echo "Writing $fout ..."
+        ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$fday" "$fout"
+    elif [[ -f "$fout" ]]; then
+        echo "Removing $fout ..."
+        rm "$fout"
+    fi
 done
