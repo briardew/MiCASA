@@ -128,7 +128,7 @@ warnings
 # ---
 MVARGS=("--prod" "$PROD" "--ver" "$VER" "--output" "$DIRDATA/v$VER/drivers")
 [[ "$FORCE" == true ]] && MVARGS+=("--force")
-# A day before start so fill works
+# A day before start so fill and forecast clean-up work
 daybe4=$(date -d "$daybeg-1 days" +%F)
 
 # Convenient vars for loops (the 10# strips leading zeros)
@@ -167,7 +167,7 @@ done
 # ---
 (
     # Remove previous forecast so we write w/o force
-    [[ "$VER" == "NRT" ]] && "$CASADIR/utils/post/forecast.sh" "$daybeg" \
+    [[ "$VER" == "NRT" ]] && "$CASADIR/utils/post/forecast.sh" "$daybe4" \
         "${PPARGS[@]}" --clean
 
     cd "$CASADIR" || exit
