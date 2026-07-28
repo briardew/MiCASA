@@ -67,11 +67,11 @@ def fillargs(dtval, **kwargs):
     # ---
     # Minimum and maximum years of land cover and VCF collections
     # Note: MOD44B.006 is only available on NCCS Discover and maybe Google Earth Engine
-    # Years 2003-2006 of MOD44B.006 on Discover were lost and recovered from GEE.
+    # Years 2003-2006 of MOD44B.006 on Discover were lost and recovered from GEE
     YMINCOV = 2001
     YMAXCOV = datetime.now().year - 2
     YMINVCF = 2001
-    YMAXVCF = 2020	
+    YMAXVCF = 2020
     # For reproducability
     if vernum == '1':
         YMAXCOV = 2021

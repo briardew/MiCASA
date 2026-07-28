@@ -373,10 +373,11 @@ def build(dtbeg, dtend, **kwargs):
 
         # Build daily vegetation indices
         # ---
-        dtcap = min(datetime(year, 12, 31), dtend)
-        ndays = (dtcap - dtbeg).days + 1
+        dtmin = max(datetime(year, 1, 1), dtbeg)
+        dtmax = min(datetime(year, 12, 31), dtend)
+        ndays = (dtmax - dtmin).days + 1
         for nd in range(ndays):
-            dtnow = dtbeg + timedelta(nd)
+            dtnow = dtmin + timedelta(nd)
 
             print('===    ________ ' + dtnow.strftime('%Y-%m-%d'))
 
