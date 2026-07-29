@@ -185,6 +185,8 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
     # Read and regrid files
     # ---
     files = get(dtnow, **kwnow)
+    if len(files) == 0:
+        raise EOFError('No files found to regrid')
 
     num = np.zeros((nlat, nlon))
     qcw = np.zeros((nlat, nlon))
@@ -373,8 +375,8 @@ def build(dtbeg, dtend, **kwargs):
 
         # Build daily vegetation indices
         # ---
-        dtmin = max(datetime(year, 1, 1), dtbeg)
-        dtmax = min(datetime(year, 12, 31), dtend)
+        dtmin = max(dtbeg, datetime(year, 1, 1))
+        dtmax = min(dtend, datetime(year, 12, 31))
         ndays = (dtmax - dtmin).days + 1
         for nd in range(ndays):
             dtnow = dtmin + timedelta(nd)
@@ -406,8 +408,8 @@ def build(dtbeg, dtend, **kwargs):
                 else:
                     try:
                         ds = regrid(dtnow, mask=mask, **kwnow)
-                    except EOFError:
-                        print('No files to process, proceeding ...', file=sys.stderr)
+                    except EOFError as e:
+                        print(e, file=sys.stderr)
                     else:
                         makedirs(dirpre, exist_ok=True)
                         ds.to_netcdf(fpre, unlimited_dims=['time'])
