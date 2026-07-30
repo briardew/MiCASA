@@ -186,10 +186,10 @@ def regrid(dtnow, monthly=False, **kwargs):
         # Can't believe we have to do this
         # h08v11, h01v07 have burning and no land cover
         if fcov is None:
-            print('Missing land cover data for ' + ff)
+            print('Missing land cover data for ' + path.basename(ff))
             continue
         if fvcf is None:
-            print('Missing VCF data for ' + ff)
+            print('Missing VCF data for ' + path.basename(ff))
             continue
 
         dsin = rxr.open_rasterio(ff).squeeze(drop=True)

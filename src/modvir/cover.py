@@ -244,7 +244,7 @@ def regrid(dtnow, **kwargs):
         # ---
         fvcf = swaphead(ff, filesvcf)
         if fvcf is None:
-            print('Missing VCF data for ' + ff)
+            print('Missing VCF data for ' + path.basename(ff))
             continue
         fused = fused + [ff, fvcf]
         dsvcf = rxr.open_rasterio(fvcf).squeeze(drop=True)
