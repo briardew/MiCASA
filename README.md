@@ -29,7 +29,17 @@ subsection.
 1. Install the MiCASA Python package in editable mode following the instructions in
 `requirements.txt`.
 2. Run `modvir --help` to get an example of how to generate the MODIS/VIIRS files.
-3. Use the utility `src/CASA/utils/prep.sh` to batch generate inputs.
+3. Use the utility `src/CASA/utils/prep.sh` to batch generate inputs. For example:
+    ```
+    ./prep.sh -v 1A cover regrid
+    ```
+And likewise for `vegind` and `burn`. Note that you need to let the cover
+generation finish before running the prep utility for `vegind` and `burn`. Once
+the `vegind` prep is done, you'll need to run
+    ```
+    modvir -v 1A -m fill vegind
+    ```
+This takes about a day to fill in the `vegind` and make a continuous record.
 
 *NOTE*: MiCASA was originally designed to run on NASA high-performance
 computing assets. Mirroring the entire `MCD12Q1`, `MOD44B`, `MCD43A4`, and
@@ -48,6 +58,18 @@ options open for ease of use. In general:
 * MODIS/VIIRS driver data is read from `data/runname/drivers`.
 * Factorial runs can be denoted with a slash, e.g., `runname/XYZ` will use the
   driver data, maps, and meteorology from `runname`.
+
+### Setting up the environment
+To initialize the environment, you can cd into `src/CASA` and source the
+setup script:
+    ```
+    . ./setup.sh
+    ```
+This will define an environment variable `$MATLAB` that you can run at the
+command line to enter into Matlab/Octave.
+
+On NCCS Discover, most Matlab/Octave will run much faster if run on a compute
+node instead of a login node.
 
 ### Spinning up
 1. Build the climatological and annual inputs needed for spin-up. Change into
