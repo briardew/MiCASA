@@ -203,8 +203,15 @@ for year = startYear:endYear
         saveRestart = 1;
     end
 
-    % Save annual restart if we made a change
-    if saveRestart, save(frestart, '-v7'); end
+    % Save annual/final restart if we made a change
+    if saveRestart
+        save(frestart, '-v7');
+        % Archive annual restarts
+        if step == NSTEPS
+            [status, result] = system(['mkdir -p ', DIRRUN, '/restarts']);
+            save([DIRRUN, '/restarts/', int2str(year), '0101.mat'], '-v7');
+        end
+    end
     saveRestart = 0;
 
     disp(['Year ', int2str(year), ', time used = ', int2str(toc), ' seconds']);
