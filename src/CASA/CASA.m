@@ -209,7 +209,7 @@ for year = startYear:endYear
         % Archive annual restarts
         if step == NSTEPS
             [status, result] = system(['mkdir -p ', DIRRUN, '/restarts']);
-            save([DIRRUN, '/restarts/', int2str(year), '0101.mat'], '-v7');
+            save([DIRRUN, '/restarts/', int2str(year+1), '0101.mat'], '-v7');
         end
     end
     saveRestart = 0;
