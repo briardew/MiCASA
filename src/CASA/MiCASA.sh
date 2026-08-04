@@ -166,10 +166,6 @@ done
 # Run CASA
 # ---
 (
-    # Remove previous forecast so we write w/o force
-    [[ "$VER" == "NRT" ]] && "$CASADIR/utils/post/forecast.sh" "$daybe4" \
-        "${PPARGS[@]}" --clean
-
     cd "$CASADIR" || exit
     # Add an extra convertOutput at the end in case we complete a month
     # Need to be careful with this, bash will expand things like *

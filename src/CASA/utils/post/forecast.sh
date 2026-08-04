@@ -40,7 +40,6 @@ helpout() {
     echo "  -i DIR, --input DIR   input root directory (default: $DATADEF)"
     echo "  -o DIR, --output DIR  output root directory (default: $DATADEF)"
     echo "  -b, --batch           operate in batch mode (default: False)"
-    echo "  -c, --clean           delete previous forecast (default: False)"
 }
 
 argparse() {
@@ -52,7 +51,6 @@ argparse() {
     DATAOUT=$DATADEF
     FORCE=true
     BATCH=false
-    CLEAN=false
 
     # First two args are for help
     MYNAME="$1"
@@ -77,10 +75,6 @@ argparse() {
                 ;;
             -b|--batch)
                 BATCH=true
-                shift
-                ;;
-            -c|--clean)
-                CLEAN=true
                 shift
                 ;;
             -i|--input)
@@ -163,7 +157,7 @@ day=$(date -d "$DAYBEG" +%d)
 ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
 f3hr="$DINFLX/3hrly/$year/$mon/$ff"
 # Exit if we are forecasting and 3hrly file is missing
-if [[ "$CLEAN" != true && ! -f "$f3hr" ]]; then
+if [[ ! -f "$f3hr" ]]; then
     echo "$MYNAME: error: 3-hourly file for $DAYBEG is missing:" >&2
     echo "$f3hr" >&2
     exit 1
@@ -172,7 +166,7 @@ fi
 ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
 fday="$DINFLX/daily/$year/$mon/$ff"
 # Exit if we are forecasting and daily file is missing
-if [[ "$CLEAN" != true && ! -f "$fday" ]]; then
+if [[ ! -f "$fday" ]]; then
     echo "$MYNAME: error: daily file for $DAYBEG is missing:" >&2
     echo "$fday" >&2
     exit 1
@@ -188,23 +182,15 @@ for num in $(seq 1 "$NDAYS"); do
     ff="${HEADFLX}_3hrly_$year$mon$day.$FEXT"
     mkdir -p "$DOUTFLX/3hrly/$year/$mon"
     fout="$DOUTFLX/3hrly/$year/$mon/$ff"
-    if [[ "$CLEAN" != true ]]; then
-        echo "Writing $fout ..."
-        ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
-    elif [[ -f "$fout" ]]; then
-        echo "Removing $fout ..."
-        rm "$fout"
-    fi
+    echo "Writing $fout ..."
+    ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$f3hr" "$fout"
+    ncatted -O -h -a stage,global,o,c,"forecast" "$fout"
 
     # Daily
     ff="${HEADFLX}_daily_$year$mon$day.$FEXT"
     mkdir -p "$DOUTFLX/daily/$year/$mon"
     fout="$DOUTFLX/daily/$year/$mon/$ff"
-    if [[ "$CLEAN" != true ]]; then
-        echo "Writing $fout ..."
-        ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$fday" "$fout"
-    elif [[ -f "$fout" ]]; then
-        echo "Removing $fout ..."
-        rm "$fout"
-    fi
+    echo "Writing $fout ..."
+    ncap2 -O -s "time=time+$num;time_bnds=time_bnds+$num" "$fday" "$fout"
+    ncatted -O -h -a stage,global,o,c,"forecast" "$fout"
 done

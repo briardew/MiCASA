@@ -175,9 +175,14 @@ for year = startYear:endYear
                         CASARES, '_daily_', syear, smon, sday, '.', FEXT];
                     fout = [dnowout, '/', fbit];
 
-                    % Skip if file exists and not overwriting
+                    % Skip if file exists and not a forecast or overwriting
                     if isfile(fout)
-                        if FORCE
+                        forecast = 0;
+                        try
+                            stage = ncreadatt(fout, '/', 'stage');
+                            forecast = strcmp(stage, 'forecast');
+                        end
+                        if FORCE || forecast
                             [status, result] = system(['rm ', fout]);
                         else
                             continue;
