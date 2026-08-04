@@ -175,7 +175,7 @@ for year = startYear:endYear
                         CASARES, '_daily_', syear, smon, sday, '.', FEXT];
                     fout = [dnowout, '/', fbit];
 
-                    % Skip if file exists and not a forecast or overwriting
+                    % Skip if file exists and not overwriting or a forecast
                     if isfile(fout)
                         forecast = 0;
                         try

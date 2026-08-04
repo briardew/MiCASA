@@ -39,9 +39,14 @@ for nyr = 1:TOTYRS
             dout = [DIROUT, '/3hrly/', syear, '/', smon];
             fout = [dout, '/', fbit];
 
-            % Skip if file exists and not overwriting
+            % Skip if file exists and not overwriting or a forecast
             if isfile(fout)
-                if FORCE
+                forecast = 0;
+                try
+                    stage = ncreadatt(fout, '/', 'stage');
+                    forecast = strcmp(stage, 'forecast');
+                end
+                if FORCE || forecast
                     [status, result] = system(['rm ', fout]);
                 else
                     continue;
