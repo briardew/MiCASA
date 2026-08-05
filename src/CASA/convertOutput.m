@@ -170,6 +170,7 @@ for year = startYear:endYear
                     [status, result] = system(['mkdir -p ', dnowout]);
                 end
 
+                % Define dimensions and metadata
                 for nn = 1:numel(colls)
                     fbit = [PRODUCT, '_v', VERSION, '_', colls(nn).name, '_', ...
                         CASARES, '_daily_', syear, smon, sday, '.', FEXT];
@@ -257,6 +258,11 @@ for year = startYear:endYear
                         '_daily_', syear, smon, sday, '.', FEXT];
                     fout = [dnowout, '/', fbit];
 
+                    % At this point, output file exists no matter what, so we check
+                    % variable existence
+                    finfo = ncinfo(fout);
+                    if any(strcmp({finfo.Variables.Name}, vout)), continue; end
+
                     % Allow for backwards compatibility if dataset wasn't output
                     try
                         if strcmp(vin, 'FIRE')
@@ -272,7 +278,7 @@ for year = startYear:endYear
                             tempin = load([dnowin, '/', vin, '.mat']).(vin);
                         end
                     catch
-                        continue
+                        continue;
                     end
 
                     % Add herbivory to respiration?
@@ -285,19 +291,15 @@ for year = startYear:endYear
                     xx = scale * fliplr(temp);
 
                     % Write dataset
-                    try
-                        ncread(fout, vout);
-                    catch
-                        nccreate(  fout, vout, 'datatype','single', ...
-                            'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
-                            'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
-                        ncwriteatt(fout, vout, 'long_name',lname);
-                        ncwriteatt(fout, vout, 'units',units);
-                        if numel(expra) > 0
-                            ncwriteatt(fout, vout, 'expressed_as',expra);
-                        end
-                        ncwrite(   fout, vout, single(xx));
+                    nccreate(  fout, vout, 'datatype','single', ...
+                        'dimensions',{'lon',NLON, 'lat',NLAT, 'time',inf}, ...
+                        'format',FORMAT, 'deflate',DEFLATE, 'shuffle',SHUFFLE);
+                    ncwriteatt(fout, vout, 'long_name',lname);
+                    ncwriteatt(fout, vout, 'units',units);
+                    if numel(expra) > 0
+                        ncwriteatt(fout, vout, 'expressed_as',expra);
                     end
+                    ncwrite(   fout, vout, single(xx));
                 end
             end
 

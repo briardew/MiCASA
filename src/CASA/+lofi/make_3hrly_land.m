@@ -59,7 +59,13 @@ for nyr = 1:TOTYRS
                 FLUXHEAD, '_daily_', syear, smon, sday, '.', FEXT];
             fin  = [DIROUT, '/', fbit];
 
-            if ~isfile(fin), continue; end
+            % Skip if input file doesn't exist or is a forecast
+            forecast = 0;
+            try
+                stage = ncreadatt(fin, '/', 'stage');
+                forecast = strcmp(stage, 'forecast');
+            end
+            if ~isfile(fin) || forecast, continue; end
 
             disp(['Reading daily data from ', fbit, ' ...']);
 
