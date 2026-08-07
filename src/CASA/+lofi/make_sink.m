@@ -62,6 +62,13 @@ for nyear = startYear:endYear
 
             if ~isfile(fout), continue; end
 
+            % A little tricky since file should exist already
+            hasvar = 0;
+            try
+                ncread(fout, SINKVAR);
+                hasvar = 1;
+            end
+
             wwprv = (dnmids(nnow) - nday)/(dnmids(nnow) - dnmids(nprv));
             % Hack to avoid pasting January onto end of dtwgt
             dtnow = wwprv*dtwgt(:,:,nprv) + (1 - wwprv)*dtwgt(:,:,mod(nprv,12)+1);
@@ -72,13 +79,6 @@ for nyear = startYear:endYear
             sink = SINKWGT * fsink(ao,nyear+nday/yrlen) * dtnow .* hetr;
             sink = min(hetr, single(sink));
             monsink = monsink + sink;
-
-            % A little tricky since file should exist already
-            hasvar = 0;
-            try
-                ncread(fout, SINKVAR);
-                hasvar = 1;
-            end
 
             % Skip if variable exists and not overwriting
             if hasvar && ~FORCE, continue; end
