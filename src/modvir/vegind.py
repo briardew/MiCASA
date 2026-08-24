@@ -25,7 +25,7 @@ def ndvi2fpar(ndvi):
 
     fpar = np.zeros_like(ndvi)
 
-    #   Joiner et al. (2018) used N0 = 0.25, but I picked N0 = 0.15, not sure why
+    # Joiner et al. (2018) used N0 = 0.25, but I picked N0 = 0.15, not sure why
     N0 = 0.15
     N1 = 0.75
 
@@ -186,7 +186,8 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
     # ---
     files = get(dtnow, **kwnow)
     if len(files) == 0:
-        raise EOFError('No files found to regrid')
+        print('No files found to regrid', file=sys.stderr)
+        return ds
 
     num = np.zeros((nlat, nlon))
     qcw = np.zeros((nlat, nlon))
@@ -406,13 +407,9 @@ def build(dtbeg, dtend, **kwargs):
                 if path.isfile(fpre) and not doforce:
                     ds = xr.open_dataset(fpre)
                 else:
-                    try:
-                        ds = regrid(dtnow, mask=mask, **kwnow)
-                    except EOFError as e:
-                        print(e, file=sys.stderr)
-                    else:
-                        makedirs(dirpre, exist_ok=True)
-                        ds.to_netcdf(fpre, unlimited_dims=['time'])
+                    ds = regrid(dtnow, mask=mask, **kwnow)
+                    makedirs(dirpre, exist_ok=True)
+                    ds.to_netcdf(fpre, unlimited_dims=['time'])
 
             # Fill and compute fPAR
             # ---
