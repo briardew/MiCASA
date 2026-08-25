@@ -285,8 +285,13 @@ EMAX = 0.40 * ones(size(SINK));
 EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
 inds = find(SINK > 0);
 EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
-% Adjustment to better match past CASAs
-EMAX = EMAX * 1.07;
+% Adjustments to better match past CASAs / SWDGNCLRs
+do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
+if strcmp(do_meteo_type, 'geosit')
+    EMAX = EMAX * 1.108;
+else
+    EMAX = EMAX * 1.070;
+end
 
 % Pretty self explanatory
 if lower(do_v1_bugs(1)) == 'n'

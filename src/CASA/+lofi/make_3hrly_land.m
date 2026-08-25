@@ -54,6 +54,7 @@ for nyr = 1:TOTYRS
             if ~isfile(fin) || forecast, continue; end
 
             % Skip if output file exists and not overwriting or a forecast
+            % Must come after the check above
             if isfile(fout)
                 forecast = 0;
                 try
