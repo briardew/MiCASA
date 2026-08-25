@@ -39,20 +39,6 @@ for nyr = 1:TOTYRS
             dout = [DIROUT, '/3hrly/', syear, '/', smon];
             fout = [dout, '/', fbit];
 
-            % Skip if file exists and not overwriting or a forecast
-            if isfile(fout)
-                forecast = 0;
-                try
-                    stage = ncreadatt(fout, '/', 'stage');
-                    forecast = strcmp(stage, 'forecast');
-                end
-                if FORCE || forecast
-                    [status, result] = system(['rm ', fout]);
-                else
-                    continue;
-                end
-            end
-
 %           1. READ DAILY FLUXES
 %===============================================================================
             fbit = ['daily/', syear, '/', smon, '/', ...
@@ -66,6 +52,20 @@ for nyr = 1:TOTYRS
                 forecast = strcmp(stage, 'forecast');
             end
             if ~isfile(fin) || forecast, continue; end
+
+            % Skip if output file exists and not overwriting or a forecast
+            if isfile(fout)
+                forecast = 0;
+                try
+                    stage = ncreadatt(fout, '/', 'stage');
+                    forecast = strcmp(stage, 'forecast');
+                end
+                if FORCE || forecast
+                    [status, result] = system(['rm ', fout]);
+                else
+                    continue;
+                end
+            end
 
             disp(['Reading daily data from ', fbit, ' ...']);
 
