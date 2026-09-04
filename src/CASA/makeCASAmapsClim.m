@@ -6,15 +6,14 @@ if ~isfolder(DIRCLIM)
     [status, result] = system(['mkdir -p ', DIRCLIM]);
 end
 
-%---  ---%
-% Eventually replace this with real stuff (***FIXME***)
+% 1. BASIS REGIONS AND FUEL NEED
+% ===
 lonxx = [-180.25:0.5:180.25]';
 latxx = [-90.25:0.5:90.25]';
 
 [LA,   LO]   = meshgrid(lat,   lon);
 [LAxx, LOxx] = meshgrid(latxx, lonxx);
 
-%%% Basis Regions and Fuel Need
 % NB: I don't yet have a good way of creating these datasets. Instead, I'm just
 % interpolating what already existed in CASA. Expect this to improve in future
 % versions
@@ -59,13 +58,15 @@ for ii = 1:length(datasets)
     clear AA BB;
 end
 
-%%% Fire Persistence and Mortality
+% 2. FIRE PERSISTENCE AND MORTALITY
+% ===
 % NB: I don't yet have a good way of creating these datasets. Instead, I'm just
 % interpolating what already existed in CASA. Expect this to improve in future
 % versions
 % NB2: These were originally annualy varying, but I started using them as a
 % climatology because 1) they were incompletely documented and 2) it didn't
 % appear the IAV was verifiable/important
+% NB3: I think IAV is important, probably sub-annual variability is not
 datasets = {'FP',     'MORT'};
 interpms = {'linear', 'linear'};
 for ii = 1:length(datasets)
@@ -104,7 +105,8 @@ for ii = 1:length(datasets)
     clear AAmo AA BB;
 end
 
-%%% Peat fraction
+% 3. PEAT FRACTION
+% ===
 dname = 'PF';
 fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || FORCE
@@ -119,7 +121,8 @@ if ~isfile(fout) || FORCE
     save(fout, dname, '-v7');
 end
 
-%%% Population density
+% 4. POPULATION DENSITY
+% ===
 dname = 'POPDENS';
 fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || FORCE
@@ -136,7 +139,8 @@ if ~isfile(fout) || FORCE
     save(fout, dname, '-v7');
 end
 
-%%% Fractional land cover types
+% 5. VEGETATAION CONTINUOUS FIELDS & LAND COVER TYPE
+% ===
 % Needed for VEG and FTC/FHC/FBC below
 ftreemv = 0;
 fherbmv = 0;
@@ -168,7 +172,6 @@ for nt = 1:NTYPE
     ftype(:,:,nt) = avgarea(latmv, lonmv, ftypemv(:,:,nt), lat, lon, RADIUS);
 end
 
-%%% Specific land cover type classification for soil moisture
 dname = 'VEG';
 fout = [DIRCLIM, '/', dname, '.mat'];
 if ~isfile(fout) || FORCE
@@ -228,7 +231,6 @@ if ~isfile(fout) || FORCE
     save(fout, dname, '-v7');
 end
 
-%%% Fractional tree, herbaceous, and bare cover
 FTC = flipud(ftree');
 FHC = flipud(fherb');
 % Add [0,1] check?
@@ -244,7 +246,8 @@ for ii = 1:length(datasets)
     save(fout, dname, '-v7');
 end
 
-%%% Crops
+% 6. CROPS
+% ===
 dxin = 1/12;
 latin = [ -90 + dxin/2:dxin: 90 - dxin/2]';
 lonin = [-180 + dxin/2:dxin:180 - dxin/2]';
@@ -277,26 +280,30 @@ areain = globarea(latin, lonin, RADIUS);
 
 totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon, RADIUS);
 total = totre .* weight;
-
-%% CASA-specific stuff
 SINK = flipud(total');
 
-% Build Emax 
+% 7. EMAX 
+% ===
+
 EMAX = 0.40 * ones(size(SINK));
 % Reduce over shrub & croplands (unsure why, maybe to match original)
-EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
-% Global adjustment to bring v1A (GEOS-IT) closer to v1 (MERRA-2)
+% Turn this off for GEOS-IT products (v1A) to improve agreement with
+% other products
 do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
-if strcmp(do_meteo_type, 'geosit')
-    EMAX = EMAX * 1.04;
+if strcmp(do_meteo_type, 'merra2')
+    EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
 end
+
 % Ramp up crop Emax (irrigation, fertilization, etc.)
 inds = find(SINK > 0);
 EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
+
 % Global adjustment to bring v1 closer to CASA-GFED 3
 EMAX = EMAX * 1.07;
 
-% Pretty self explanatory
+% Rescale since CASA units are per cover (wood/herb/defo) type
+% We keep this after the adjustment to Emax because the fit was done before the
+% bug was identified
 if lower(do_v1_bugs(1)) == 'n'
     SINK = SINK./FHC;
 end
@@ -311,7 +318,8 @@ for ii = 1:length(datasets)
     save(fout, dname, '-v7');
 end
 
-%%% Soil carbon and texture components
+% 8. SOIL CARBON AND TEXTURE COMPONENTS
+% ===
 % Plan for extension w/ modularity:
 % The block below should go into some subroutine, say,
 %     +makeCASAinput/soil.m
@@ -365,13 +373,12 @@ elseif NSOILDAT == 2
     fill = flipud(ncread(fin, 't_fill')');
 end
 
-% Pretty self explanatory
+% Rescale since CASA units are per cover (wood/herb/defo) type
 if lower(do_v1_bugs(1)) == 'n'
     ORGC_top = ORGC_top./(FTC + FHC);
     ORGC_sub = ORGC_sub./(FTC + FHC);
 end
 
-%%% Soil texture class
 % Percentages of sand-silt-clay from Potter et al. (1993)
 ppcoarse = [83;  8;  9];
 ppcormed = [60; 20; 20];
