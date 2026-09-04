@@ -281,17 +281,20 @@ total = totre .* weight;
 %% CASA-specific stuff
 SINK = flipud(total');
 
+% Build Emax 
 EMAX = 0.40 * ones(size(SINK));
+% Reduce over shrub & croplands (unsure why, maybe to match original)
 EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
-inds = find(SINK > 0);
-EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
-% Adjustments to better match past CASAs / SWDGNCLRs
+% Global adjustment to bring v1A (GEOS-IT) closer to v1 (MERRA-2)
 do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
 if strcmp(do_meteo_type, 'geosit')
-    EMAX = EMAX * 1.108;
-else
-    EMAX = EMAX * 1.070;
+    EMAX = EMAX * 1.04;
 end
+% Ramp up crop Emax (irrigation, fertilization, etc.)
+inds = find(SINK > 0);
+EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
+% Global adjustment to bring v1 closer to CASA-GFED 3
+EMAX = EMAX * 1.07;
 
 % Pretty self explanatory
 if lower(do_v1_bugs(1)) == 'n'
