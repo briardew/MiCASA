@@ -16,6 +16,13 @@ from modvir.config import FEXT, TIME0, TUNITS, LCVAR, NTYPE, fillargs
 from modvir.geometry import edges, centers, singrid, sinarea
 from modvir.utils import download, swaphead, tidy
 
+# Days that appear bad and we will QC out
+MOREQC = {
+    '1A': [
+        datetime(2001, 6, 24),
+    ]
+}
+
 
 def get(dtnow, **kwargs):
     """Acquire MODIS/VIIRS burned area tiles"""
@@ -243,6 +250,12 @@ def regrid(dtnow, monthly=False, **kwargs):
         else:
             iok = datein > 0
 
+        # Additional QC (just 2001-06-24 for now)
+        for dd in MOREQC.get(vernum, []):
+            if dd.year == dtnow.year:
+                doy = (dd - datetime(dd.year, 1, 1)).days + 1
+                iok[datein == doy] = False
+
         LAok = LAin[iok]
         LOok = LOin[iok]
         bins = (late, lone)
@@ -362,7 +375,7 @@ def build(dtbeg, dtend, **kwargs):
                     kwnow = fillargs(dtnow, **kwargs)
                     fday = headday + dtnow.strftime('%Y%m%d') + '.' + FEXT
                     if not path.isfile(fday) or doforce:
-                        # Hack to preserve v1 "bug" that averaged burn dates
+                        # Reproduce v1 "bug" that averaged burn dates
                         if ver == '1':
                             ds = regrid(dtnow, **{**kwnow, 'regrid': False})
 

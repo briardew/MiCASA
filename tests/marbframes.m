@@ -1,13 +1,14 @@
 %VER = 'NRT';
 %dnums = [datenum(2025,01,01):1:floor(now)-2]';
 
-VER = '1';
+VER = '1A';
 %dnums = [datenum(2024,01,01):1:datenum(2024,06,30)]';
-dnums = [datenum(2019,01,01):1:datenum(2019,03,07)]';
+%dnums = [datenum(2019,01,01):1:datenum(2019,03,07)]';
+dnums = [datenum(2005,01,01):1:datenum(2005,06,30)]';
 
 DIRDATA = '~ghg_ops/Projects/MiCASA/data';
 DIRM2 = '/discover/nobackup/projects/gmao/merra2/data/pub/products/MERRA2_all';
-DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive/d5294_geosit_jan18/diag';
+DIRIT = '/discover/nobackup/projects/gmao/geos-it/dao_ops/archive';
 % Yikes. I'd like these utilities shared in this repo, but ... yikes.
 addpath('/discover/nobackup/bweir/matlab');
 addpath('/discover/nobackup/bweir/matlab/globutils');
@@ -56,11 +57,8 @@ for ii = 1:numel(dnums)
     smon  = datestr(dnum, 'mm');
     sday  = datestr(dnum, 'dd');
 
-%   ff = [DIRDATA, '/v', VER, '/drivers/vegind/', syear, ...
-%       '/MiCASA_v', VER, '_vegind_x3600_y1800_daily_', syear, smon, sday, '.nc4'];
-    % Hack, remove
-    ff = ['../data', '/v', '1A', '/drivers/vegind/', syear, ...
-        '/MiCASA_v', '1A', '_vegind_x3600_y1800_daily_', syear, smon, sday, '.nc4'];
+    ff = [DIRDATA, '/v', VER, '/drivers/vegind/', syear, ...
+        '/MiCASA_v', VER, '_vegind_x3600_y1800_daily_', syear, smon, sday, '.nc4'];
     fpar = ncread(ff, 'fPAR');
 
     ff = [DIRDATA, '/v', VER, '/drivers/burn/', syear, ...
@@ -76,16 +74,24 @@ for ii = 1:numel(dnums)
     icem2 = ncread(fm2, 'FRLANDICE');
     snom2 = 0;
 
+    if dnum < datenum(2008,01,01)
+        tagit = 'd5294_geosit_jan98';
+    elseif dnum < datenum(2018,01,01)
+        tagit = 'd5294_geosit_jan08';
+    else
+        tagit = 'd5294_geosit_jan18';
+    end
+
     for hour = 0:23
-        fm2 = [DIRIT, '/Y', syear, '/M', smon, ...
-            '/d5294_geosit_jan18.ocn_tavg_1hr_glo_L576x361_slv.', ...
+        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+            '/', tagit, '.ocn_tavg_1hr_glo_L576x361_slv.', ...
             syear, '-', smon, '-', sday, 'T', num2str(hour,'%02u'), '30Z.nc4'];
         icem2in = ncread(fm2, 'FRSEAICE');
         icem2in(isnan(icem2in)) = 0;
         icem2 = icem2 + icem2in/24;
 
-        fm2 = [DIRIT, '/Y', syear, '/M', smon, ...
-            '/d5294_geosit_jan18.lnd_tavg_1hr_glo_L576x361_slv.', ...
+        fm2 = [DIRIT, '/', tagit, '/diag/Y', syear, '/M', smon, ...
+            '/', tagit, '.lnd_tavg_1hr_glo_L576x361_slv.', ...
             syear, '-', smon, '-', sday, 'T', num2str(hour,'%02u'), '30Z.nc4'];
         snom2in = ncread(fm2, 'FRSNO');
         snom2in(isnan(snom2in)) = 0;
@@ -123,7 +129,7 @@ for ii = 1:numel(dnums)
     caxis([-4 100]);
     hgexport(gcf, ['figs/marb_',syear,smon,sday,'.png'], style);
 
-    ff = [DIRDATA, '/v', VER, '/holding/daily/', syear, ...
+    ff = [DIRDATA, '/v', VER, '/netcdf/daily/', syear, ...
         '/', smon, '/MiCASA_v', VER, '_flux_x3600_y1800_daily_', ...
         syear, smon, sday, '.nc4'];
     nbe = ncread(ff, 'NEE') + ncread(ff, 'FIRE') + ncread(ff, 'FUEL');

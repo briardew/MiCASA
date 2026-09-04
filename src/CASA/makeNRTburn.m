@@ -2,7 +2,7 @@
 %
 %    MAKENRTBURN computes averages and std devs of burned area from an input
 %    dataset and averages and std devs of biomass burning from QFED. It
-%    computes NRT burned area by adding the the input average a scaled version
+%    computes NRT burned area by adding to the input average a scaled version
 %    of the QFED anomaly. The random errors of this approximation
 %
 % Author(s):	Brad Weir <brad.weir@nasa.gov>
@@ -11,14 +11,8 @@
 % 2024-12-17	First crack
 %
 % Notes:
-% * This doesn't use defineConstants. One reason is that its builds input data,
-% so the `runname` variable isn't entirely appropriate. Also not sure if this
-% belongs in the CASA or modvir ecosystem. Downsides: reproduction of janky
-% monthly mean approach, doesn't produce files in the same format as modvir
-% (need to fix modvir here), and separate definition of 1980 as time start.
 %
 % TODO:
-% * Split into 2 phases for fit and use? (takes about 10 minutes)
 % * Make more robust/consistent
 % * Make latency more robust (an argument?)
 %===============================================================================
@@ -28,15 +22,16 @@ runname = 'vNRT'; defineConstants;
 VERIN = '1';
 YEAR0 = 2001;								% Fit start
 YEARF = 2021;								% Fit end
+
 LATENCY = getenv('LATENCY');
 if isempty(LATENCY), LATENCY = 2; end
 DNOUT = [datenum(startYear,01,01):now-LATENCY];
 
 % This needs to be improved
 if ~exist('DIRDATA', 'var')
-    DIRDATA = ['../../data'];					% Directory under which all output goes
+    DIRDATA = ['../../data'];						% Directory under which all output goes
 end
-DIRAUX  = [DIRDATA, '/../data-aux'];				% Directory holding inputs to be regridded/etc.
+DIRAUX  = [DIRDATA, '/../data-aux'];					% Directory holding inputs to be regridded/etc.
 % Note: This will only work on systems that already have QFED
 QFDIR   = [DIRAUX,  '/QFED/v2.6r1/sfc'];
 QFNRT   = [DIRAUX,  '/QFED/v2.6r1-nrt/sfc'];
@@ -75,7 +70,7 @@ end
 
 % RUN
 %==============================================================================
-NBINS = 3;					% Wood, defo, and herb
+NBINS = 3;					% wood, defo, and herb
 
 % Get grid data
 % ---
