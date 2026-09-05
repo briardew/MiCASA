@@ -287,10 +287,11 @@ SINK = flipud(total');
 
 EMAX = 0.40 * ones(size(SINK));
 % Reduce over shrub & croplands (unsure why, maybe to match original)
-% Turn this off for GEOS-IT products (v1A) to improve agreement with
-% other products
+% Less for GEOS-IT products (v1A) to improve agreement with MERRA-2 products (v1)
 do_meteo_type = lower(strrep(strrep(do_meteo_type, '\s', ''), '-', ''));
-if strcmp(do_meteo_type, 'merra2')
+if strcmp(do_meteo_type, 'geosit')
+    EMAX = EMAX - 0.02*flipud(sum(ftype(:,:,[6:10]), 3)');
+else
     EMAX = EMAX - 0.04*flipud(sum(ftype(:,:,[6:10]), 3)');
 end
 
