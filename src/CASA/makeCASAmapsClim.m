@@ -246,7 +246,7 @@ for ii = 1:length(datasets)
     save(fout, dname, '-v7');
 end
 
-% 6. CROPS
+% 6. CROPS & EMAX
 % ===
 dxin = 1/12;
 latin = [ -90 + dxin/2:dxin: 90 - dxin/2]';
@@ -282,9 +282,6 @@ totre = 1e6 * avgarea(latin, lonin, totin./areain, lat, lon, RADIUS);
 total = totre .* weight;
 SINK = flipud(total');
 
-% 7. EMAX 
-% ===
-
 EMAX = 0.40 * ones(size(SINK));
 % Reduce over shrub & croplands (unsure why, maybe to match original)
 % Less for GEOS-IT products (v1A) to improve agreement with MERRA-2 products (v1)
@@ -303,8 +300,8 @@ EMAX(inds) = EMAX(inds) + 0.0013*SINK(inds);
 EMAX = EMAX * 1.07;
 
 % Rescale since CASA units are per cover (wood/herb/defo) type
-% We keep this after the adjustment to Emax because the fit was done before the
-% bug was identified
+% *** Keep after Emax adjustment because it was computed before bug was
+% identified, also I think this makes more sense unit-wise ***
 if lower(do_v1_bugs(1)) == 'n'
     SINK = SINK./FHC;
 end
