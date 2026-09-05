@@ -316,7 +316,7 @@ for ii = 1:length(datasets)
     save(fout, dname, '-v7');
 end
 
-% 8. SOIL CARBON AND TEXTURE COMPONENTS
+% 7. SOIL CARBON AND TEXTURE COMPONENTS
 % ===
 % Plan for extension w/ modularity:
 % The block below should go into some subroutine, say,
