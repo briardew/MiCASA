@@ -189,6 +189,8 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
         print('No files found to regrid', file=sys.stderr)
 
     num = np.zeros((nlat, nlon))
+    # Technically qcw should be 2 for missing tiles, but NDVI & fPAR will be NaNs,
+    # so there is no practical difference
     qcw = np.zeros((nlat, nlon))
     red = np.zeros((nlat, nlon))
     nir = np.zeros((nlat, nlon))
