@@ -187,14 +187,15 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
     files = get(dtnow, **kwnow)
     if len(files) == 0:
         print('No files found to regrid', file=sys.stderr)
-        return ds
 
     num = np.zeros((nlat, nlon))
     qcw = np.zeros((nlat, nlon))
     red = np.zeros((nlat, nlon))
     nir = np.zeros((nlat, nlon))
 
-    if files[0][-3:] == 'hdf':
+    # Get file parameters (default to MODIS for no files)
+    fext = files[0].rsplit('.', 1)[-1] if len(files) > 0 else 'hdf'
+    if fext == 'hdf':
         # MODIS
         # ---
         XVAR = 'x'
@@ -204,7 +205,7 @@ def regrid(dtnow, mask=None, monthly=False, **kwargs):
         # Need mask_and_scale=False for zero-diff with rioxarray
         inargs = {'engine': 'rasterio', 'mask_and_scale': False}
         xyargs = {'engine': 'rasterio', 'mask_and_scale': False}
-    elif files[0][-2:] == 'h5':
+    elif fext == 'h5':
         # VIIRS
         # ---
         XVAR = 'XDim'
