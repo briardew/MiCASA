@@ -93,6 +93,7 @@ warnings() {
         echo ""
         # shellcheck disable=SC2034
         read -n1 -s -r -p $"Press any key to continue ..." unused
+        # Needed because key entry above does not clear line
         echo ""
     fi
 }
