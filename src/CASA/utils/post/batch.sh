@@ -180,7 +180,7 @@ for year in $(seq "$YEAR0" "$YEARF"); do
 
     # Note: `command` is a shell built-in
     mycmd="$ROOTDIR/$cmd $year ${CMDARGS[*]} --batch"
-    echo "Submitting $mycmd to ${HOSTS[$nn]}"
+    echo "${HOSTS[$nn]}: Submitting $mycmd"
     screen -L -dmS "MiCASA-post-$cmd-$year" \
         bash --login -c "ssh -t ${HOSTS[$nn]} \"$mycmd; exit\""
 done
